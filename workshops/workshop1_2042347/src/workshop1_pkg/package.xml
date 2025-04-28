@@ -1,11 +1,11 @@
 <?xml version="1.0"?>
 <package format="2">
-    <name>template_package</name>
+    <name>workshop1_pkg</name>
     <version>0.1.0</version>
-    <description>Template project for ROS melodic node.</description>
+    <description>Workshop 1 project for ROS melodic node.</description>
 
     <!-- Maintainership Information -->
-    <maintainer email="v.rizeakos@student.tue.nl">V.Rizeakos</maintainer>
+    <maintainer email="m.p.m.strolenberg@student.tue.nl">M.P.M.Strolenberg</maintainer>
     <license>BSD</license>
 
     <!-- ROS dependencies -->

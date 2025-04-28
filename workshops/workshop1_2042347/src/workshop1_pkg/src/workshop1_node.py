@@ -56,7 +56,7 @@ class Node:
 
 if __name__ == "__main__":
     try:
-        camera_node = Node(node_name = "template_node")
+        camera_node = Node(node_name = "workshop1_node")
         rospy.spin()
     except rospy.ROSInterruptException:
         pass
