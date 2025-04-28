@@ -1,0 +1,4 @@
+<launch>
+  <node pkg="imu" type="imu_reader_node.py" name="imu_reader_node" output="screen">
+  </node>
+</launch>

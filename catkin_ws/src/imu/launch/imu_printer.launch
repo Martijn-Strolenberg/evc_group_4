@@ -1,0 +1,4 @@
+<launch>
+  <node pkg="imu" type="imu_printer_node.py" name="imu_printer_node" output="screen">
+  </node>
+</launch>
