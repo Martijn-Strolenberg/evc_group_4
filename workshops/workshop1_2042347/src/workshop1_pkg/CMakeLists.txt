@@ -21,6 +21,7 @@ install(DIRECTORY launch/
 
 # Install Python scripts
 catkin_install_python(PROGRAMS
-  src/workshop1_node.py
+  src/pub_node.py
+  src/sub_node.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )

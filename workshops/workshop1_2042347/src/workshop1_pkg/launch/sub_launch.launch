@@ -1,0 +1,3 @@
+<launch>
+  <node pkg="workshop1_pkg" type="sub_node.py" name="sub_node" output="screen"></node>
+</launch>

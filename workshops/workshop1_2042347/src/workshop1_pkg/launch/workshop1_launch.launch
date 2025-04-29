@@ -1,4 +1,0 @@
-<launch>
-  <node pkg="workshop1_pkg" type="workshop1_node.py" name="workshop1_node" output="screen">
-  </node>
-</launch>

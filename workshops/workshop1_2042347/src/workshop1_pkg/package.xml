@@ -2,7 +2,7 @@
 <package format="2">
     <name>workshop1_pkg</name>
     <version>0.1.0</version>
-    <description>Workshop 1 project for ROS melodic node.</description>
+    <description>Workshop 1 assignment 1.</description>
 
     <!-- Maintainership Information -->
     <maintainer email="m.p.m.strolenberg@student.tue.nl">M.P.M.Strolenberg</maintainer>
