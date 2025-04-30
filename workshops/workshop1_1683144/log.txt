@@ -1,0 +1,32 @@
+... logging to /root/.ros/log/7aa4fcb4-25a4-11f0-ab71-0242ac110003/roslaunch-8c0616888c9f-12094.log
+Checking log directory for disk usage. This may take a while.
+Press Ctrl-C to interrupt
+Done checking log file disk usage. Usage is <1GB.
+]2;/ros_ws/workshops/workshop1_1683144/src/template_package/launch/template_node.launch
+[1mstarted roslaunch server http://8c0616888c9f:45983/[0m
+
+SUMMARY
+========
+
+PARAMETERS
+ * /rosdistro: melodic
+ * /rosversion: 1.14.13
+
+NODES
+  /
+    template_node (template_package/template_node.py)
+
+auto-starting new master
+[1mprocess[master]: started with pid [12108][0m
+[1mROS_MASTER_URI=http://localhost:11311[0m
+]2;/ros_ws/workshops/workshop1_1683144/src/template_package/launch/template_node.launch http://localhost:11311
+[1msetting /run_id to 7aa4fcb4-25a4-11f0-ab71-0242ac110003[0m
+[1mprocess[rosout-1]: started with pid [12119][0m
+started core service [/rosout]
+[1mprocess[template_node-2]: started with pid [12122][0m
+[template_node-2] killing on exit
+[rosout-1] killing on exit
+[master] killing on exit
+shutting down processing monitor...
+... shutting down processing monitor complete
+[1mdone[0m
