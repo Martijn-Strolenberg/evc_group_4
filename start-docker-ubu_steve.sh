@@ -40,14 +40,18 @@ if [ "$container_exists" = "$CONTAINER_NAME" ]; then
         docker start -ai "$CONTAINER_NAME"
     fi
 else
-    echo "🐳 Creating and starting new container '$CONTAINER_NAME'..."
+    echo "📦 Building Docker image 'ros-melodic-custom' from Dockerfile in current directory..."
+    docker build -t ros-melodic-custom .
+
+    echo "🐳 Creating and starting new container '$CONTAINER_NAME' from custom image..."
     docker run -it \
         --name "$CONTAINER_NAME" \
-        --env="DISPLAY=${DISPLAY}" \
+        --env="DISPLAY" \
         --env="QT_X11_NO_MITSHM=1" \
         --volume="/tmp/.X11-unix:/tmp/.X11-unix:rw" \
         --volume="${HOST_ROS_WS_PATH}:${CONTAINER_ROS_WS_PATH}" \
-        ros:melodic bash
+        ros-melodic-custom bash
 fi
+
 
 echo "✅ Done"
