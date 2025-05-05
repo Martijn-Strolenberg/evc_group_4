@@ -8,7 +8,7 @@ docker build -t evc_ros:v1 .
 
 run a docker container with name ```jetbot_cont1```
 ```powershell
-docker run --rm -it --name jetbot_cont1 -p 11311:11311 -p 45100-45101:45100-45101 evc_ros:v1
+docker run --rm -it -e DISPLAY=$DISPLAY --name jetbot_cont1 -p 11311:11311 -p 45100-45101:45100-45101 evc_ros:v1
 ```
 
 Use ```docker ps``` to list all running containers. To open a new terminal inside a docker container called ```jetbot_cont1``` run:
