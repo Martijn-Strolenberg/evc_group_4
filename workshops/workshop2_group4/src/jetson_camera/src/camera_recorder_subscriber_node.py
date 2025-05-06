@@ -5,6 +5,7 @@ import rospy
 import numpy as np
 from cv_bridge import CvBridge, CvBridgeError
 from sensor_msgs.msg import CompressedImage
+from jetson_camera.msg import twovids
 
 
 class CameraSubscriberNode:
@@ -18,8 +19,8 @@ class CameraSubscriberNode:
         
         # Construct subscriber
         self.sub_image = rospy.Subscriber(
-            "/camera/image_raw",
-            CompressedImage,
+            "/camera/image_proc",
+            twovids,
             self.image_cb,
             buff_size=2**24,
             queue_size=1
@@ -39,16 +40,17 @@ class CameraSubscriberNode:
             rospy.loginfo("Camera subscriber captured first image from publisher.")
         try:
             # Decode image without CvBridge
-            cv_image = cv2.imdecode(np.frombuffer(data.data, np.uint8), cv2.IMREAD_COLOR)
-            #rospy.loginfo("PubSub delay: {}".format((rospy.Time.now() - data.header.stamp).to_sec())) # this makes the feed slow!!!
+            #raw_image = cv2.imdecode(np.frombuffer(data.raw_img.data, np.uint8), cv2.IMREAD_COLOR)
+            undis_image = cv2.imdecode(np.frombuffer(data.undist_img.data, np.uint8), cv2.IMREAD_COLOR)
 
+            rospy.loginfo("Trying to show camera")
             # Ensure the window updates instantly
-            #cv2.imshow("Camera View", cv_image)
-            #cv2.waitKey(1)  # Keep at 1 to prevent blocking
+            cv2.imshow("Camera View", undis_image)
+            cv2.waitKey(1)  # Keep at 1 to prevent blocking
         except CvBridgeError as err:
             rospy.logerr("Error converting image: {}".format(err))
             return
-        
+        """
         # On first frame only: set up VideoWriter
         if self.first_image:
             h, w = frame.shape[:2]
@@ -71,6 +73,7 @@ class CameraSubscriberNode:
         # Optional: display it
         cv2.imshow("Camera View", frame)
         cv2.waitKey(1)
+        """
 
     def cleanup(self):
         cv2.destroyAllWindows()
