@@ -36,7 +36,7 @@ class CameraSubscriberNode:
         try:
             # Decode image without CvBridge
             cv_image = cv2.imdecode(np.frombuffer(data.data, np.uint8), cv2.IMREAD_COLOR)
-            rospy.loginfo("PubSub delay: {}".format((rospy.Time.now() - data.header.stamp).to_sec()))
+            #rospy.loginfo("PubSub delay: {}".format((rospy.Time.now() - data.header.stamp).to_sec()))
 
             # Ensure the window updates instantly
             cv2.imshow("Camera View", cv_image)
