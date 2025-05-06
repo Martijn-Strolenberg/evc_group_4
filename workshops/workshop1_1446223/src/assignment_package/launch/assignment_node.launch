@@ -1,0 +1,4 @@
+<launch>
+  <node pkg="assignment_package" type="publisher_node.py" name="publish_node" output="screen" />
+  <node pkg="assignment_package" type="subscriber_node.py" name="subscriber_node" output="screen" />
+</launch>
