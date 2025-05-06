@@ -6,10 +6,24 @@ find_package(catkin REQUIRED COMPONENTS
   cv_bridge
   rospy
   sensor_msgs
+  std_msgs
+  message_generation
+)
+add_message_files(
+  FILES
+  twovids.msg
+  test.msg
+)
+# Declare a catkin package
+generate_messages(
+  DEPENDENCIES
+  sensor_msgs
+  std_msgs
 )
 
-# Declare a catkin package
-catkin_package()
+catkin_package(
+  CATKIN_DEPENDS message_runtime sensor_msgs std_msgs
+)
 
 # Include directories
 include_directories(
