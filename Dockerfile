@@ -37,7 +37,7 @@ ARG HOME_DIR=/home/$USERNAME
 
 # Setup environment variables (use host IP if needed)
 ARG ROS_MASTER_URI=http://jetbot:11311
-ARG CLIENT_IP=192.168.8.232
+ARG CLIENT_IP=192.168.8.249
 
 RUN echo "export ROS_MASTER_URI=$ROS_MASTER_URI" >> ~/.bashrc && \
     echo "export ROS_IP=$CLIENT_IP" >> ~/.bashrc && \

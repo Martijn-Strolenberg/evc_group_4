@@ -1,0 +1,179 @@
+[rospy.client][INFO] 2025-05-06 11:15:34,951: init_node, name[/camera_subscriber_node_203_1746530134921], pid[203]
+[xmlrpc][INFO] 2025-05-06 11:15:34,952: XML-RPC server binding to 0.0.0.0:0
+[xmlrpc][INFO] 2025-05-06 11:15:34,953: Started XML-RPC server [http://192.168.8.249:35697/]
+[rospy.init][INFO] 2025-05-06 11:15:34,953: ROS Slave URI: [http://192.168.8.249:35697/]
+[rospy.impl.masterslave][INFO] 2025-05-06 11:15:34,953: _ready: http://192.168.8.249:35697/
+[xmlrpc][INFO] 2025-05-06 11:15:34,963: xml rpc node: starting XML-RPC server
+[rospy.registration][INFO] 2025-05-06 11:15:34,963: Registering with master node http://jetbot:11311
+[rospy.init][INFO] 2025-05-06 11:15:35,054: registered with master
+[rospy.rosout][INFO] 2025-05-06 11:15:35,055: initializing /rosout core topic
+[rospy.rosout][INFO] 2025-05-06 11:15:35,072: connected to core topic /rosout
+[rospy.simtime][INFO] 2025-05-06 11:15:35,085: /use_sim_time is not set, will not subscribe to simulated time [/clock] topic
+[rosout][INFO] 2025-05-06 11:15:35,108: Initializing camera subscriber node...
+[rosout][INFO] 2025-05-06 11:15:35,141: Camera subscriber node initialized!
+[rospy.internal][INFO] 2025-05-06 11:15:35,185: topic[/camera/image_raw] adding connection to [http://192.168.8.179:34447/], count 0
+[rosout][INFO] 2025-05-06 11:15:35,258: Camera subscriber captured first image from publisher.
+[rosout][INFO] 2025-05-06 11:15:35,273: PubSub delay: -3599.82765198
+[rosout][INFO] 2025-05-06 11:15:35,456: PubSub delay: -3599.67805505
+[rosout][INFO] 2025-05-06 11:15:35,492: PubSub delay: -3599.80896997
+[rosout][INFO] 2025-05-06 11:15:35,531: PubSub delay: -3599.80291891
+[rosout][INFO] 2025-05-06 11:15:35,562: PubSub delay: -3599.83942008
+[rosout][INFO] 2025-05-06 11:15:35,594: PubSub delay: -3599.83968997
+[rosout][INFO] 2025-05-06 11:15:35,638: PubSub delay: -3599.82857394
+[rosout][INFO] 2025-05-06 11:15:35,674: PubSub delay: -3599.82683492
+[rosout][INFO] 2025-05-06 11:15:35,704: PubSub delay: -3599.82951784
+[rosout][INFO] 2025-05-06 11:15:35,735: PubSub delay: -3599.83074808
+[rosout][INFO] 2025-05-06 11:15:35,769: PubSub delay: -3599.83234215
+[rosout][INFO] 2025-05-06 11:15:35,802: PubSub delay: -3599.83189988
+[rosout][INFO] 2025-05-06 11:15:35,837: PubSub delay: -3599.82971501
+[rosout][INFO] 2025-05-06 11:15:35,866: PubSub delay: -3599.83415508
+[rosout][INFO] 2025-05-06 11:15:35,898: PubSub delay: -3599.83547282
+[rosout][INFO] 2025-05-06 11:15:35,928: PubSub delay: -3599.83923793
+[rosout][INFO] 2025-05-06 11:15:35,956: PubSub delay: -3599.84507084
+[rosout][INFO] 2025-05-06 11:15:35,984: PubSub delay: -3599.84946108
+[rosout][INFO] 2025-05-06 11:15:36,019: PubSub delay: -3599.84861898
+[rosout][INFO] 2025-05-06 11:15:36,052: PubSub delay: -3599.84899807
+[rosout][INFO] 2025-05-06 11:15:36,096: PubSub delay: -3599.83735394
+[rosout][INFO] 2025-05-06 11:15:36,124: PubSub delay: -3599.8432281
+[rosout][INFO] 2025-05-06 11:15:36,149: PubSub delay: -3599.85199904
+[rosout][INFO] 2025-05-06 11:15:36,182: PubSub delay: -3599.85163498
+[rosout][INFO] 2025-05-06 11:15:36,214: PubSub delay: -3599.85293818
+[rosout][INFO] 2025-05-06 11:15:36,247: PubSub delay: -3599.85287499
+[rosout][INFO] 2025-05-06 11:15:36,286: PubSub delay: -3599.84797788
+[rosout][INFO] 2025-05-06 11:15:36,316: PubSub delay: -3599.85117316
+[rosout][INFO] 2025-05-06 11:15:36,350: PubSub delay: -3599.85100007
+[rosout][INFO] 2025-05-06 11:15:36,383: PubSub delay: -3599.85086489
+[rosout][INFO] 2025-05-06 11:15:36,416: PubSub delay: -3599.85145307
+[rosout][INFO] 2025-05-06 11:15:36,448: PubSub delay: -3599.85235095
+[rosout][INFO] 2025-05-06 11:15:36,480: PubSub delay: -3599.85291004
+[rosout][INFO] 2025-05-06 11:15:36,516: PubSub delay: -3599.85134506
+[rosout][INFO] 2025-05-06 11:15:36,548: PubSub delay: -3599.85312796
+[rosout][INFO] 2025-05-06 11:15:36,581: PubSub delay: -3599.85231304
+[rosout][INFO] 2025-05-06 11:15:36,614: PubSub delay: -3599.85280395
+[rosout][INFO] 2025-05-06 11:15:36,647: PubSub delay: -3599.85308886
+[rosout][INFO] 2025-05-06 11:15:36,682: PubSub delay: -3599.85125899
+[rosout][INFO] 2025-05-06 11:15:36,713: PubSub delay: -3599.85330009
+[rosout][INFO] 2025-05-06 11:15:36,749: PubSub delay: -3599.85128021
+[rosout][INFO] 2025-05-06 11:15:36,782: PubSub delay: -3599.85160089
+[rosout][INFO] 2025-05-06 11:15:36,814: PubSub delay: -3599.85281301
+[rosout][INFO] 2025-05-06 11:15:36,849: PubSub delay: -3599.85125303
+[rosout][INFO] 2025-05-06 11:15:36,881: PubSub delay: -3599.85249186
+[rosout][INFO] 2025-05-06 11:15:36,918: PubSub delay: -3599.84929609
+[rosout][INFO] 2025-05-06 11:15:36,948: PubSub delay: -3599.85300493
+[rosout][INFO] 2025-05-06 11:15:36,982: PubSub delay: -3599.85171413
+[rosout][INFO] 2025-05-06 11:15:37,014: PubSub delay: -3599.85254908
+[rosout][INFO] 2025-05-06 11:15:37,050: PubSub delay: -3599.85057402
+[rosout][INFO] 2025-05-06 11:15:37,082: PubSub delay: -3599.85138297
+[rosout][INFO] 2025-05-06 11:15:37,118: PubSub delay: -3599.85007095
+[rosout][INFO] 2025-05-06 11:15:37,148: PubSub delay: -3599.85206604
+[rosout][INFO] 2025-05-06 11:15:37,184: PubSub delay: -3599.84916306
+[rosout][INFO] 2025-05-06 11:15:37,213: PubSub delay: -3599.85334992
+[rosout][INFO] 2025-05-06 11:15:37,250: PubSub delay: -3599.85087705
+[rosout][INFO] 2025-05-06 11:15:37,289: PubSub delay: -3599.84454989
+[rosout][INFO] 2025-05-06 11:15:37,319: PubSub delay: -3599.84801793
+[rosout][INFO] 2025-05-06 11:15:37,350: PubSub delay: -3599.85040283
+[rosout][INFO] 2025-05-06 11:15:37,384: PubSub delay: -3599.84976292
+[rosout][INFO] 2025-05-06 11:15:37,417: PubSub delay: -3599.84957504
+[rosout][INFO] 2025-05-06 11:15:37,470: PubSub delay: -3599.83025503
+[rosout][INFO] 2025-05-06 11:15:37,503: PubSub delay: -3599.83052802
+[rosout][INFO] 2025-05-06 11:15:37,546: PubSub delay: -3599.82111311
+[rosout][INFO] 2025-05-06 11:15:37,578: PubSub delay: -3599.82231903
+[rosout][INFO] 2025-05-06 11:15:37,616: PubSub delay: -3599.85121918
+[rosout][INFO] 2025-05-06 11:15:37,647: PubSub delay: -3599.85344505
+[rosout][INFO] 2025-05-06 11:15:37,682: PubSub delay: -3599.85111904
+[rosout][INFO] 2025-05-06 11:15:37,714: PubSub delay: -3599.85323405
+[rosout][INFO] 2025-05-06 11:15:37,747: PubSub delay: -3599.85337281
+[rosout][INFO] 2025-05-06 11:15:37,783: PubSub delay: -3599.85033202
+[rosout][INFO] 2025-05-06 11:15:37,845: PubSub delay: -3599.82245517
+[rosout][INFO] 2025-05-06 11:15:37,869: PubSub delay: -3599.83128619
+[rosout][INFO] 2025-05-06 11:15:37,898: PubSub delay: -3599.83537602
+[rosout][INFO] 2025-05-06 11:15:37,931: PubSub delay: -3599.83594108
+[rosout][INFO] 2025-05-06 11:15:37,957: PubSub delay: -3599.84349608
+[rosout][INFO] 2025-05-06 11:15:37,982: PubSub delay: -3599.8515892
+[rosout][INFO] 2025-05-06 11:15:38,014: PubSub delay: -3599.85287189
+[rosout][INFO] 2025-05-06 11:15:38,047: PubSub delay: -3599.85317612
+[rosout][INFO] 2025-05-06 11:15:38,083: PubSub delay: -3599.8506031
+[rosout][INFO] 2025-05-06 11:15:38,115: PubSub delay: -3599.85269809
+[rosout][INFO] 2025-05-06 11:15:38,147: PubSub delay: -3599.85300994
+[rosout][INFO] 2025-05-06 11:15:38,180: PubSub delay: -3599.85310292
+[rosout][INFO] 2025-05-06 11:15:38,214: PubSub delay: -3599.85229087
+[rosout][INFO] 2025-05-06 11:15:38,248: PubSub delay: -3599.85226393
+[rosout][INFO] 2025-05-06 11:15:38,291: PubSub delay: -3599.84206295
+[rosout][INFO] 2025-05-06 11:15:38,320: PubSub delay: -3599.84739304
+[rosout][INFO] 2025-05-06 11:15:38,348: PubSub delay: -3599.852911
+[rosout][INFO] 2025-05-06 11:15:38,383: PubSub delay: -3599.85064697
+[rosout][INFO] 2025-05-06 11:15:38,417: PubSub delay: -3599.84922099
+[rosout][INFO] 2025-05-06 11:15:38,464: PubSub delay: -3599.83602405
+[rosout][INFO] 2025-05-06 11:15:38,501: PubSub delay: -3599.83229613
+[rosout][INFO] 2025-05-06 11:15:38,530: PubSub delay: -3599.83624387
+[rosout][INFO] 2025-05-06 11:15:38,562: PubSub delay: -3599.83795881
+[rosout][INFO] 2025-05-06 11:15:38,600: PubSub delay: -3599.83375001
+[rosout][INFO] 2025-05-06 11:15:38,635: PubSub delay: -3599.83209682
+[rosout][INFO] 2025-05-06 11:15:38,665: PubSub delay: -3599.83565712
+[rosout][INFO] 2025-05-06 11:15:38,698: PubSub delay: -3599.83583188
+[rosout][INFO] 2025-05-06 11:15:38,731: PubSub delay: -3599.83558011
+[rosout][INFO] 2025-05-06 11:15:38,766: PubSub delay: -3599.83441997
+[rosout][INFO] 2025-05-06 11:15:38,798: PubSub delay: -3599.83590007
+[rosout][INFO] 2025-05-06 11:15:38,830: PubSub delay: -3599.83663511
+[rosout][INFO] 2025-05-06 11:15:38,861: PubSub delay: -3599.83899903
+[rosout][INFO] 2025-05-06 11:15:38,888: PubSub delay: -3599.84537888
+[rosout][INFO] 2025-05-06 11:15:38,922: PubSub delay: -3599.84570813
+[rosout][INFO] 2025-05-06 11:15:38,949: PubSub delay: -3599.85187602
+[rosout][INFO] 2025-05-06 11:15:38,981: PubSub delay: -3599.85221219
+[rosout][INFO] 2025-05-06 11:15:39,014: PubSub delay: -3599.8525312
+[rosout][INFO] 2025-05-06 11:15:39,049: PubSub delay: -3599.85152316
+[rosout][INFO] 2025-05-06 11:15:39,080: PubSub delay: -3599.85337806
+[rosout][INFO] 2025-05-06 11:15:39,122: PubSub delay: -3599.84464002
+[rosout][INFO] 2025-05-06 11:15:39,155: PubSub delay: -3599.84577298
+[rosout][INFO] 2025-05-06 11:15:39,183: PubSub delay: -3599.8509469
+[rosout][INFO] 2025-05-06 11:15:39,214: PubSub delay: -3599.85284305
+[rosout][INFO] 2025-05-06 11:15:39,248: PubSub delay: -3599.85202122
+[rosout][INFO] 2025-05-06 11:15:39,285: PubSub delay: -3599.84857702
+[rosout][INFO] 2025-05-06 11:15:39,316: PubSub delay: -3599.85122609
+[rosout][INFO] 2025-05-06 11:15:39,348: PubSub delay: -3599.85207701
+[rosout][INFO] 2025-05-06 11:15:39,381: PubSub delay: -3599.85268211
+[rosout][INFO] 2025-05-06 11:15:39,414: PubSub delay: -3599.85267091
+[rosout][INFO] 2025-05-06 11:15:39,449: PubSub delay: -3599.85170698
+[rosout][INFO] 2025-05-06 11:15:39,482: PubSub delay: -3599.85169697
+[rosout][INFO] 2025-05-06 11:15:39,516: PubSub delay: -3599.85121894
+[rosout][INFO] 2025-05-06 11:15:39,548: PubSub delay: -3599.85228181
+[rosout][INFO] 2025-05-06 11:15:39,586: PubSub delay: -3599.84869385
+[rospy.core][INFO] 2025-05-06 11:15:46,380: signal_shutdown [signal-2]
+[rospy.rosout][ERROR] 2025-05-06 11:16:39,681: Unable to report rosout: timed out
+Traceback (most recent call last):
+  File "/opt/ros/melodic/lib/python2.7/dist-packages/rospy/impl/rosout.py", line 91, in _rosout
+    disable_topics_ = rospy.get_param_cached("/rosout_disable_topics_generation", False)
+  File "/opt/ros/melodic/lib/python2.7/dist-packages/rospy/client.py", line 490, in get_param_cached
+    return _param_server.get_param_cached(param_name)
+  File "/opt/ros/melodic/lib/python2.7/dist-packages/rospy/msproxy.py", line 168, in get_param_cached
+    code, msg, value = self.target.subscribeParam(rospy.names.get_caller_id(), rospy.core.get_node_uri(), resolved_key)
+  File "/usr/lib/python2.7/xmlrpclib.py", line 1243, in __call__
+    return self.__send(self.__name, args)
+  File "/opt/ros/melodic/lib/python2.7/dist-packages/rospy/core.py", line 670, in _ServerProxy__request
+    self, methodname, params)
+  File "/usr/lib/python2.7/xmlrpclib.py", line 1602, in __request
+    verbose=self.__verbose
+  File "/usr/lib/python2.7/xmlrpclib.py", line 1283, in request
+    return self.single_request(host, handler, request_body, verbose)
+  File "/usr/lib/python2.7/xmlrpclib.py", line 1311, in single_request
+    self.send_content(h, request_body)
+  File "/usr/lib/python2.7/xmlrpclib.py", line 1459, in send_content
+    connection.endheaders(request_body)
+  File "/usr/lib/python2.7/httplib.py", line 1095, in endheaders
+    self._send_output(message_body)
+  File "/usr/lib/python2.7/httplib.py", line 898, in _send_output
+    self.send(msg)
+  File "/usr/lib/python2.7/httplib.py", line 860, in send
+    self.connect()
+  File "/usr/lib/python2.7/httplib.py", line 837, in connect
+    self.timeout, self.source_address)
+  File "/usr/lib/python2.7/socket.py", line 575, in create_connection
+    raise err
+timeout: timed out
+
+[rosout][INFO] 2025-05-06 11:15:39,615: PubSub delay: -3599.85217309
+[rospy.core][INFO] 2025-05-06 11:16:39,767: signal_shutdown [signal-2]
+[rospy.internal][INFO] 2025-05-06 11:16:39,840: topic[/camera/image_raw] removing connection to http://192.168.8.179:34447/
+[rospy.impl.masterslave][INFO] 2025-05-06 11:16:39,841: signal-2
+[rosout][INFO] 2025-05-06 11:16:39,691: PubSub delay: -3541.94226098
+[rospy.core][INFO] 2025-05-06 11:16:40,061: signal_shutdown [atexit]
