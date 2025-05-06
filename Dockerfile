@@ -30,10 +30,10 @@ RUN sudo rosdep update && \
 
 # Copy in project files
 ARG HOME_DIR=/home/$USERNAME
-COPY EVC $HOME_DIR/EVC
-COPY talker.py $HOME_DIR/
-COPY listener.py $HOME_DIR/
-RUN sudo chown -R $USERNAME:$USERNAME $HOME_DIR/EVC $HOME_DIR/talker.py $HOME_DIR/listener.py
+# COPY EVC $HOME_DIR/EVC
+# COPY talker.py $HOME_DIR/
+# COPY listener.py $HOME_DIR/
+# RUN sudo chown -R $USERNAME:$USERNAME $HOME_DIR/EVC $HOME_DIR/talker.py $HOME_DIR/listener.py
 
 # Setup environment variables (use host IP if needed)
 ARG ROS_MASTER_URI=http://jetbot:11311
