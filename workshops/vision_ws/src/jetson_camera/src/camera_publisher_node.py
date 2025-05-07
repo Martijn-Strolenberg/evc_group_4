@@ -12,7 +12,7 @@ class CameraPublisherNode:
         rospy.loginfo("Initializing camera publisher node...")
         # Initialize the ROS node
         self.node_name = node_name
-        rospy.init_node(self.node_name, anonymous=True)
+        rospy.init_node(self.node_name, anonymous=True, xmlrpc_port=45100, tcpros_port=45101)
 
         # Publisher for the image topic
         self.image_pub = rospy.Publisher(
