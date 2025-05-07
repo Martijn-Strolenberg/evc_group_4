@@ -7,6 +7,7 @@ from cv_bridge import CvBridge, CvBridgeError
 from sensor_msgs.msg import CompressedImage
 from jetson_camera.msg import twovids, test
 
+
 class CameraProcessorNode:
     def __init__(self):
         self.initialized = False
@@ -14,7 +15,7 @@ class CameraProcessorNode:
         self.bridge = CvBridge()
 
         # test variables
-        self.h = 0
+        #self.h = 0
         
         # Construct subscriber
         self.sub_image = rospy.Subscriber(
@@ -85,10 +86,10 @@ class CameraProcessorNode:
     def publish_new_msg(self, dis_img, undis_img):
         self.h = self.h + 1
         msg = twovids()
-        mesg = test()
+        #mesg = test()
         msg.raw_img.format = "jpeg"
         msg.undist_img.format = "jpeg"
-        mesg.num = self.h
+        #mesg.num = self.h
 
         # Convert the OpenCV image to a ROS CompressedImage message
         success1, encoded_dis_image = cv2.imencode(".jpg", dis_img)
@@ -103,7 +104,7 @@ class CameraProcessorNode:
 
             # Publish the image
             #rospy.loginfo("h: {num}".format(num=self.h))
-            self.pub_image.publish(mesg)
+            self.pub_image.publish(msg)
 
     def cleanup(self):
         cv2.destroyAllWindows()
