@@ -55,7 +55,7 @@ class CameraSubscriberNode:
             
             # On first frame only: set up VideoWriter
             if self.first_image:
-                h, w = frame.shape[:2]
+                h, w = undis_image.shape[:2]
                 fourcc = cv2.VideoWriter_fourcc(*"XVID")
                 fps    = 15.0  # or read msg.header.stamp deltas
                 self.writer = cv2.VideoWriter("output.avi",
@@ -70,17 +70,15 @@ class CameraSubscriberNode:
                 self.first_image = False
 
             # Write the frame
-            self.writer.write(frame)
+            self.writer.write(undis_image)
 
-            # Optional: display it
-            cv2.imshow("Camera View", frame)
             #cv2.waitKey(1)
             cv2.waitKey(1)  # Non-blocking update
 
             #rospy.loginfo("Trying to show camera")
             # Ensure the window updates instantly
             #cv2.imshow("Camera View", undis_image)
-            cv2.waitKey(1)  # Keep at 1 to prevent blocking
+            #cv2.waitKey(1)  # Keep at 1 to prevent blocking
         except CvBridgeError as err:
             rospy.logerr("Error converting image: {}".format(err))
             return
@@ -91,7 +89,7 @@ class CameraSubscriberNode:
 
 if __name__ == "__main__":
     # Initialize the node
-    rospy.init_node('camera_viewer_node', anonymous=True, xmlrpc_port=45100, tcpros_port=45101)
+    rospy.init_node('camera_viewer_node', anonymous=True)
     camera_node = CameraSubscriberNode()
     try:
         rospy.spin()
