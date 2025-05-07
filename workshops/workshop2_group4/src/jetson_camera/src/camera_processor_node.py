@@ -15,8 +15,6 @@ class CameraProcessorNode:
 
         # test variables
         self.h = 0
-        self.writer = None
-        self.first_image = True
         
         # Construct subscriber
         self.sub_image = rospy.Subscriber(
@@ -80,28 +78,7 @@ class CameraProcessorNode:
             # Display the result
             #cv2.imshow("Original vs. Undistorted", side_by_side)
             #cv2.waitKey(1)  # Non-blocking update
-            # On first frame only: set up VideoWriter
-            if self.first_image:
-                h, w = cv_image_undistorted.shape[:2]
-                fourcc = cv2.VideoWriter_fourcc(*"XVID")
-                fps    = 15.0  # or read msg.header.stamp deltas
-                self.writer = cv2.VideoWriter("output.avi",
-                                            fourcc,
-                                            fps,
-                                            (w, h))
-                if not self.writer.isOpened():
-                    rospy.logfatal("Cannot open VideoWriter")
-                    rospy.signal_shutdown("VideoWriter failed")
-                    return
-                rospy.loginfo("Recording %dx%d @ %.1f FPS to output.avi", w, h, fps)
-                self.first_image = False
-
-            # Write the frame
-            self.writer.write(cv_image_undistorted)
-
-            # Optional: display it
-            cv2.imshow("Camera View", cv_image_undistorted)
-            cv2.waitKey(1)
+            
         except CvBridgeError as err:
             rospy.logerr("Error converting image: {}".format(err))
 
@@ -134,7 +111,7 @@ class CameraProcessorNode:
 # Main function run the node
 if __name__ == "__main__":
     # Initialize the nodes
-    rospy.init_node('camera_processor_node', anonymous=True)
+    rospy.init_node('camera_processor_node', anonymous=True, xmlrpc_port=45100, tcpros_port=45101)
     camera_node = CameraProcessorNode()
     try:
         rospy.spin()
