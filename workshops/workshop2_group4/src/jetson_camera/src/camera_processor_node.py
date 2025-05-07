@@ -28,7 +28,7 @@ class CameraProcessorNode:
 
         self.pub_image = rospy.Publisher(
             "/camera/image_proc",
-            test,
+            twovids,
             queue_size=1
         )
 
@@ -84,7 +84,7 @@ class CameraProcessorNode:
             rospy.logerr("Error converting image: {}".format(err))
 
     def publish_new_msg(self, dis_img, undis_img):
-        self.h = self.h + 1
+        #self.h = self.h + 1
         msg = twovids()
         #mesg = test()
         msg.raw_img.format = "jpeg"
