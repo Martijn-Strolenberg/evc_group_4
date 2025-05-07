@@ -1,0 +1,3 @@
+<launch>
+  <node pkg="jetson_camera" type="movie_subscriber_node.py" name="movie_subscriber_node" output="screen"/>
+</launch>

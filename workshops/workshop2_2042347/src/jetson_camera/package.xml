@@ -2,10 +2,10 @@
 <package format="2">
     <name>jetson_camera</name>
     <version>0.1.0</version>
-    <description>This package provides access to camera frames for any camera interface (CSI or USB).</description>
+    <description>This package is used to demonstrate some vision applications.</description>
 
     <!-- Maintainership Information -->
-    <maintainer email="v.rizeakos@student.tue.nl">V.Rizeakos</maintainer>
+    <maintainer email="m.p.m.strolenberg@student.tue.nl">M.P.M.Strolenberg</maintainer>
     <license>BSD</license>
 
     <!-- ROS dependencies -->

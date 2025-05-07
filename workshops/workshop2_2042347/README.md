@@ -17,3 +17,8 @@ docker build -t evc_ros:v1 .
 ```powershell
 docker run --rm -it -e DISPLAY=$DISPLAY --name jetbot1 -p 11311:11311 -p 45100-45101:45100-45101 -v "C:\Users\marti\Documents\TUe_EmbeddedSystems\5LIA0_EmbeddedVisualControl\evc_group_4:/home/robot/evc" evc_ros:v1
 ```
+
+weird git error
+```powershell
+Remove-Item "workshops/workshop2_group4/src/CMakeLists.txt" -Force 
+```
