@@ -52,6 +52,29 @@ class CameraSubscriberNode:
 
             # Display the result
             cv2.imshow("Original vs. Undistorted", side_by_side)
+            
+            # On first frame only: set up VideoWriter
+            if self.first_image:
+                h, w = frame.shape[:2]
+                fourcc = cv2.VideoWriter_fourcc(*"XVID")
+                fps    = 15.0  # or read msg.header.stamp deltas
+                self.writer = cv2.VideoWriter("output.avi",
+                                            fourcc,
+                                            fps,
+                                            (w, h))
+                if not self.writer.isOpened():
+                    rospy.logfatal("Cannot open VideoWriter")
+                    rospy.signal_shutdown("VideoWriter failed")
+                    return
+                rospy.loginfo("Recording %dx%d @ %.1f FPS to output.avi", w, h, fps)
+                self.first_image = False
+
+            # Write the frame
+            self.writer.write(frame)
+
+            # Optional: display it
+            cv2.imshow("Camera View", frame)
+            #cv2.waitKey(1)
             cv2.waitKey(1)  # Non-blocking update
 
             #rospy.loginfo("Trying to show camera")
