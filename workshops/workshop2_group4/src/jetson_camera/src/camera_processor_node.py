@@ -5,13 +5,18 @@ import rospy
 import numpy as np
 from cv_bridge import CvBridge, CvBridgeError
 from sensor_msgs.msg import CompressedImage
-from jetson_camera.msg import twovids
+from jetson_camera.msg import twovids, test
 
 class CameraProcessorNode:
     def __init__(self):
         self.initialized = False
         rospy.loginfo("Initializing camera processor node...")
         self.bridge = CvBridge()
+
+        # test variables
+        self.h = 0
+        self.writer = None
+        self.first_image = True
         
         # Construct subscriber
         self.sub_image = rospy.Subscriber(
@@ -24,7 +29,7 @@ class CameraProcessorNode:
 
         self.pub_image = rospy.Publisher(
             "/camera/image_proc",
-            twovids,
+            test,
             queue_size=1
         )
 
@@ -39,6 +44,9 @@ class CameraProcessorNode:
         self.distortion_coeff = np.array([
             -0.36759883, 0.15256109, 0.00324047, -0.00128645, -0.02882766
         ])
+
+        self.first_image_received = False
+        self.initialized = True
 
     # Function that is executed every time it receives a new message from the publisher
     def image_cb(self, data):
@@ -72,13 +80,38 @@ class CameraProcessorNode:
             # Display the result
             #cv2.imshow("Original vs. Undistorted", side_by_side)
             #cv2.waitKey(1)  # Non-blocking update
+            # On first frame only: set up VideoWriter
+            if self.first_image:
+                h, w = cv_image_undistorted.shape[:2]
+                fourcc = cv2.VideoWriter_fourcc(*"XVID")
+                fps    = 15.0  # or read msg.header.stamp deltas
+                self.writer = cv2.VideoWriter("output.avi",
+                                            fourcc,
+                                            fps,
+                                            (w, h))
+                if not self.writer.isOpened():
+                    rospy.logfatal("Cannot open VideoWriter")
+                    rospy.signal_shutdown("VideoWriter failed")
+                    return
+                rospy.loginfo("Recording %dx%d @ %.1f FPS to output.avi", w, h, fps)
+                self.first_image = False
+
+            # Write the frame
+            self.writer.write(cv_image_undistorted)
+
+            # Optional: display it
+            cv2.imshow("Camera View", cv_image_undistorted)
+            cv2.waitKey(1)
         except CvBridgeError as err:
             rospy.logerr("Error converting image: {}".format(err))
 
     def publish_new_msg(self, dis_img, undis_img):
+        self.h = self.h + 1
         msg = twovids()
+        mesg = test()
         msg.raw_img.format = "jpeg"
         msg.undist_img.format = "jpeg"
+        mesg.num = self.h
 
         # Convert the OpenCV image to a ROS CompressedImage message
         success1, encoded_dis_image = cv2.imencode(".jpg", dis_img)
@@ -92,7 +125,8 @@ class CameraProcessorNode:
             msg.undist_img.data = encoded_undis_image.tobytes()
 
             # Publish the image
-            self.pub_image.publish(msg)
+            #rospy.loginfo("h: {num}".format(num=self.h))
+            self.pub_image.publish(mesg)
 
     def cleanup(self):
         cv2.destroyAllWindows()
