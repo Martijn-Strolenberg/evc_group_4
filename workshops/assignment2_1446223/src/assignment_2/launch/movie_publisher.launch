@@ -1,0 +1,5 @@
+<launch>
+  <node name="movie_publisher_node" pkg="assignment_2" type="movie_publisher_node.py" output="screen">
+  <param name="movie_path" value="$(find assignment_2)/src/movie.mp4" />
+  </node>
+</launch>
