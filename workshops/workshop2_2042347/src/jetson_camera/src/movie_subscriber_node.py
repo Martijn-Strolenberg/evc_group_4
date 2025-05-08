@@ -4,6 +4,7 @@ import cv2
 import rospy
 import numpy as np
 from sensor_msgs.msg import CompressedImage
+from cv_bridge import CvBridge, CvBridgeError
 
 
 class CameraSubscriberNode:
@@ -36,8 +37,43 @@ class CameraSubscriberNode:
             cv_image = cv2.imdecode(np.frombuffer(data.data, np.uint8), cv2.IMREAD_COLOR)
             #rospy.loginfo("PubSub delay: {}".format((rospy.Time.now() - data.header.stamp).to_sec()))
 
+            # START: Image Processing
+            # Convert to HSV color space
+            hsv = cv2.cvtColor(cv_image, cv2.COLOR_BGR2HSV)
+            # Define HSV range for blue (adjust if needed)
+            lower_blue = np.array([100, 150, 50])
+            upper_blue = np.array([140, 255, 255])
+
+            # Threshold the HSV image to get only blue colors
+            mask = cv2.inRange(hsv, lower_blue, upper_blue)
+
+            # Morphological operations to clean noise
+            kernel = np.ones((5, 5), np.uint8)
+            mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
+            mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
+
+            # Find contours in the mask
+            _, contours, _ = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+            # Draw bounding boxes around detected objects
+            for cnt in contours:
+                if cv2.contourArea(cnt) > 300:  # Filter out small noise
+                    x, y, w, h = cv2.boundingRect(cnt)
+                    center_x = x + w // 2
+                    center_y = y + h // 2
+                    cv2.rectangle(cv_image, (x, y), (x + w, y + h), (0, 255, 0), 2)
+                    # Draw crosshair at center
+                    cv2.line(cv_image, (center_x - 5, center_y), (center_x + 5, center_y), (0, 0, 255), 2)
+                    cv2.line(cv_image, (center_x, center_y - 5), (center_x, center_y + 5), (0, 0, 255), 2)
+                    rospy.loginfo("Blue pen object found at: ({}, {})".format(center_x, center_y))
+
+            # Show results
+            cv2.imshow("Detected Blue Object", cv_image)
+            cv2.imshow("Mask", mask)
+            # END: Image Processing
+
             # Ensure the window updates instantly
-            cv2.imshow("Camera View", cv_image)
+            #cv2.imshow("Camera View", cv_image)
             cv2.waitKey(1)  # Keep at 1 to prevent blocking
         except CvBridgeError as err:
             rospy.logerr("Error converting image: {}".format(err))
