@@ -1,0 +1,207 @@
+[rospy.client][INFO] 2025-05-07 13:05:35,397: init_node, name[/camera_processor_node_1116_1746623135351], pid[1116]
+[xmlrpc][INFO] 2025-05-07 13:05:35,398: XML-RPC server binding to 0.0.0.0:0
+[xmlrpc][INFO] 2025-05-07 13:05:35,399: Started XML-RPC server [http://192.168.8.249:41495/]
+[rospy.init][INFO] 2025-05-07 13:05:35,399: ROS Slave URI: [http://192.168.8.249:41495/]
+[rospy.impl.masterslave][INFO] 2025-05-07 13:05:35,400: _ready: http://192.168.8.249:41495/
+[xmlrpc][INFO] 2025-05-07 13:05:35,409: xml rpc node: starting XML-RPC server
+[rospy.registration][INFO] 2025-05-07 13:05:35,409: Registering with master node http://jetbot:11311
+[rospy.init][INFO] 2025-05-07 13:05:35,501: registered with master
+[rospy.rosout][INFO] 2025-05-07 13:05:35,503: initializing /rosout core topic
+[rospy.rosout][INFO] 2025-05-07 13:05:35,552: connected to core topic /rosout
+[rospy.simtime][INFO] 2025-05-07 13:05:35,570: /use_sim_time is not set, will not subscribe to simulated time [/clock] topic
+[rosout][INFO] 2025-05-07 13:05:35,613: Initializing camera processor node...
+[rospy.internal][INFO] 2025-05-07 13:05:35,738: topic[/camera/image_raw] adding connection to [http://192.168.8.179:41431/], count 0
+[rosout][INFO] 2025-05-07 13:05:35,829: Processor node initialized.
+[rosout][INFO] 2025-05-07 13:05:35,871: Processor node synthesis.
+[rosout][ERROR] 2025-05-07 13:05:35,928: bad callback: <bound method CameraProcessorNode.image_cb of <__main__.CameraProcessorNode instance at 0x7fddd5152960>>
+Traceback (most recent call last):
+  File "/opt/ros/melodic/lib/python2.7/dist-packages/rospy/topics.py", line 750, in _invoke_callback
+    cb(msg)
+  File "./src/jetson_camera/src/camera_processor_node.py", line 88, in image_cb
+    rospy.loginfo("PUBLISH {payload}".format(payload=msg))
+NameError: global name 'msg' is not defined
+
+[rosout][INFO] 2025-05-07 13:05:35,955: Processor node synthesis.
+[rosout][ERROR] 2025-05-07 13:05:35,996: bad callback: <bound method CameraProcessorNode.image_cb of <__main__.CameraProcessorNode instance at 0x7fddd5152960>>
+Traceback (most recent call last):
+  File "/opt/ros/melodic/lib/python2.7/dist-packages/rospy/topics.py", line 750, in _invoke_callback
+    cb(msg)
+  File "./src/jetson_camera/src/camera_processor_node.py", line 88, in image_cb
+    rospy.loginfo("PUBLISH {payload}".format(payload=msg))
+NameError: global name 'msg' is not defined
+
+[rosout][INFO] 2025-05-07 13:05:36,023: Processor node synthesis.
+[rosout][ERROR] 2025-05-07 13:05:36,065: bad callback: <bound method CameraProcessorNode.image_cb of <__main__.CameraProcessorNode instance at 0x7fddd5152960>>
+Traceback (most recent call last):
+  File "/opt/ros/melodic/lib/python2.7/dist-packages/rospy/topics.py", line 750, in _invoke_callback
+    cb(msg)
+  File "./src/jetson_camera/src/camera_processor_node.py", line 88, in image_cb
+    rospy.loginfo("PUBLISH {payload}".format(payload=msg))
+NameError: global name 'msg' is not defined
+
+[rosout][INFO] 2025-05-07 13:05:36,086: Processor node synthesis.
+[rosout][ERROR] 2025-05-07 13:05:36,183: bad callback: <bound method CameraProcessorNode.image_cb of <__main__.CameraProcessorNode instance at 0x7fddd5152960>>
+Traceback (most recent call last):
+  File "/opt/ros/melodic/lib/python2.7/dist-packages/rospy/topics.py", line 750, in _invoke_callback
+    cb(msg)
+  File "./src/jetson_camera/src/camera_processor_node.py", line 88, in image_cb
+    rospy.loginfo("PUBLISH {payload}".format(payload=msg))
+NameError: global name 'msg' is not defined
+
+[rosout][INFO] 2025-05-07 13:05:36,218: Processor node synthesis.
+[rosout][ERROR] 2025-05-07 13:05:36,270: bad callback: <bound method CameraProcessorNode.image_cb of <__main__.CameraProcessorNode instance at 0x7fddd5152960>>
+Traceback (most recent call last):
+  File "/opt/ros/melodic/lib/python2.7/dist-packages/rospy/topics.py", line 750, in _invoke_callback
+    cb(msg)
+  File "./src/jetson_camera/src/camera_processor_node.py", line 88, in image_cb
+    rospy.loginfo("PUBLISH {payload}".format(payload=msg))
+NameError: global name 'msg' is not defined
+
+[rosout][INFO] 2025-05-07 13:05:36,296: Processor node synthesis.
+[rosout][ERROR] 2025-05-07 13:05:36,348: bad callback: <bound method CameraProcessorNode.image_cb of <__main__.CameraProcessorNode instance at 0x7fddd5152960>>
+Traceback (most recent call last):
+  File "/opt/ros/melodic/lib/python2.7/dist-packages/rospy/topics.py", line 750, in _invoke_callback
+    cb(msg)
+  File "./src/jetson_camera/src/camera_processor_node.py", line 88, in image_cb
+    rospy.loginfo("PUBLISH {payload}".format(payload=msg))
+NameError: global name 'msg' is not defined
+
+[rosout][INFO] 2025-05-07 13:05:36,388: Processor node synthesis.
+[rosout][ERROR] 2025-05-07 13:05:36,427: bad callback: <bound method CameraProcessorNode.image_cb of <__main__.CameraProcessorNode instance at 0x7fddd5152960>>
+Traceback (most recent call last):
+  File "/opt/ros/melodic/lib/python2.7/dist-packages/rospy/topics.py", line 750, in _invoke_callback
+    cb(msg)
+  File "./src/jetson_camera/src/camera_processor_node.py", line 88, in image_cb
+    rospy.loginfo("PUBLISH {payload}".format(payload=msg))
+NameError: global name 'msg' is not defined
+
+[rosout][INFO] 2025-05-07 13:05:36,449: Processor node synthesis.
+[rosout][ERROR] 2025-05-07 13:05:36,521: bad callback: <bound method CameraProcessorNode.image_cb of <__main__.CameraProcessorNode instance at 0x7fddd5152960>>
+Traceback (most recent call last):
+  File "/opt/ros/melodic/lib/python2.7/dist-packages/rospy/topics.py", line 750, in _invoke_callback
+    cb(msg)
+  File "./src/jetson_camera/src/camera_processor_node.py", line 88, in image_cb
+    rospy.loginfo("PUBLISH {payload}".format(payload=msg))
+NameError: global name 'msg' is not defined
+
+[rosout][INFO] 2025-05-07 13:05:36,551: Processor node synthesis.
+[rosout][ERROR] 2025-05-07 13:05:36,591: bad callback: <bound method CameraProcessorNode.image_cb of <__main__.CameraProcessorNode instance at 0x7fddd5152960>>
+Traceback (most recent call last):
+  File "/opt/ros/melodic/lib/python2.7/dist-packages/rospy/topics.py", line 750, in _invoke_callback
+    cb(msg)
+  File "./src/jetson_camera/src/camera_processor_node.py", line 88, in image_cb
+    rospy.loginfo("PUBLISH {payload}".format(payload=msg))
+NameError: global name 'msg' is not defined
+
+[rosout][INFO] 2025-05-07 13:05:36,620: Processor node synthesis.
+[rosout][ERROR] 2025-05-07 13:05:36,666: bad callback: <bound method CameraProcessorNode.image_cb of <__main__.CameraProcessorNode instance at 0x7fddd5152960>>
+Traceback (most recent call last):
+  File "/opt/ros/melodic/lib/python2.7/dist-packages/rospy/topics.py", line 750, in _invoke_callback
+    cb(msg)
+  File "./src/jetson_camera/src/camera_processor_node.py", line 88, in image_cb
+    rospy.loginfo("PUBLISH {payload}".format(payload=msg))
+NameError: global name 'msg' is not defined
+
+[rosout][INFO] 2025-05-07 13:05:36,688: Processor node synthesis.
+[rosout][ERROR] 2025-05-07 13:05:36,731: bad callback: <bound method CameraProcessorNode.image_cb of <__main__.CameraProcessorNode instance at 0x7fddd5152960>>
+Traceback (most recent call last):
+  File "/opt/ros/melodic/lib/python2.7/dist-packages/rospy/topics.py", line 750, in _invoke_callback
+    cb(msg)
+  File "./src/jetson_camera/src/camera_processor_node.py", line 88, in image_cb
+    rospy.loginfo("PUBLISH {payload}".format(payload=msg))
+NameError: global name 'msg' is not defined
+
+[rosout][INFO] 2025-05-07 13:05:36,784: Processor node synthesis.
+[rosout][ERROR] 2025-05-07 13:05:36,825: bad callback: <bound method CameraProcessorNode.image_cb of <__main__.CameraProcessorNode instance at 0x7fddd5152960>>
+Traceback (most recent call last):
+  File "/opt/ros/melodic/lib/python2.7/dist-packages/rospy/topics.py", line 750, in _invoke_callback
+    cb(msg)
+  File "./src/jetson_camera/src/camera_processor_node.py", line 88, in image_cb
+    rospy.loginfo("PUBLISH {payload}".format(payload=msg))
+NameError: global name 'msg' is not defined
+
+[rosout][INFO] 2025-05-07 13:05:36,851: Processor node synthesis.
+[rosout][ERROR] 2025-05-07 13:05:36,892: bad callback: <bound method CameraProcessorNode.image_cb of <__main__.CameraProcessorNode instance at 0x7fddd5152960>>
+Traceback (most recent call last):
+  File "/opt/ros/melodic/lib/python2.7/dist-packages/rospy/topics.py", line 750, in _invoke_callback
+    cb(msg)
+  File "./src/jetson_camera/src/camera_processor_node.py", line 88, in image_cb
+    rospy.loginfo("PUBLISH {payload}".format(payload=msg))
+NameError: global name 'msg' is not defined
+
+[rosout][INFO] 2025-05-07 13:05:36,915: Processor node synthesis.
+[rosout][ERROR] 2025-05-07 13:05:36,962: bad callback: <bound method CameraProcessorNode.image_cb of <__main__.CameraProcessorNode instance at 0x7fddd5152960>>
+Traceback (most recent call last):
+  File "/opt/ros/melodic/lib/python2.7/dist-packages/rospy/topics.py", line 750, in _invoke_callback
+    cb(msg)
+  File "./src/jetson_camera/src/camera_processor_node.py", line 88, in image_cb
+    rospy.loginfo("PUBLISH {payload}".format(payload=msg))
+NameError: global name 'msg' is not defined
+
+[rosout][INFO] 2025-05-07 13:05:36,988: Processor node synthesis.
+[rosout][ERROR] 2025-05-07 13:05:37,027: bad callback: <bound method CameraProcessorNode.image_cb of <__main__.CameraProcessorNode instance at 0x7fddd5152960>>
+Traceback (most recent call last):
+  File "/opt/ros/melodic/lib/python2.7/dist-packages/rospy/topics.py", line 750, in _invoke_callback
+    cb(msg)
+  File "./src/jetson_camera/src/camera_processor_node.py", line 88, in image_cb
+    rospy.loginfo("PUBLISH {payload}".format(payload=msg))
+NameError: global name 'msg' is not defined
+
+[rosout][INFO] 2025-05-07 13:05:37,052: Processor node synthesis.
+[rosout][ERROR] 2025-05-07 13:05:37,096: bad callback: <bound method CameraProcessorNode.image_cb of <__main__.CameraProcessorNode instance at 0x7fddd5152960>>
+Traceback (most recent call last):
+  File "/opt/ros/melodic/lib/python2.7/dist-packages/rospy/topics.py", line 750, in _invoke_callback
+    cb(msg)
+  File "./src/jetson_camera/src/camera_processor_node.py", line 88, in image_cb
+    rospy.loginfo("PUBLISH {payload}".format(payload=msg))
+NameError: global name 'msg' is not defined
+
+[rosout][INFO] 2025-05-07 13:05:37,120: Processor node synthesis.
+[rosout][ERROR] 2025-05-07 13:05:37,167: bad callback: <bound method CameraProcessorNode.image_cb of <__main__.CameraProcessorNode instance at 0x7fddd5152960>>
+Traceback (most recent call last):
+  File "/opt/ros/melodic/lib/python2.7/dist-packages/rospy/topics.py", line 750, in _invoke_callback
+    cb(msg)
+  File "./src/jetson_camera/src/camera_processor_node.py", line 88, in image_cb
+    rospy.loginfo("PUBLISH {payload}".format(payload=msg))
+NameError: global name 'msg' is not defined
+
+[rosout][INFO] 2025-05-07 13:05:37,185: Processor node synthesis.
+[rosout][ERROR] 2025-05-07 13:05:37,231: bad callback: <bound method CameraProcessorNode.image_cb of <__main__.CameraProcessorNode instance at 0x7fddd5152960>>
+Traceback (most recent call last):
+  File "/opt/ros/melodic/lib/python2.7/dist-packages/rospy/topics.py", line 750, in _invoke_callback
+    cb(msg)
+  File "./src/jetson_camera/src/camera_processor_node.py", line 88, in image_cb
+    rospy.loginfo("PUBLISH {payload}".format(payload=msg))
+NameError: global name 'msg' is not defined
+
+[rosout][INFO] 2025-05-07 13:05:37,284: Processor node synthesis.
+[rosout][ERROR] 2025-05-07 13:05:37,328: bad callback: <bound method CameraProcessorNode.image_cb of <__main__.CameraProcessorNode instance at 0x7fddd5152960>>
+Traceback (most recent call last):
+  File "/opt/ros/melodic/lib/python2.7/dist-packages/rospy/topics.py", line 750, in _invoke_callback
+    cb(msg)
+  File "./src/jetson_camera/src/camera_processor_node.py", line 88, in image_cb
+    rospy.loginfo("PUBLISH {payload}".format(payload=msg))
+NameError: global name 'msg' is not defined
+
+[rosout][INFO] 2025-05-07 13:05:37,356: Processor node synthesis.
+[rosout][ERROR] 2025-05-07 13:05:37,399: bad callback: <bound method CameraProcessorNode.image_cb of <__main__.CameraProcessorNode instance at 0x7fddd5152960>>
+Traceback (most recent call last):
+  File "/opt/ros/melodic/lib/python2.7/dist-packages/rospy/topics.py", line 750, in _invoke_callback
+    cb(msg)
+  File "./src/jetson_camera/src/camera_processor_node.py", line 88, in image_cb
+    rospy.loginfo("PUBLISH {payload}".format(payload=msg))
+NameError: global name 'msg' is not defined
+
+[rospy.core][INFO] 2025-05-07 13:05:37,434: signal_shutdown [signal-2]
+[rosout][INFO] 2025-05-07 13:05:37,418: Processor node synthesis.
+[rospy.internal][INFO] 2025-05-07 13:05:37,487: topic[/camera/image_raw] removing connection to http://192.168.8.179:41431/
+[rospy.impl.masterslave][INFO] 2025-05-07 13:05:37,487: signal-2
+[rosout][ERROR] 2025-05-07 13:05:37,463: bad callback: <bound method CameraProcessorNode.image_cb of <__main__.CameraProcessorNode instance at 0x7fddd5152960>>
+Traceback (most recent call last):
+  File "/opt/ros/melodic/lib/python2.7/dist-packages/rospy/topics.py", line 750, in _invoke_callback
+    cb(msg)
+  File "./src/jetson_camera/src/camera_processor_node.py", line 88, in image_cb
+    rospy.loginfo("PUBLISH {payload}".format(payload=msg))
+NameError: global name 'msg' is not defined
+
+[rospy.core][INFO] 2025-05-07 13:05:38,055: signal_shutdown [atexit]

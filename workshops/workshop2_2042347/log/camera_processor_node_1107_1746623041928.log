@@ -1,0 +1,65 @@
+[rospy.client][INFO] 2025-05-07 13:04:01,973: init_node, name[/camera_processor_node_1107_1746623041928], pid[1107]
+[xmlrpc][INFO] 2025-05-07 13:04:01,973: XML-RPC server binding to 0.0.0.0:0
+[xmlrpc][INFO] 2025-05-07 13:04:01,974: Started XML-RPC server [http://192.168.8.249:43415/]
+[rospy.init][INFO] 2025-05-07 13:04:01,975: ROS Slave URI: [http://192.168.8.249:43415/]
+[rospy.impl.masterslave][INFO] 2025-05-07 13:04:01,975: _ready: http://192.168.8.249:43415/
+[xmlrpc][INFO] 2025-05-07 13:04:01,984: xml rpc node: starting XML-RPC server
+[rospy.registration][INFO] 2025-05-07 13:04:01,984: Registering with master node http://jetbot:11311
+[rospy.init][INFO] 2025-05-07 13:04:02,076: registered with master
+[rospy.rosout][INFO] 2025-05-07 13:04:02,079: initializing /rosout core topic
+[rospy.rosout][INFO] 2025-05-07 13:04:02,130: connected to core topic /rosout
+[rospy.simtime][INFO] 2025-05-07 13:04:02,168: /use_sim_time is not set, will not subscribe to simulated time [/clock] topic
+[rosout][INFO] 2025-05-07 13:04:02,232: Initializing camera processor node...
+[rospy.internal][INFO] 2025-05-07 13:04:02,394: topic[/camera/image_raw] adding connection to [http://192.168.8.179:41431/], count 0
+[rosout][INFO] 2025-05-07 13:04:02,542: Processor node initialized.
+[rosout][INFO] 2025-05-07 13:04:02,664: Processor node synthesis.
+[rosout][INFO] 2025-05-07 13:04:02,765: Processor node synthesis.
+[rosout][INFO] 2025-05-07 13:04:02,826: Processor node synthesis.
+[rosout][INFO] 2025-05-07 13:04:02,922: Processor node synthesis.
+[rosout][INFO] 2025-05-07 13:04:02,997: Processor node synthesis.
+[rosout][INFO] 2025-05-07 13:04:03,051: Processor node synthesis.
+[rosout][INFO] 2025-05-07 13:04:03,144: Processor node synthesis.
+[rosout][INFO] 2025-05-07 13:04:03,209: Processor node synthesis.
+[rosout][INFO] 2025-05-07 13:04:03,291: Processor node synthesis.
+[rosout][INFO] 2025-05-07 13:04:03,386: Processor node synthesis.
+[rosout][INFO] 2025-05-07 13:04:03,485: Processor node synthesis.
+[rosout][INFO] 2025-05-07 13:04:03,587: Processor node synthesis.
+[rosout][INFO] 2025-05-07 13:04:03,668: Processor node synthesis.
+[rosout][INFO] 2025-05-07 13:04:03,727: Processor node synthesis.
+[rosout][INFO] 2025-05-07 13:04:03,822: Processor node synthesis.
+[rosout][INFO] 2025-05-07 13:04:03,924: Processor node synthesis.
+[rosout][INFO] 2025-05-07 13:04:04,029: Processor node synthesis.
+[rosout][INFO] 2025-05-07 13:04:04,116: Processor node synthesis.
+[rosout][INFO] 2025-05-07 13:04:04,214: Processor node synthesis.
+[rosout][INFO] 2025-05-07 13:04:04,284: Processor node synthesis.
+[rosout][INFO] 2025-05-07 13:04:04,357: Processor node synthesis.
+[rosout][INFO] 2025-05-07 13:04:04,416: Processor node synthesis.
+[rosout][INFO] 2025-05-07 13:04:04,471: Processor node synthesis.
+[rosout][INFO] 2025-05-07 13:04:04,562: Processor node synthesis.
+[rosout][INFO] 2025-05-07 13:04:04,652: Processor node synthesis.
+[rosout][INFO] 2025-05-07 13:04:04,718: Processor node synthesis.
+[rosout][INFO] 2025-05-07 13:04:04,777: Processor node synthesis.
+[rosout][INFO] 2025-05-07 13:04:04,829: Processor node synthesis.
+[rosout][INFO] 2025-05-07 13:04:04,909: Processor node synthesis.
+[rosout][INFO] 2025-05-07 13:04:04,990: Processor node synthesis.
+[rosout][INFO] 2025-05-07 13:04:05,048: Processor node synthesis.
+[rosout][INFO] 2025-05-07 13:04:05,157: Processor node synthesis.
+[rosout][INFO] 2025-05-07 13:04:05,246: Processor node synthesis.
+[rosout][INFO] 2025-05-07 13:04:05,316: Processor node synthesis.
+[rosout][INFO] 2025-05-07 13:04:05,407: Processor node synthesis.
+[rosout][INFO] 2025-05-07 13:04:05,466: Processor node synthesis.
+[rosout][INFO] 2025-05-07 13:04:05,522: Processor node synthesis.
+[rosout][INFO] 2025-05-07 13:04:05,584: Processor node synthesis.
+[rosout][INFO] 2025-05-07 13:04:05,681: Processor node synthesis.
+[rosout][INFO] 2025-05-07 13:04:05,750: Processor node synthesis.
+[rosout][INFO] 2025-05-07 13:04:05,855: Processor node synthesis.
+[rosout][INFO] 2025-05-07 13:04:05,908: Processor node synthesis.
+[rosout][INFO] 2025-05-07 13:04:06,009: Processor node synthesis.
+[rosout][INFO] 2025-05-07 13:04:06,095: Processor node synthesis.
+[rospy.core][INFO] 2025-05-07 13:04:06,203: signal_shutdown [signal-2]
+[rosout][INFO] 2025-05-07 13:04:06,175: Processor node synthesis.
+[rospy.internal][INFO] 2025-05-07 13:04:06,315: topic[/camera/image_raw] removing connection to http://192.168.8.179:41431/
+[rospy.impl.masterslave][INFO] 2025-05-07 13:04:06,316: signal-2
+[rosout][INFO] 2025-05-07 13:04:06,248: Processor node synthesis.
+[rospy.core][INFO] 2025-05-07 13:04:06,854: signal_shutdown [signal-2]
+[rospy.core][INFO] 2025-05-07 13:04:06,858: signal_shutdown [atexit]

@@ -1,0 +1,76 @@
+[rospy.client][INFO] 2025-05-07 12:44:33,231: init_node, name[/camera_subscriber_node_67_1746621873141], pid[67]
+[xmlrpc][INFO] 2025-05-07 12:44:33,232: XML-RPC server binding to 0.0.0.0:0
+[xmlrpc][INFO] 2025-05-07 12:44:33,233: Started XML-RPC server [http://192.168.8.249:46121/]
+[rospy.init][INFO] 2025-05-07 12:44:33,233: ROS Slave URI: [http://192.168.8.249:46121/]
+[rospy.impl.masterslave][INFO] 2025-05-07 12:44:33,234: _ready: http://192.168.8.249:46121/
+[rospy.registration][INFO] 2025-05-07 12:44:33,236: Registering with master node http://jetbot:11311
+[xmlrpc][INFO] 2025-05-07 12:44:33,236: xml rpc node: starting XML-RPC server
+[rospy.init][INFO] 2025-05-07 12:44:33,335: registered with master
+[rospy.rosout][INFO] 2025-05-07 12:44:33,335: initializing /rosout core topic
+[rospy.registration][ERROR] 2025-05-07 12:44:35,275: [Errno -2] Name or service not known
+Unable to register with master node [http://jetbot:11311]: master may not be running yet. Will keep trying.
+[rospy.core][INFO] 2025-05-07 12:44:35,405: signal_shutdown [signal-2]
+[rospy.registration][WARNING] 2025-05-07 12:44:37,269: unclean shutdown
+Traceback (most recent call last):
+  File "/opt/ros/melodic/lib/python2.7/dist-packages/rospy/impl/registration.py", line 375, in cleanup
+    multi()
+  File "/usr/lib/python2.7/xmlrpclib.py", line 1006, in __call__
+    return MultiCallIterator(self.__server.system.multicall(marshalled_list))
+  File "/usr/lib/python2.7/xmlrpclib.py", line 1243, in __call__
+    return self.__send(self.__name, args)
+  File "/opt/ros/melodic/lib/python2.7/dist-packages/rospy/core.py", line 670, in _ServerProxy__request
+    self, methodname, params)
+  File "/usr/lib/python2.7/xmlrpclib.py", line 1602, in __request
+    verbose=self.__verbose
+  File "/usr/lib/python2.7/xmlrpclib.py", line 1283, in request
+    return self.single_request(host, handler, request_body, verbose)
+  File "/usr/lib/python2.7/xmlrpclib.py", line 1311, in single_request
+    self.send_content(h, request_body)
+  File "/usr/lib/python2.7/xmlrpclib.py", line 1459, in send_content
+    connection.endheaders(request_body)
+  File "/usr/lib/python2.7/httplib.py", line 1095, in endheaders
+    self._send_output(message_body)
+  File "/usr/lib/python2.7/httplib.py", line 898, in _send_output
+    self.send(msg)
+  File "/usr/lib/python2.7/httplib.py", line 860, in send
+    self.connect()
+  File "/usr/lib/python2.7/httplib.py", line 837, in connect
+    self.timeout, self.source_address)
+  File "/usr/lib/python2.7/socket.py", line 557, in create_connection
+    for res in getaddrinfo(host, port, 0, SOCK_STREAM):
+gaierror: [Errno -2] Name or service not known
+
+[rospy.impl.masterslave][INFO] 2025-05-07 12:44:37,270: signal-2
+[rospy.core][INFO] 2025-05-07 12:44:42,371: signal_shutdown [signal-2]
+[rospy.rosout][INFO] 2025-05-07 12:44:42,372: connected to core topic /rosout
+[rospy.simtime][ERROR] 2025-05-07 12:44:44,352: Unable to initialize /clock: [Errno -2] Name or service not known
+Traceback (most recent call last):
+  File "/opt/ros/melodic/lib/python2.7/dist-packages/rospy/impl/simtime.py", line 79, in init_simtime
+    if not _is_use_simtime():
+  File "/opt/ros/melodic/lib/python2.7/dist-packages/rospy/impl/simtime.py", line 60, in _is_use_simtime
+    code, msg, val = m.getParam(rospy.names.get_caller_id(), _USE_SIMTIME)
+  File "/usr/lib/python2.7/xmlrpclib.py", line 1243, in __call__
+    return self.__send(self.__name, args)
+  File "/opt/ros/melodic/lib/python2.7/dist-packages/rospy/core.py", line 670, in _ServerProxy__request
+    self, methodname, params)
+  File "/usr/lib/python2.7/xmlrpclib.py", line 1602, in __request
+    verbose=self.__verbose
+  File "/usr/lib/python2.7/xmlrpclib.py", line 1283, in request
+    return self.single_request(host, handler, request_body, verbose)
+  File "/usr/lib/python2.7/xmlrpclib.py", line 1311, in single_request
+    self.send_content(h, request_body)
+  File "/usr/lib/python2.7/xmlrpclib.py", line 1459, in send_content
+    connection.endheaders(request_body)
+  File "/usr/lib/python2.7/httplib.py", line 1095, in endheaders
+    self._send_output(message_body)
+  File "/usr/lib/python2.7/httplib.py", line 898, in _send_output
+    self.send(msg)
+  File "/usr/lib/python2.7/httplib.py", line 860, in send
+    self.connect()
+  File "/usr/lib/python2.7/httplib.py", line 837, in connect
+    self.timeout, self.source_address)
+  File "/usr/lib/python2.7/socket.py", line 557, in create_connection
+    for res in getaddrinfo(host, port, 0, SOCK_STREAM):
+gaierror: [Errno -2] Name or service not known
+
+[rospy.core][INFO] 2025-05-07 12:44:44,355: signal_shutdown [atexit]

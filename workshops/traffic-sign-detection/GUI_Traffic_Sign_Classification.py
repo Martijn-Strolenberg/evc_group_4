@@ -4,13 +4,14 @@
 
 
 
-import tkinter as tk
-from tkinter import filedialog
-from tkinter import Label, Button
-from PIL import ImageTk, Image
+import Tkinter as tk
+from Tkinter import *
+# from Tkinter import filedialog
+# from Tkinter import Label, Button
+# from PIL import ImageTk, Image
+from PIL import *
 import numpy as np
 import cv2
-
 
 from tensorflow.keras.models import load_model
 
@@ -154,7 +155,7 @@ def upload_image():
         pass
 
 if __name__ == "__main__":
-    model, classes = load_traffic_classifier()
+    # model, classes = load_traffic_classifier()
     top, label, sign_image = init_gui()
     top.mainloop()
     

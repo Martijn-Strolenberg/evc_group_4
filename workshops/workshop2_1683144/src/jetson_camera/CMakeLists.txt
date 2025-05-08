@@ -6,10 +6,25 @@ find_package(catkin REQUIRED COMPONENTS
   cv_bridge
   rospy
   sensor_msgs
+  std_msgs
+  message_generation
+)
+add_message_files(
+  FILES
+  twovids.msg
+  test.msg
+  speed.msg
+)
+# Declare a catkin package
+generate_messages(
+  DEPENDENCIES
+  sensor_msgs
+  std_msgs
 )
 
-# Declare a catkin package
-catkin_package()
+catkin_package(
+  CATKIN_DEPENDS message_runtime sensor_msgs std_msgs
+)
 
 # Include directories
 include_directories(
@@ -22,7 +37,8 @@ install(DIRECTORY launch/
 
 # Install Python scripts
 catkin_install_python(PROGRAMS
+  src/camera_processor_node.py
   src/camera_publisher_node.py
-  src/camera_subscriber_node.py
+  src/camera_recorder_subscriber_node.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )

@@ -1,0 +1,12 @@
+[rospy.client][INFO] 2025-05-07 13:07:29,702: init_node, name[/camera_processor_node_1384_1746623249657], pid[1384]
+[xmlrpc][INFO] 2025-05-07 13:07:29,702: XML-RPC server binding to 0.0.0.0:0
+[xmlrpc][INFO] 2025-05-07 13:07:29,703: Started XML-RPC server [http://192.168.8.249:41751/]
+[rospy.init][INFO] 2025-05-07 13:07:29,704: ROS Slave URI: [http://192.168.8.249:41751/]
+[rospy.impl.masterslave][INFO] 2025-05-07 13:07:29,704: _ready: http://192.168.8.249:41751/
+[xmlrpc][INFO] 2025-05-07 13:07:29,706: xml rpc node: starting XML-RPC server
+[rospy.registration][INFO] 2025-05-07 13:07:29,706: Registering with master node http://jetbot:11311
+[rospy.init][INFO] 2025-05-07 13:07:29,805: registered with master
+[rospy.rosout][INFO] 2025-05-07 13:07:29,806: initializing /rosout core topic
+[rospy.rosout][INFO] 2025-05-07 13:07:29,844: connected to core topic /rosout
+[rospy.simtime][INFO] 2025-05-07 13:07:29,861: /use_sim_time is not set, will not subscribe to simulated time [/clock] topic
+[rospy.core][INFO] 2025-05-07 13:07:55,600: signal_shutdown [signal-2]
