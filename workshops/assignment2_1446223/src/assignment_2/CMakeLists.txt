@@ -22,7 +22,7 @@ install(DIRECTORY launch/
 
 # Install Python scripts
 catkin_install_python(PROGRAMS
-  src/camera_publisher_node.py
+  src/movie_publisher_node.py
   src/camera_subscriber_node.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )

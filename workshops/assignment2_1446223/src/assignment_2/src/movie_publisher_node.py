@@ -6,7 +6,7 @@ from sensor_msgs.msg import CompressedImage
 
 class MoviePublisherNode:
     def __init__(self, node_name):
-        rospy.init_node(node_name, anonymous=True)
+        rospy.init_node(node_name, anonymous=True, xmlrpc_port=45100,tcpros_port=45101)
         rospy.loginfo("Initializing movie publisher node...")
 
         # Retrieve parameters
