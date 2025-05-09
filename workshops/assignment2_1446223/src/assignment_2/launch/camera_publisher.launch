@@ -1,5 +1,0 @@
-<launch>
-  <node pkg="assignment_2" type="camera_publisher_node.py" name="camera_publisher_node" output="screen">
-    <rosparam command="load" file="$(find assignment_2)/config/parameters.yaml" />
-  </node>
-</launch>

@@ -17,7 +17,7 @@ class CameraSubscriberNode:
         
         # Construct subscriber
         self.sub_image = rospy.Subscriber(
-            "/camera/image_raw",
+            "/camera/image_proc",
             CompressedImage,
             self.image_cb,
             buff_size=2**24,

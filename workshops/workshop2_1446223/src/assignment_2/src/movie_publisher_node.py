@@ -24,7 +24,7 @@ class MoviePublisherNode:
 
         # Publisher for the image topic
         self.image_pub = rospy.Publisher(
-            '/camera/image_raw',
+            '/camera/image_proc',
             CompressedImage,
             queue_size=1
         )
