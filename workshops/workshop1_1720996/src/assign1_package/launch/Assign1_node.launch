@@ -1,0 +1,4 @@
+<launch>
+  <node pkg="assign1_package" type="assign1_pub.py" name="Assign1_pub" output="screen">
+  </node>
+</launch>
