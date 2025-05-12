@@ -1,5 +1,6 @@
 #!/usr/bin/env python2
 
+import time
 import hat
 from hat import *
 import motorDriver
@@ -37,21 +38,16 @@ class MotorSubscriberNode:
         if not self.initialized:
             return
         in_vel = data.velocity
-        in_pos = data.position
+        in_pos = data.distance
         in_ang = data.angle
-
-        rospy.loginfo("Received motor command: v=%.2f, p=%.2f, a=%.2f", in_vel, in_pos, in_ang)
 
         motor = DaguWheelsDriver() # initialize motor drivers
         motor.set_wheels_speed(left=in_vel, right=in_vel) #
         # We need stop at the correct point in time based on encoder information
 
         time.sleep(5)
-        motor.close()      
-
-
-    def cleanup(self):
-        cv2.destroyAllWindows()
+        motor.close() 
+        
 
 if __name__ == "__main__":
     # Initialize the node
@@ -61,5 +57,4 @@ if __name__ == "__main__":
         rospy.spin()
     except KeyboardInterrupt:
         rospy.loginfo("Shutting down image viewer node.")
-    finally:
-        camera_node.cleanup()
+

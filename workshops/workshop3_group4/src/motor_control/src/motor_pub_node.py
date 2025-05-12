@@ -27,27 +27,29 @@ class MotorPublisherNode:
 
     def run(self):
         rate = rospy.Rate(10)  # 10 Hz
+        try:
+            while not rospy.is_shutdown():
+                try:
+                    velocity = float(raw_input("Enter velocity (m/s): "))
+                    position = float(raw_input("Enter position (m): "))
+                    angle = float(raw_input("Enter angle (degrees): "))
 
-        while not rospy.is_shutdown():
-            try:
-                velocity = float(raw_input("Enter velocity (m/s): "))
-                position = float(raw_input("Enter position (m): "))
-                angle = float(raw_input("Enter angle (degrees): "))
+                    msg = motor_cmd()
+                    msg.velocity = velocity
+                    msg.distance = position
+                    msg.angle = angle
 
-                msg = motor_cmd()
-                msg.velocity = velocity
-                msg.distance = position
-                msg.angle = angle
+                    rospy.loginfo("Publishing motor command: v=%.2f, p=%.2f, a=%.2f", velocity, position, angle)
+                    self.pub_cmd.publish(msg)
 
-                rospy.loginfo("Publishing motor command: v=%.2f, p=%.2f, a=%.2f", velocity, position, angle)
-                self.pub_cmd.publish(msg)
+                except ValueError:
+                    rospy.logwarn("Invalid input. Please enter numeric values.")
+                except rospy.ROSInterruptException:
+                    break
 
-            except ValueError:
-                rospy.logwarn("Invalid input. Please enter numeric values.")
-            except rospy.ROSInterruptException:
-                break
-
-            rate.sleep()
+                rate.sleep()
+        except (rospy.ROSInterruptException, KeyboardInterrupt):
+            rospy.loginfo("Shutting down motor cmd publisher.")
     
         
     def publish_msg(self): # not used anymore
