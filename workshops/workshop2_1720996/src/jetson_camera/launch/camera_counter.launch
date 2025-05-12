@@ -1,0 +1,3 @@
+<launch>
+  <node pkg="jetson_camera" type="camera_person_counter_node.py" name="person_counter" output="screen"/>
+</launch>
