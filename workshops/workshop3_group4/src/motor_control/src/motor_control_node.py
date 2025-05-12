@@ -36,16 +36,18 @@ class MotorSubscriberNode:
     def motor_cb(self, data):
         if not self.initialized:
             return
-        in_vel = data.velocity.data
-        in_pos = data.position.data
-        in_ang = data.angle.data
+        in_vel = data.velocity
+        in_pos = data.position
+        in_ang = data.angle
+
+        rospy.loginfo("Received motor command: v=%.2f, p=%.2f, a=%.2f", in_vel, in_pos, in_ang)
 
         motor = DaguWheelsDriver() # initialize motor drivers
         motor.set_wheels_speed(left=in_vel, right=in_vel) #
         # We need stop at the correct point in time based on encoder information
-        
 
-        
+        time.sleep(5)
+        motor.close()      
 
 
     def cleanup(self):
