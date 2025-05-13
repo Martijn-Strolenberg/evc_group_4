@@ -20,6 +20,15 @@ class OdometryPublisherNode:
             queue_size=10
         )
         
+        # Construct subscriber
+        self.sub_cmd = rospy.Subscriber(
+            "/motor_control",
+            motor_cmd,
+            self.read_topic,
+            buff_size=2**24,
+            queue_size=10
+        )  
+
         GPIO_MOTOR_ENCODER_1=18
         GPIO_MOTOR_ENCODER_2=19
         self.driver_L = WheelEncoderDriver(GPIO_MOTOR_ENCODER_1)
@@ -41,7 +50,11 @@ class OdometryPublisherNode:
         rospy.loginfo("odem node initialized!")
         self.timer = rospy.Timer(rospy.Duration(0.10), self.read_encoder) # publishing 10 Hz
 
-
+    def read_topic(self,data):
+        self.velocity = data.velocity
+        self.distance = data.distance
+        self.theta = data.angle
+        
     def read_encoder(self,event):
         msg = encoder() 
 
@@ -49,10 +62,19 @@ class OdometryPublisherNode:
         self.ticks_left = self.driver_L._ticks
         self.ticks_right = self.driver_R._ticks
         d_A, d_theta = self.odometry(self.ticks_left,self.ticks_right)
-        rospy.loginfo("d_A: {delta_A},d_theta: {delta_theta} ".format(delta_A = d_A, delta_theta = d_theta))
+        #rospy.loginfo("d_A: {delta_A},d_theta: {delta_theta} ".format(delta_A = d_A, delta_theta = d_theta))
         # Send encoder message
+        self.distance -= d_A
+        self.angle -= d_theta
+
         msg.enc_L = self.ticks_left
         msg.enc_R = self.ticks_right
+        msg.d_A = d_A
+        msg.d_theta = d_theta
+        msg.abs_distance = self.distance
+        msg.abs_angle = self.angle
+        if self.distance <= 0.0 and self.angle <= 0.0:
+            rospy.loginfo("Destination reached")
         self.pub_odom.publish(msg)
 
         
@@ -62,10 +84,9 @@ class OdometryPublisherNode:
 
         # update the prev ticks
         self.prev_ticks_L = self.ticks_left
-        self.prev_ticks_R = self.ticks_right
+        self.prev_ticks_R = self.ticks_right        
+
         
-
-
         
     
     def odometry(self, L_ticks, R_ticks):
