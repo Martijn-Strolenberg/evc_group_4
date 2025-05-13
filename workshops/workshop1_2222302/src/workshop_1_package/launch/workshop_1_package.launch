@@ -1,0 +1,6 @@
+<launch>
+  <node pkg="workshop_1_package" type="subscriber.py" name="subscriber_node" output="screen">
+  </node>
+  <node pkg="workshop_1_package" type="publisher.py" name="Publisher_node" output="screen">
+  </node>
+</launch>
