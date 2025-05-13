@@ -52,12 +52,14 @@ class MotorPublisherNode:
                         break
                     angle = float(a_input)
 
+                    self.new_cmd = self.new_cmd + 1
+                    
                     msg = motor_cmd()
                     msg.velocity = velocity
                     msg.distance = position
                     msg.angle = angle
-                    msg.new_mesg = self.new_cmd + 1
-                    self.new_cmd = self.new_cmd
+                    msg.new_mesg = self.new_cmd
+                    
 
                     rospy.loginfo("Publishing motor command: v=%.2f, p=%.2f, a=%.2f", velocity, position, angle)
                     self.pub_cmd.publish(msg)
