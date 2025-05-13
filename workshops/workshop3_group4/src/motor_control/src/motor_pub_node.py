@@ -53,11 +53,11 @@ class MotorPublisherNode:
                     angle = float(a_input)
 
                     self.new_cmd = self.new_cmd + 1
-                    
+
                     msg = motor_cmd()
                     msg.velocity = velocity
                     msg.distance = position
-                    msg.angle = angle
+                    msg.angle = np.deg2rad(angle)
                     msg.new_mesg = self.new_cmd
                     
 
