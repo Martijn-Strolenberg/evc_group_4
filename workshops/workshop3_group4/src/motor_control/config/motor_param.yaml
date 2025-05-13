@@ -1,6 +1,7 @@
 ## Motor Params
 gain: 1
-trim: -0.001
+# negative: more to left? postive: more to right?
+trim: -0.002
 
 ## Odom Params
 wheel_rad: 0.033
