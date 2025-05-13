@@ -15,6 +15,7 @@ add_message_files(
   FILES
   twovids.msg
   motor_cmd.msg
+  encoder.msg
 )
 # Declare a catkin package
 generate_messages(
