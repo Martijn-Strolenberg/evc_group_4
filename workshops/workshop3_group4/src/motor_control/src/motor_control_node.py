@@ -112,7 +112,7 @@ class MotorSubscriberNode:
 
             # Distance affects direction (positive: forward, negative: backward)
             direction = np.sign(in_distance)
-
+            
             motor.set_wheels_speed(
                 left=(self.config["gain"] - self.config["trim"]) * direction * curr_wheel_speed_left,
                 right=(self.config["gain"] + self.config["trim"]) * direction * curr_wheel_speed_right
