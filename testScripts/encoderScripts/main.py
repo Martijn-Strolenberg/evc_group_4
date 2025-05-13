@@ -11,4 +11,4 @@ driver_2 = WheelEncoderDriver(GPIO_MOTOR_ENCODER_2)
 
 while True:
     print("Motor Encoder 1: {} \t Motor Encoder 2: {}".format(driver_1._ticks, driver_2._ticks))
-    sleep(1)
+    sleep(0.01)
