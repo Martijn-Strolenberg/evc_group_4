@@ -77,8 +77,7 @@ class OdometryPublisherNode:
         msg.d_theta = d_theta
         msg.abs_distance = self.distance
         msg.abs_angle = self.angle
-        if self.distance <= 0.0 and self.angle <= 0.0:
-            rospy.loginfo("Destination reached")
+        
         self.pub_odom.publish(msg)
 
         

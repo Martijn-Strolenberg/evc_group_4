@@ -24,7 +24,7 @@ from sensor_msgs.msg import CompressedImage
 
 from jetson_camera.msg import twovids
 
-from motor_control.msg import motor_cmd
+from motor_control.msg import motor_cmd,encoder
 
 
 
@@ -46,9 +46,9 @@ class MotorSubscriberNode:
 
         self.sub_cmd = rospy.Subscriber(
 
-            "/motor_control",
+            "/encoder",
 
-            motor_cmd,
+            encoder,
 
             self.motor_cb,
 
@@ -59,10 +59,6 @@ class MotorSubscriberNode:
         )
 
         self.gain, self.trim = self.load_param()
-
-
-
-        self.first_image_received = False
 
         self.initialized = True
 
@@ -78,32 +74,30 @@ class MotorSubscriberNode:
 
             return
 
-        in_vel = -data.velocity
-
-        in_pos = data.distance
-
-        in_ang = data.angle
+        distance = data.abs_distance 
+        angle  = data.abs_angle
 
 
-
+        if distance <= 0.0 and angle <= 0.0:
+            rospy.loginfo("Destination reached")
+            motor.close()
+        
         motor = DaguWheelsDriver() # initialize motor drivers
 
 
-        motor.set_wheels_speed(left=0, right=in_vel) #
+        #motor.set_wheels_speed(left=0, right=in_vel) #
 
 
-        motor.set_wheels_speed(left=(self.gain - self.trim)*in_vel, 
+        motor.set_wheels_speed(left=(self.gain - self.trim)*0.1, 
 
 
-                               right=(self.gain + self.trim)*in_vel) #
+                               right=(self.gain + self.trim)*0.1) #
 
         # We need stop at the correct point in time based on encoder information
 
 
 
-        time.sleep(8)
-
-        motor.close() 
+        #time.sleep(8) 
 
 
 
