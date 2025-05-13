@@ -41,5 +41,6 @@ install(DIRECTORY launch/
 catkin_install_python(PROGRAMS
   src/motor_pub_node.py
   src/motor_control_node.py
+  src/odometry_node.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )

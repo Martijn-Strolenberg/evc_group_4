@@ -1,3 +1,5 @@
+#!/usr/bin/env python2
+
 import rospy
 import numpy as np
 
@@ -15,8 +17,6 @@ class OdometryPublisherNode:
         self.pub_odom = rospy.Publisher(
             "/encoder",
             encoder,
-            self.motor_cb,
-            buff_size=2**24,
             queue_size=10
         )
         
@@ -35,9 +35,11 @@ class OdometryPublisherNode:
 
     def read_encoder(self,event):
         msg = encoder()
-        msg.enc_L.data = self.driver_L._ticks
-        msg.enc_L.data = self.driver_R._ticks
+        msg.enc_L = self.driver_L._ticks
+        msg.enc_R = self.driver_R._ticks
         self.pub_odom.publish(msg)
+
+        
     
     def odometry(self,L_ticks,R_ticks,direction_left,direction_right):
         msg = Odometry()
