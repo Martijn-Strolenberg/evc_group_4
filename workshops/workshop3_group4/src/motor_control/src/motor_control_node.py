@@ -112,8 +112,6 @@ class MotorSubscriberNode:
             
             motor.set_wheels_speed(left=(self.config["gain"] - self.config["trim"])*curr_wheel_speed_left, 
                                right=(self.config["gain"] + self.config["trim"])*curr_wheel_speed_right)
-                
-
             
         # motor.set_wheels_speed(left=(self.config["gain"] - self.config["trim"])*rotate_left, 
         #                        right=(self.config["gain"] + self.config["trim"])*rotate_right) #

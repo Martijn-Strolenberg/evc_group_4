@@ -1,9 +1,12 @@
 ## Motor Params
 gain: 1
-trim: 0.95
+trim: -0.001
 
 ## Odom Params
-wheel_rad = 0.033
-baseline = 0.163
-encoder_res = 137
+wheel_rad: 0.033
+baseline: 0.163
+encoder_res: 137
 
+## Movement params
+
+velocity: 0.2
