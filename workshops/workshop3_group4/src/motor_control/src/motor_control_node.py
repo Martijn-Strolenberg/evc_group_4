@@ -3,8 +3,7 @@ import time
 import hat
 from hat import *
 import motorDriver                       # import motor driver
-from motorDriver import DaguWheelsDriver # import motor driver functions
-from encoderDriver import *              # import encoder drivers
+from motorDriver import * # import motor driver functions
 import cv2
 import rospy
 import numpy as np
@@ -34,8 +33,8 @@ class MotorSubscriberNode:
         self.GPIO_MOTOR_ENCODER_1=18
         self.GPIO_MOTOR_ENCODER_2=19
         self.gpio_pin = 19
-        self.driver_L = WheelEncoderDriver(self.GPIO_MOTOR_ENCODER_1)
-        self.driver_R = WheelEncoderDriver(self.GPIO_MOTOR_ENCODER_2)
+        #self.driver_L = WheelEncoderDriver(self.GPIO_MOTOR_ENCODER_1)
+        #self.driver_R = WheelEncoderDriver(self.GPIO_MOTOR_ENCODER_2)
 
         ## Get intrinsic Robot params
         self.config = self.load_param()
