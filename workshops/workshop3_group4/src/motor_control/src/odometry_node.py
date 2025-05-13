@@ -26,18 +26,32 @@ class OdometryPublisherNode:
         self.driver_R = WheelEncoderDriver(GPIO_MOTOR_ENCODER_2)
 
         self.config = self.load_param()
+        
+        self.ticks_left = 0
+        self.ticks_right = 0
 
-        self.first_image_received = False
         self.initialized = True
         rospy.loginfo("odem node initialized!")
         self.timer = rospy.Timer(rospy.Duration(0.10), self.read_encoder) # publishing 10 Hz
 
 
     def read_encoder(self,event):
-        msg = encoder()
-        msg.enc_L = self.driver_L._ticks
-        msg.enc_R = self.driver_R._ticks
+        msg = encoder() 
+
+        # read the encoders
+        self.ticks_left = self.driver_L._ticks
+        self.ticks_right = self.driver_R._ticks
+        
+        # Send encoder message
+        msg.enc_L = self.ticks_left
+        msg.enc_R = self.ticks_right
         self.pub_odom.publish(msg)
+
+        
+        # Difference in encoder tics from previous measurement                
+        #delta_ticks_left = L_ticks - self.L_ticks_prev
+        #delta_ticks_right = R_ticks - self.R_ticks_prev
+
 
         
     
