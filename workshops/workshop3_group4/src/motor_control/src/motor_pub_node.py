@@ -30,9 +30,26 @@ class MotorPublisherNode:
         try:
             while not rospy.is_shutdown():
                 try:
-                    velocity = float(raw_input("Enter velocity (m/s): "))
-                    position = float(raw_input("Enter position (m): "))
-                    angle = float(raw_input("Enter angle (degrees): "))
+                    # Read velocity input
+                    v_input = raw_input("Enter velocity (m/s) [or 'q' to quit]: ")
+                    if v_input.strip().lower() == 'q':
+                        rospy.loginfo("Exiting motor command publisher.")
+                        break
+                    velocity = float(v_input)
+
+                    # Read position input
+                    p_input = raw_input("Enter position (m): ")
+                    if p_input.strip().lower() == 'q':
+                        rospy.loginfo("Exiting motor command publisher.")
+                        break
+                    position = float(p_input)
+
+                    # Read angle input
+                    a_input = raw_input("Enter angle (degrees): ")
+                    if a_input.strip().lower() == 'q':
+                        rospy.loginfo("Exiting motor command publisher.")
+                        break
+                    angle = float(a_input)
 
                     msg = motor_cmd()
                     msg.velocity = velocity
@@ -66,6 +83,6 @@ class MotorPublisherNode:
 # Main function run the node
 if __name__ == "__main__":
     # Initialize the nodes
-    rospy.init_node('motor_pub_node', anonymous=True, xmlrpc_port=45100, tcpros_port=45101)
+    rospy.init_node('motor_pub_node', anonymous=True)
     motor_node = MotorPublisherNode()
     motor_node.run()
