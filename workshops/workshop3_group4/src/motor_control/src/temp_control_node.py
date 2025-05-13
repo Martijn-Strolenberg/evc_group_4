@@ -80,44 +80,22 @@ class MotorSubscriberNode:
         new_mesg = data.new_mesg
         if new_mesg != self.prev_mesg:
             motor = DaguWheelsDriver() # initialize motor drivers
-            motor.set_wheels_speed(left=(self.gain - self.trim)*0.1, 
-                               right=(self.gain + self.trim)*0.1) #
+
+            # step 1 turn the robot to the required angle
+            if angle > 0:
+                motor.set_wheels_speed(left=-(self.gain - self.trim)*0.1, right=(self.gain + self.trim)*0.1) # GO LEFT?
+            elif distance > 0:
+                motor.set_wheels_speed(left=(self.gain - self.trim)*0.1, right=(self.gain + self.trim)*0.1) # GO STRAIGHT
 
 
-        if distance <= 0.0 and angle <= 0.0 and new_mesg != self.prev_mesg:
+        if distance <= 0.0 and new_mesg != self.prev_mesg:  # STOP CONDITION
             rospy.loginfo("Destination reached")
             self.prev_mesg = new_mesg
             motor.close()
-        
-
-
-        #motor.set_wheels_speed(left=0, right=in_vel) #
-
-
-
-
-        # We need stop at the correct point in time based on encoder information
-
-
-
-        #time.sleep(8) 
-
-
 
     def load_param(self):
-
-        #config = {}
-
-        #config["gain"] = rospy.get_param("~gain")
-
-        #config["trim"] = rospy.get_param("~trim")
-
-        #rospy.loginfo("Loaded config: %s", config)
-
         gain = rospy.get_param("~gain")
-
         trim = rospy.get_param("~trim")
-
         rospy.loginfo("Loaded config")
 
         return gain,trim
@@ -129,15 +107,9 @@ class MotorSubscriberNode:
 if __name__ == "__main__":
 
     # Initialize the node
-
     rospy.init_node('motor_control_node', anonymous=True, xmlrpc_port=45100, tcpros_port=45101)
-
     camera_node = MotorSubscriberNode()
-
     try:
-
         rospy.spin()
-
     except KeyboardInterrupt:
-
         rospy.loginfo("Shutting down image viewer node.")
