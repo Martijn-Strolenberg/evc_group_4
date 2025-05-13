@@ -38,12 +38,12 @@ class MotorSubscriberNode:
     def motor_cb(self, data):
         if not self.initialized:
             return
-        in_vel = -data.velocity
+        in_vel = data.velocity
         in_pos = data.distance
         in_ang = data.angle
         
         motor = DaguWheelsDriver() # initialize motor drivers
-        motor.set_wheels_speed(left=(self.gain - self.trim)*0, 
+        motor.set_wheels_speed(left=(self.gain - self.trim)*in_vel, 
                                right=(self.gain + self.trim)*in_vel) #
         # We need stop at the correct point in time based on encoder information
 
