@@ -3,6 +3,11 @@
 import Adafruit_SSD1306
 from PIL import Image, ImageDraw, ImageFont
 from time import sleep
+from tofDriver import VL53L0X
+import time
+
+# Initialize the ToF sensor
+sensor = VL53L0X()
 
 # Initialize the display (I2C address: 0x3C)
 disp = Adafruit_SSD1306.SSD1306_128_64(rst=None, i2c_bus=1, i2c_address=0x3C)
@@ -26,16 +31,27 @@ draw = ImageDraw.Draw(image)
 font = ImageFont.load_default()
 
 # Draw static text
-draw.rectangle((0, 0, width, height), outline=0, fill=0)  # Clear the image
-draw.text((10, 5), "Battery: 75%", font=font, fill=255)
-draw.text((10, 20), "Connection: OK", font=font, fill=255)
-draw.text((10, 35), "ToF: Active", font=font, fill=255)
+# draw.rectangle((0, 0, width, height), outline=0, fill=0)  # Clear the image
+# draw.text((10, 5), "Battery: 75%", font=font, fill=255)
+# draw.text((10, 20), "Connection: OK", font=font, fill=255)
+# draw.text((10, 35), "ToF: Active", font=font, fill=255)
 
 # Display the image
-disp.image(image)
-disp.display()
+# disp.image(image)
+# disp.display()
 
 # Refresh every 5 seconds
 while True:
-    sleep(5)
+    distance = sensor.read_distance()
+    # Draw dynamic text
+    draw.rectangle((0, 0, width, height), outline=0, fill=0)  # Clear the image
+    draw.text((10, 5), "Battery: ??%", font=font, fill=255)
+    draw.text((10, 20), "Connection: ??", font=font, fill=255)
+    draw.text((10, 35), "ToF: Distance =" + str(distance) , font=font, fill=255)
+
+    # Display the image
+    disp.image(image)
+    disp.display()
+
+    sleep(0.1)
 
