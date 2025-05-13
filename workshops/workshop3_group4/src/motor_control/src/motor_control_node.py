@@ -43,7 +43,8 @@ class MotorSubscriberNode:
         in_ang = data.angle
         
         motor = DaguWheelsDriver() # initialize motor drivers
-        motor.set_wheels_speed(left=0, right=in_vel) #
+        motor.set_wheels_speed(left=(self.gain - self.trim)*0, 
+                               right=(self.gain + self.trim)*in_vel) #
         # We need stop at the correct point in time based on encoder information
 
         time.sleep(8)
