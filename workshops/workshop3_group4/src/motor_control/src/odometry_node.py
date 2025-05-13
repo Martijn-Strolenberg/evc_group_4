@@ -45,6 +45,10 @@ class OdometryPublisherNode:
         self.L_ticks_prev = 0
         self.R_ticks_prev = 0
         self.alpha = 2 * np.pi / self.config["encoder_res"]
+
+        self.velocity = 0
+        self.distance = 0
+        self.angle = 0
         
         self.initialized = True
         rospy.loginfo("odem node initialized!")
@@ -53,7 +57,7 @@ class OdometryPublisherNode:
     def read_topic(self,data):
         self.velocity = data.velocity
         self.distance = data.distance
-        self.theta = data.angle
+        self.angle = data.angle
         
     def read_encoder(self,event):
         msg = encoder() 
