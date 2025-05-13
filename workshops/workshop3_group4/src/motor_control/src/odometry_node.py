@@ -124,7 +124,7 @@ class OdometryPublisherNode:
         d_A = (d_right + d_left)/2
 
         ## How much the robot has turned (delta  )  [rads]
-        d_theta = (d_right - d_left)/(2*self.config["baseline"])
+        d_theta = (d_right + d_left)/(self.config["baseline"])
 
         ## Filling the Odometry message
         # fill absolute position relative to the origin 

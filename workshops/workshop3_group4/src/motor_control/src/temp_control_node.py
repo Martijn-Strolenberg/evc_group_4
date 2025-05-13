@@ -83,12 +83,13 @@ class MotorSubscriberNode:
 
             # step 1 turn the robot to the required angle
             if angle > 0:
-                motor.set_wheels_speed(left=-(self.gain - self.trim)*0.1, right=(self.gain + self.trim)*0.1) # GO LEFT?
+                #motor.set_wheels_speed(left=-(self.gain - self.trim)*0.1, right=(self.gain + self.trim)*0.1) # GO LEFT!
+                motor.set_wheels_speed(left=(self.gain - self.trim)*0.15, right=-(self.gain + self.trim)*0.15) # GO RIGHT!
             elif distance > 0:
                 motor.set_wheels_speed(left=(self.gain - self.trim)*0.1, right=(self.gain + self.trim)*0.1) # GO STRAIGHT
 
 
-        if distance <= 0.0 and new_mesg != self.prev_mesg:  # STOP CONDITION
+        if angle <= 0.0 and new_mesg != self.prev_mesg:  # STOP CONDITION
             rospy.loginfo("Destination reached")
             self.prev_mesg = new_mesg
             motor.close()

@@ -1,7 +1,6 @@
 #!/usr/bin/env python2
 
 from motorDriver import *
-from encoderDriver import *
 from time import sleep, time
 import sys
 import tty
