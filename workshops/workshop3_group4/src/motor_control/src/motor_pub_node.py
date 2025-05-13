@@ -83,6 +83,6 @@ class MotorPublisherNode:
 # Main function run the node
 if __name__ == "__main__":
     # Initialize the nodes
-    rospy.init_node('motor_pub_node', anonymous=True)
+    rospy.init_node('motor_pub_node', anonymous=True, xmlrpc_port=45102,tcpros_port = 45103)
     motor_node = MotorPublisherNode()
     motor_node.run()

@@ -28,6 +28,7 @@ class MotorSubscriberNode:
             buff_size=2**24,
             queue_size=10
         )
+        self.gain, self.trim = self.load_param()
 
         self.first_image_received = False
         self.initialized = True
@@ -37,16 +38,26 @@ class MotorSubscriberNode:
     def motor_cb(self, data):
         if not self.initialized:
             return
-        in_vel = data.velocity
+        in_vel = -data.velocity
         in_pos = data.distance
         in_ang = data.angle
-
+        
         motor = DaguWheelsDriver() # initialize motor drivers
-        motor.set_wheels_speed(left=in_vel, right=in_vel) #
+        motor.set_wheels_speed(left=0, right=in_vel) #
         # We need stop at the correct point in time based on encoder information
 
-        time.sleep(5)
+        time.sleep(8)
         motor.close() 
+    
+    def load_param(self):
+        #config = {}
+        #config["gain"] = rospy.get_param("~gain")
+        #config["trim"] = rospy.get_param("~trim")
+        #rospy.loginfo("Loaded config: %s", config)
+        gain = rospy.get_param("~gain")
+        trim = rospy.get_param("~trim")
+        rospy.loginfo("Loaded config")
+        return gain,trim
         
 
 if __name__ == "__main__":
