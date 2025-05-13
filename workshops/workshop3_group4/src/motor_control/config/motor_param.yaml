@@ -1,2 +1,9 @@
-gain: 1.0
-trim: -0.001
+## Motor Params
+gain: 1
+trim: 0.95
+
+## Odom Params
+wheel_rad = 0.033
+baseline = 0.163
+encoder_res = 137
+

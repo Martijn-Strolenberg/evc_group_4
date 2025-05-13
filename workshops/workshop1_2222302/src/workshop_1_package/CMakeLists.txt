@@ -1,31 +1,14 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(motor_control)
+project(workshop_1_package)
 
 # Find catkin and any catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  cv_bridge
   rospy
-  sensor_msgs
-  std_msgs
-  message_generation
-  geometry_msgs
-  nav_msgs
-)
-add_message_files(
-  FILES
-  twovids.msg
-  motor_cmd.msg
-)
-# Declare a catkin package
-generate_messages(
-  DEPENDENCIES
-  sensor_msgs
   std_msgs
 )
 
-catkin_package(
-  CATKIN_DEPENDS message_runtime sensor_msgs std_msgs geometry_msgs nav_msgs
-)
+# Declare a catkin package
+catkin_package()
 
 # Include directories
 include_directories(
@@ -38,7 +21,7 @@ install(DIRECTORY launch/
 
 # Install Python scripts
 catkin_install_python(PROGRAMS
-  src/motor_pub_node.py
-  src/motor_control_node.py
+  src/publisher.py
+  src/subscriber.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
