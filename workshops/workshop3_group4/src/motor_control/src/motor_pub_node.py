@@ -21,6 +21,7 @@ class MotorPublisherNode:
             motor_cmd,
             queue_size=10
         )
+        self.new_cmd = 0 
         # self.motor_gui = MotorGUI()
         # override self.motor_gui.submit to run publish_msg
         # self.motor_gui.submit = self.publish_msg
@@ -55,6 +56,8 @@ class MotorPublisherNode:
                     msg.velocity = velocity
                     msg.distance = position
                     msg.angle = angle
+                    msg.new_mesg = self.new_cmd + 1
+                    self.new_cmd = self.new_cmd
 
                     rospy.loginfo("Publishing motor command: v=%.2f, p=%.2f, a=%.2f", velocity, position, angle)
                     self.pub_cmd.publish(msg)

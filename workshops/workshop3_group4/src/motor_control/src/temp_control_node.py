@@ -61,6 +61,7 @@ class MotorSubscriberNode:
         self.gain, self.trim = self.load_param()
 
         self.initialized = True
+        self.prev_mesg = 0
 
         rospy.loginfo("motor control node initialized!")
 
@@ -76,22 +77,24 @@ class MotorSubscriberNode:
 
         distance = data.abs_distance 
         angle  = data.abs_angle
+        new_mesg = data.new_mesg
+        if new_mesg != self.prev_mesg:
+            motor = DaguWheelsDriver() # initialize motor drivers
+            motor.set_wheels_speed(left=(self.gain - self.trim)*0.1, 
+                               right=(self.gain + self.trim)*0.1) #
 
 
-        if distance <= 0.0 and angle <= 0.0:
+        if distance <= 0.0 and angle <= 0.0 and new_mesg != self.prev_mesg:
             rospy.loginfo("Destination reached")
+            self.prev_mesg = new_mesg
             motor.close()
         
-        motor = DaguWheelsDriver() # initialize motor drivers
 
 
         #motor.set_wheels_speed(left=0, right=in_vel) #
 
 
-        motor.set_wheels_speed(left=(self.gain - self.trim)*0.1, 
 
-
-                               right=(self.gain + self.trim)*0.1) #
 
         # We need stop at the correct point in time based on encoder information
 

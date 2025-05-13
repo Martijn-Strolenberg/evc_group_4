@@ -4,3 +4,4 @@ float64 d_A
 float64 d_theta
 float64 abs_distance
 float64 abs_angle
+uint32 new_mesg

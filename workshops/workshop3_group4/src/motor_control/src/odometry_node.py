@@ -58,6 +58,7 @@ class OdometryPublisherNode:
         self.velocity = data.velocity
         self.distance = data.distance
         self.angle = data.angle
+        self.new_mesg = data.new_mesg
         
     def read_encoder(self,event):
         msg = encoder() 
