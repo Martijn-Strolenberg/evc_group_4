@@ -10,8 +10,6 @@ import numpy as np
 from sensor_msgs.msg import CompressedImage
 from jetson_camera.msg import twovids
 from motor_control.msg import motor_cmd
-from motor_odometry.msg import odem
-from nav_msgs.msg
 
 
 class OdometryPublisherNode:

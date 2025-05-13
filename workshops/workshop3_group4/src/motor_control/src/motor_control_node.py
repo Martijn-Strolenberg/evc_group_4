@@ -3,8 +3,7 @@ import time
 import hat
 from hat import *
 import motorDriver                       # import motor driver
-from motorDriver import DaguWheelsDriver # import motor driver functions
-from encoderDriver import *              # import encoder drivers
+from motorDriver import * # import motor driver functions
 import cv2
 import rospy
 import numpy as np
@@ -34,8 +33,8 @@ class MotorSubscriberNode:
         self.GPIO_MOTOR_ENCODER_1=18
         self.GPIO_MOTOR_ENCODER_2=19
         self.gpio_pin = 19
-        self.driver_L = WheelEncoderDriver(self.GPIO_MOTOR_ENCODER_1)
-        self.driver_R = WheelEncoderDriver(self.GPIO_MOTOR_ENCODER_2)
+        #self.driver_L = WheelEncoderDriver(self.GPIO_MOTOR_ENCODER_1)
+        #self.driver_R = WheelEncoderDriver(self.GPIO_MOTOR_ENCODER_2)
 
         ## Get intrinsic Robot params
         self.config = self.load_param()
@@ -58,69 +57,71 @@ class MotorSubscriberNode:
     def motor_cb(self, data):
         if not self.initialized:
             return
-        
-        motor = DaguWheelsDriver() # initialize motor drivers
-        
-        # Get the values from the topic
+
+        motor = DaguWheelsDriver()
+
+        # Get command values
         in_velocity = data.velocity
-        in_distance = data.distance
-        in_angle = data.angle
+        in_distance = data.distance   # can be negative
+        in_angle = data.angle         # can be negative
 
-        # convert degrees to rads
         angle_rad = np.deg2rad(in_angle)
-        
-        # sin(theta) = x / dist .'. 
-        # x = sin(theta) * dist
-        new_x = np.sin(angle_rad) * in_distance
-        
-        # cos(theta) = y / dist .'. 
-        # y = cos(theta) * dist
-        new_y = np.cos(angle_rad) * in_distance
-        
-        # Rotate the robot with in_angle degrees
-        if in_angle > 0:
-            rotate_left = angle_rad / 2
-            rotate_right = -angle_rad / 2
-        else:
-            rotate_left = -angle_rad / 2
-            rotate_right = angle_rad / 2
-        
-        rotation_left_done = 0
-        rotation_right_done = 0
 
-        old_right_motor_encoder_ticks = self.driver_R._ticks
-        old_left_motor_encoder_ticks = self.driver_L._ticks
-        
-        # continue untill both rotations have finished
-        while (rotation_left_done == 0) or (rotation_right_done == 0):
-            right_motor_encoder_ticks = old_right_motor_encoder_ticks - self.driver_R._ticks
-            left_motor_encoder_ticks = old_left_motor_encoder_ticks - self.driver_L._ticks
+        # Compute desired wheel rotation (in radians) for in-place turn
+        rotate_left = angle_rad / 2.0
+        rotate_right = -angle_rad / 2.0
 
-            if(rotation_left_done == 0) and (self.alpha * rotate_left > left_motor_encoder_ticks):
-                rotation_left_done = 0
-                curr_wheel_speed_left = 0.1
-            else:
-                rotation_left_done = 1
-                curr_wheel_speed_left = 0
+        # Convert rotation to ticks (ticks = radians / alpha)
+        left_target_ticks = abs(rotate_left / self.alpha)
+        right_target_ticks = abs(rotate_right / self.alpha)
 
-            if(rotation_right_done == 0) and (self.alpha * rotate_right > right_motor_encoder_ticks):
-                rotation_right_done = 0
-                curr_wheel_speed_right = 0.1
-            else:
-                rotation_right_done = 1
-                curr_wheel_speed_right = 0
-            
-            motor.set_wheels_speed(left=(self.config["gain"] - self.config["trim"])*curr_wheel_speed_left, 
-                               right=(self.config["gain"] + self.config["trim"])*curr_wheel_speed_right)
-            
-        # motor.set_wheels_speed(left=(self.config["gain"] - self.config["trim"])*rotate_left, 
-        #                        right=(self.config["gain"] + self.config["trim"])*rotate_right) #
-        # # We need stop at the correct point in time based on encoder information
+        # Record start tick positions
+        left_start = self.driver_L._ticks
+        right_start = self.driver_R._ticks
 
-        # if in_distance <= np.sqrt(self.x ** 2 + self.y ** 2):
-            
-        # #time.sleep(8)
-            motor.close() 
+        # Perform rotation
+        while True:
+            left_progress = abs(self.driver_L._ticks - left_start)
+            right_progress = abs(self.driver_R._ticks - right_start)
+
+            curr_wheel_speed_left = 0.1 if left_progress < left_target_ticks else 0
+            curr_wheel_speed_right = 0.1 if right_progress < right_target_ticks else 0
+
+            motor.set_wheels_speed(
+                left=(self.config["gain"] - self.config["trim"]) * np.sign(rotate_left) * curr_wheel_speed_left,
+                right=(self.config["gain"] + self.config["trim"]) * np.sign(rotate_right) * curr_wheel_speed_right
+            )
+
+            if left_progress >= left_target_ticks and right_progress >= right_target_ticks:
+                break
+
+        # Reset encoder baselines for forward/backward driving
+        left_start = self.driver_L._ticks
+        right_start = self.driver_R._ticks
+
+        # Convert linear distance to wheel ticks
+        wheel_rotations = in_distance / (2 * np.pi * self.config["wheel_rad"])  # can be negative
+        target_ticks = abs(wheel_rotations * self.config["encoder_res"])
+
+        while True:
+            left_progress = abs(self.driver_L._ticks - left_start)
+            right_progress = abs(self.driver_R._ticks - right_start)
+
+            curr_wheel_speed_left = 0.1 if left_progress < target_ticks else 0
+            curr_wheel_speed_right = 0.1 if right_progress < target_ticks else 0
+
+            # Distance affects direction (positive: forward, negative: backward)
+            direction = np.sign(in_distance)
+
+            motor.set_wheels_speed(
+                left=(self.config["gain"] - self.config["trim"]) * direction * curr_wheel_speed_left,
+                right=(self.config["gain"] + self.config["trim"]) * direction * curr_wheel_speed_right
+            )
+
+            if left_progress >= target_ticks and right_progress >= target_ticks:
+                break
+
+        motor.close()
 
     ## Measures the odometry and returns values since last measurement.
     # @param direction 1 for forward 0 for backwards
