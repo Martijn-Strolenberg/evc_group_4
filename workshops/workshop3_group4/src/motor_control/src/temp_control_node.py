@@ -57,14 +57,13 @@ class MotorSubscriberNode:
 
             # step 1 turn the robot to the required angle
             if angle > 0 and self.rotate_dir == 0:
-                #motor.set_wheels_speed(left=-(self.gain - self.trim)*0.1, right=(self.gain + self.trim)*0.1) # GO LEFT!
-                motor.set_wheels_speed(left=(self.gain - self.trim)*0.15, right=-(self.gain + self.trim)*0.15) # GO RIGHT!
+                motor.set_wheels_speed(left=(self.gain - self.trim)*velocity_cmd, right=-(self.gain + self.trim)*velocity_cmd) # GO RIGHT!
             elif angle > 0 and self.rotate_dir == 1:
-                motor.set_wheels_speed(left=-(self.gain - self.trim)*0.1, right=(self.gain + self.trim)*0.1) # GO LEFT!
+                motor.set_wheels_speed(left=-(self.gain - self.trim)*velocity_cmd, right=(self.gain + self.trim)*velocity_cmd) # GO LEFT!
             elif distance > 0:
-                motor.set_wheels_speed(left=(self.gain - self.trim)*0.1, right=(self.gain + self.trim)*0.1) # GO STRAIGHT
+                motor.set_wheels_speed(left=(self.gain - self.trim)*velocity_cmd, right=(self.gain + self.trim)*velocity_cmd) # GO STRAIGHT
         
-        if angle <= 5*np.pi/180 and new_mesg != self.prev_mesg:  # STOP CONDITION
+        if angle <= 5*np.pi/180 and distance < 0.01 and new_mesg != self.prev_mesg:  # STOP CONDITION
             rospy.loginfo("Destination reached")
             self.prev_mesg = new_mesg
             motor.close()
