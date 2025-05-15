@@ -55,6 +55,11 @@ class OdometryPublisherNode:
         self.distance = 0
         self.angle = 0
         self.new_mesg = 0
+
+        ## absolute position parameters
+        self.x = 0
+        self.y = 0
+        self.theta = 0
         
         self.initialized = True
         rospy.loginfo("odem node initialized!")
