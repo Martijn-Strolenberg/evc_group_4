@@ -41,15 +41,16 @@ class MotorSubscriberNode:
         distance = data.abs_distance 
         angle  = data.abs_angle
         new_mesg = data.new_mesg
+        velocity_cmd = data.velocity_cmd
         if new_mesg != self.prev_mesg:
             motor = DaguWheelsDriver() # initialize motor drivers
 
             # step 1 turn the robot to the required angle
             if angle > 0:
-                #motor.set_wheels_speed(left=-(self.gain - self.trim)*0.1, right=(self.gain + self.trim)*0.1) # GO LEFT!
-                motor.set_wheels_speed(left=(self.gain - self.trim)*0.15, right=-(self.gain + self.trim)*0.15) # GO RIGHT!
+                #motor.set_wheels_speed(left=-(self.gain - self.trim)*velocity_cmd, right=(self.gain + self.trim)*velocity_cmd) # GO LEFT!
+                motor.set_wheels_speed(left=(self.gain - self.trim)*velocity_cmd, right=-(self.gain + self.trim)*velocity_cmd) # GO RIGHT!
             elif distance > 0:
-                motor.set_wheels_speed(left=(self.gain - self.trim)*0.1, right=(self.gain + self.trim)*0.1) # GO STRAIGHT
+                motor.set_wheels_speed(left=(self.gain - self.trim)*velocity_cmd, right=(self.gain + self.trim)*velocity_cmd) # GO STRAIGHT
 
 
         if angle <= 0.0 and new_mesg != self.prev_mesg:  # STOP CONDITION

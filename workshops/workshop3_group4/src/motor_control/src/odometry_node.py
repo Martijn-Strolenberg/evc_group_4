@@ -90,6 +90,7 @@ class OdometryPublisherNode:
         msg.abs_distance = self.distance
         msg.abs_angle = self.angle
         msg.new_mesg = self.new_mesg
+        msg.velocity_cmd = self.velocity
         
         self.pub_odom.publish(msg)
 
