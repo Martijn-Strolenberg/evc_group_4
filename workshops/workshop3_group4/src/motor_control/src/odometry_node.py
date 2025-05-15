@@ -34,8 +34,13 @@ class OdometryPublisherNode:
         self.driver_L = WheelEncoderDriver(GPIO_MOTOR_ENCODER_1)
         self.driver_R = WheelEncoderDriver(GPIO_MOTOR_ENCODER_2)
 
+        # Load and initialize parameters
         self.config = self.load_param()
-        
+        self.wheel_radius = self.config["wheel_rad"]
+        self.baseline = self.config["baseline"]
+        self.encoder_resolution = self.config["encoder_res"]
+
+        # Wheel encoder parameters
         self.ticks_left = 0
         self.prev_ticks_L = 0
         self.ticks_right = 0
@@ -44,7 +49,7 @@ class OdometryPublisherNode:
         ## Parameters for odom
         self.L_ticks_prev = 0
         self.R_ticks_prev = 0
-        self.alpha = 2 * np.pi / self.config["encoder_res"]
+        self.alpha = 2 * np.pi / self.encoder_resolution
 
         self.velocity = 0
         self.distance = 0
@@ -53,7 +58,7 @@ class OdometryPublisherNode:
         
         self.initialized = True
         rospy.loginfo("odem node initialized!")
-        self.timer = rospy.Timer(rospy.Duration(0.10), self.read_encoder) # publishing 10 Hz
+        self.timer = rospy.Timer(rospy.Duration(0.05), self.read_encoder) # publishing 20 Hz
 
     def read_topic(self,data):
         self.velocity = data.velocity
@@ -83,7 +88,7 @@ class OdometryPublisherNode:
         
         self.pub_odom.publish(msg)
 
-        
+        """
         # Difference in encoder tics from previous measurement                
         delta_ticks_left = self.ticks_left - self.prev_ticks_L
         delta_ticks_right = self.ticks_right - self.prev_ticks_R
@@ -91,7 +96,7 @@ class OdometryPublisherNode:
         # update the prev ticks
         self.prev_ticks_L = self.ticks_left
         self.prev_ticks_R = self.ticks_right        
-
+        """
         
         
     
@@ -117,27 +122,32 @@ class OdometryPublisherNode:
         rotation_wheel_right = delta_ticks_right * self.alpha
 
         # Calculate distance each wheel has travelled since last measurement in [m]
-        d_left = self.config["wheel_rad"] * rotation_wheel_left
-        d_right = self.config["wheel_rad"] * rotation_wheel_right
+        d_left = self.wheel_radius * rotation_wheel_left
+        d_right = self.wheel_radius * rotation_wheel_right
 
         ## Average distance travelled by the robot in [m]
         d_A = (d_right + d_left)/2
 
         ## How much the robot has turned (delta  )  [rads]
-        d_theta = (d_right + d_left)/(self.config["baseline"])
+        d_theta = (d_right + d_left)/(self.baseline)
+
+        self.x = self.x + self.wheel_radius * (rotation_wheel_left + rotation_wheel_right)*np.cos(self.theta)/2
+        self.y = self.y + self.wheel_radius * (rotation_wheel_left + rotation_wheel_right)*np.sin(self.theta)/2
+        self.theta = self.theta + self.wheel_radius * (rotation_wheel_right - rotation_wheel_left)/(self.baseline)
 
         ## Filling the Odometry message
+        msg.header.stamp = rospy.Time.now()  # Fill the time stamp
+        msg.header.frame_id = "odom"  # Fill the frame id
+        msg.child_frame_id = "base_link"  # Fill the child frame id
         # fill absolute position relative to the origin 
+        msg.pose.pose.position.x = self.x   # Absolute x position
+        msg.pose.pose.position.y = self.y   # Absolute y position
+        msg.pose.pose.position.z = 0.0      #z is always zeros as we don't drive into the air
+        
 
-        #self.x = self.x + self.config["wheel_rad"] * (rotation_wheel_left + rotation_wheel_right)*np.cos(self.theta)/2
-        #self.y = self.y + self.config["wheel_rad"] * (rotation_wheel_left + rotation_wheel_right)*np.sin(self.theta)/2
-        #self.theta = self.theta + self.config["wheel_rad"]*(rotation_wheel_right - rotation_wheel_left)/(self.config["baseline"])
+        return d_A, d_theta   # return the delta average distance and delta angle
 
-        #msg.pose.pose.position.x = self.x #x
-        #msg.pose.pose.position.y = self.y #y
-        #msg.pose.pose.position.z = 0.0  #z is always zeros as we don't drive into the air
 
-        return d_A,d_theta
     def load_param(self):
         config = {}
         config["gain"] = rospy.get_param("~gain")
