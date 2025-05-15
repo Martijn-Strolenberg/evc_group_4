@@ -179,7 +179,7 @@ class MotorSubscriberNode:
 
 if __name__ == "__main__":
     # Initialize the node
-    rospy.init_node('motor_control_node', anonymous=True, xmlrpc_port=45100, tcpros_port=45101)
+    rospy.init_node('motor_control_node')
     camera_node = MotorSubscriberNode()
     try:
         rospy.spin()

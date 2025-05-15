@@ -236,7 +236,7 @@ class OdometryPublisherNode:
 {} 
 if __name__ == "__main__":
     # Initialize the node
-    rospy.init_node('odometry_node')
+    rospy.init_node('odometry_node', anonymous=True, xmlrpc_port=45102, tcpros_port=45103)
     odometry_node = OdometryPublisherNode()
     try:
         rospy.spin()

@@ -39,6 +39,7 @@ install(DIRECTORY launch/
 
 # Install Python scripts
 catkin_install_python(PROGRAMS
+  src/motor_command_node.py
   src/temp_control_node.py
   src/motor_pub_node.py
   src/motor_control_node.py

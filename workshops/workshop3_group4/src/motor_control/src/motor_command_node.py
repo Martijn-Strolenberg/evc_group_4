@@ -2,6 +2,7 @@
 
 import rospy
 import numpy as np
+# from motor_GUI import MotorGUI
 from motor_control.msg import motor_cmd
 
 # USER DEFINED SPEEDS
@@ -87,6 +88,6 @@ class MotorPublisherNode:
 # Main function run the node
 if __name__ == "__main__":
     # Initialize the nodes
-    rospy.init_node('motor_pub_node')
+    rospy.init_node('motor_command_node')
     motor_node = MotorPublisherNode()
     motor_node.run()
