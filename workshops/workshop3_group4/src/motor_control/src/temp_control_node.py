@@ -63,7 +63,7 @@ class MotorSubscriberNode:
             elif distance > 0:
                 motor.set_wheels_speed(left=(self.gain - self.trim)*0.1, right=(self.gain + self.trim)*0.1) # GO STRAIGHT
         
-        if angle <= 0.0 and new_mesg != self.prev_mesg:  # STOP CONDITION
+        if angle <= 5*np.pi/180 and new_mesg != self.prev_mesg:  # STOP CONDITION
             rospy.loginfo("Destination reached")
             self.prev_mesg = new_mesg
             motor.close()
