@@ -138,8 +138,11 @@ class OdometryPublisherNode:
         # d_A = (d_right + d_left)/2
 
         # This formula for d_A takes into account wheels not turning
-        R = (self.baseline / 2.0) * (d_left + d_right) / (d_right - d_left)
-        d_A = abs(R * d_theta)
+        if (d_right - d_left) == 0:
+            d_A = (d_right + d_left)/2
+        else:
+            R = (self.baseline / 2.0) * (d_left + d_right) / (d_right - d_left)
+            d_A = abs(R * d_theta)
 
         ## Average velocity of the robot in [m/s]
         d_v_A = d_A / 0.02
