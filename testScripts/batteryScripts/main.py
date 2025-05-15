@@ -10,15 +10,11 @@ def shutdown_duckiebattery(serial_port="/dev/ttyACM0", baud_rate=9600):
     Sends a shutdown command to the Duckiebattery via USB serial connection.
     """
     # Command to be sent
-    command = INFO_COMMAND
+    command = b"Q"
     try:
         # Open serial connection to the Duckiebattery
-        ser = serial.Serial(port=serial_port, baudrate=baud_rate, timeout=1)
-        print(
-            "Connected to Duckiebattery on {} at {} baud.".format(
-                serial_port, baud_rate
-            )
-        )
+        ser = serial.Serial(port=serial_port, baudrate=baud_rate, timeout=10)
+        print("Connected to Duckiebattery on {} at {} baud.".format(serial_port, baud_rate))
 
         # Send the shutdown command
         ser.write(command)

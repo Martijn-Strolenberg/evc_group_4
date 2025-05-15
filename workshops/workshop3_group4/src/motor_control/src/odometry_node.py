@@ -63,7 +63,7 @@ class OdometryPublisherNode:
         
         self.initialized = True
         rospy.loginfo("odem node initialized!")
-        self.timer = rospy.Timer(rospy.Duration(0.05), self.read_encoder) # publishing 20 Hz
+        self.timer = rospy.Timer(rospy.Duration(0.02), self.read_encoder) # publishing 50 Hz
 
     def read_topic(self,data):
         self.velocity = data.velocity
