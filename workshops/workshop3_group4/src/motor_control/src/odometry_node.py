@@ -64,7 +64,7 @@ class OdometryPublisherNode:
         
         self.initialized = True
         rospy.loginfo("odem node initialized!")
-        self.timer = rospy.Timer(rospy.Duration(1/self.sample_rate), self.read_encoder) # publishing at sample rate
+        self.timer = rospy.Timer(rospy.Duration(0.02), self.read_encoder) # publishing at sample rate
 
     def read_topic(self,data):
         self.velocity = data.velocity
@@ -136,7 +136,8 @@ class OdometryPublisherNode:
         d_A = (d_right + d_left)/2
 
         ## Average velocity of the robot in [m/s]
-        d_v_A = d_A / (1/self.sample_rate) 
+        d_v_A = d_A / 0.02
+        #rospy.loginfo("current robot velocity: {vel} \n".format(vel=d_v_A))
 
         ## How much the robot has turned (delta  )  [rads]
         d_theta = (d_right - d_left)/(self.baseline)
