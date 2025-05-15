@@ -6,12 +6,13 @@ import numpy as np
 from cv_bridge import CvBridge, CvBridgeError
 from sensor_msgs.msg import CompressedImage
 from jetson_camera.msg import twovids
+from motor_control.msg import motor_cmd
 
 
 class CameraSubscriberNode:
     def __init__(self):
         self.initialized = False
-        rospy.loginfo("Initializing camera subscriber node...")
+        rospy.loginfo("Initializing camera object detection node...")
         self.bridge = CvBridge()
         
         # Construct subscriber
@@ -25,7 +26,7 @@ class CameraSubscriberNode:
 
         self.first_image_received = False
         self.initialized = True
-        rospy.loginfo("Camera subscriber node initialized!")
+        rospy.loginfo("Camera object detection node initialized!")
 
 
     def image_cb(self, data):
@@ -69,10 +70,38 @@ class CameraSubscriberNode:
                     cv2.line(undis_image, (center_x - 5, center_y), (center_x + 5, center_y), (0, 0, 255), 2)
                     cv2.line(undis_image, (center_x, center_y - 5), (center_x, center_y + 5), (0, 0, 255), 2)
                     rospy.loginfo("Blue pen object found at: ({}, {})".format(center_x, center_y))
-
-            # Show results
+                    if (center_x <= 214 and center_y <= 160):
+                        rospy.loginfo("Blue pen is in the left upper corner.")
+                        # move forward + turn left
+                    elif ((center_x > 214 or center_x < 426) and center_y <= 160):
+                        rospy.loginfo("Blue pen is in the middle up.")
+                        # move forward (i think)
+                    elif (center_x > 426 and center_y <= 160):
+                        rospy.loginfo("Blue pen is in the right upper corner.")
+                        # move forward + turn right
+                    elif (center_x <= 214 and (center_y > 160 or center_y < 320)):
+                        rospy.loginfo("Blue pen is in the middle left.")
+                        # turn left
+                    elif ((center_x > 214 or center_x < 426) and (center_y > 160 or center_y < 320)):
+                        rospy.loginfo("Blue pen is in the middle.")
+                        # do nothing
+                    elif (center_x >= 426 and (center_y > 160 or center_y < 320)):
+                        rospy.loginfo("Blue pen is in the middle right.")
+                        # turn right
+                    elif (center_x <= 214 and center_y >= 320):
+                        rospy.loginfo("Blue pen is in the left lower corner.")
+                        # move backward + turn left
+                    elif ((center_x > 214 or center_x < 426) and center_y >= 320):
+                        rospy.loginfo("Blue pen is in the middle down.")
+                        # move backward (i think)
+                    elif (center_x >= 426 and center_y >= 320):
+                        rospy.loginfo("Blue pen is in the right lower corner.")
+                        # move backward + turn right
+                    else:
+                        rospy.loginfo("Blue pen is in the unknown position.")
             # END: Image Processing
 
+            # SHOW THE RESULTS:
             # Stack the images horizontally
             side_by_side = np.hstack((raw_image, undis_image))
 
@@ -83,13 +112,8 @@ class CameraSubscriberNode:
             # Display the result
             cv2.imshow("Original vs. Undistorted", side_by_side)
             
-            #cv2.waitKey(1)
             cv2.waitKey(1)  # Non-blocking update
 
-            #rospy.loginfo("Trying to show camera")
-            # Ensure the window updates instantly
-            #cv2.imshow("Camera View", undis_image)
-            #cv2.waitKey(1)  # Keep at 1 to prevent blocking
         except CvBridgeError as err:
             rospy.logerr("Error converting image: {}".format(err))
             return
@@ -100,7 +124,7 @@ class CameraSubscriberNode:
 
 if __name__ == "__main__":
     # Initialize the node
-    rospy.init_node('camera_viewer_node', anonymous=True)
+    rospy.init_node('object_detection_node')
     camera_node = CameraSubscriberNode()
     try:
         rospy.spin()
