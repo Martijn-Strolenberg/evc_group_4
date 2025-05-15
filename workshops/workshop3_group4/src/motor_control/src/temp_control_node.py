@@ -35,7 +35,7 @@ class MotorSubscriberNode:
 
 
     def motor_cb(self, data):
-        if not self.initialized:
+        if   self.initialized:
             return
 
         distance = data.abs_distance 
@@ -43,13 +43,14 @@ class MotorSubscriberNode:
         new_mesg = data.new_mesg
         velocity_cmd = data.velocity_cmd
         # To turn left or right
-        if angle < 0:
-            self.rotate_dir = 1
-        else:
-            self.rotate_dir = 0
+        if abs(angle) > 5*np.pi/180:
+            if angle < 0:
+                self.rotate_dir = 1
+            else:
+                self.rotate_dir = 0
         
-        if self.rotate_dir == 1:
-            angle = -angle
+            if self.rotate_dir == 1:
+                angle = -angle
 
         if new_mesg != self.prev_mesg:
             motor = DaguWheelsDriver() # initialize motor drivers
