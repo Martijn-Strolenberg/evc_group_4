@@ -66,7 +66,7 @@ class MotorSubscriberNode:
             self.abs_angle_old = data.abs_angle
             rospy.loginfo("State = 0 Running Initialization")
 
-            rospy.loginfo("curr_msg: {:.2f} new_mesg: {:.2f}".format(self.curr_msg, self.new_mesg))
+            rospy.loginfo("curr_msg: {:.2f} new_mesg: {:.2f}".format(self.curr_msg, data.new_mesg))
 
             # Cache input command
             self.in_distance = data.abs_distance
@@ -78,16 +78,16 @@ class MotorSubscriberNode:
             self.right_start_ticks = current_right_ticks
 
             # Compute target ticks for rotation
-            self.rotate_left = self.in_angle_rad / 2.0
-            self.rotate_right = -self.in_angle_rad / 2.0
+            self.rotate_left = self.in_angle_rad
+            self.rotate_right = -self.in_angle_rad
 
-            self.left_target_rot_ticks = abs(self.rotate_left / self.alpha)
-            self.right_target_rot_ticks = abs(self.rotate_right / self.alpha)
+            self.left_target_rot_ticks = abs(self.rotate_left / self.alpha)*2
+            self.right_target_rot_ticks = abs(self.rotate_right / self.alpha)*2
 
             rospy.loginfo("in_distance: {:.2f} \tin_angle_rad: {:.2f}".format(self.in_distance, self.in_angle_rad))
 
-            self.rot_speed = 0.1
-            self.drive_speed = 0.2
+            self.rot_speed = data.velocity_cmd
+            self.drive_speed = data.velocity_cmd
 
             self.state = 1  # Go to rotation phase
             return

@@ -3,6 +3,8 @@
 import rospy
 import numpy as np
 from tofDriver import VL53L0X
+from std_msgs.msg import Float64
+
 
 class TofPublisherNode:
     def __init__(self):
@@ -16,6 +18,7 @@ class TofPublisherNode:
             queue_size=10
         )
         self.sensor = VL53L0X()
+        rospy.loginfo("VL53L0X initialized.")
 
 
     def run(self):

@@ -1,14 +1,11 @@
 #!/usr/bin/env python2
 
-import time
-import hat
-from hat import *
 import rospy
 import Adafruit_SSD1306
 from PIL import Image, ImageDraw, ImageFont
 from time import sleep
-from tofDriver import VL53L0X
 import time
+from std_msgs.msg import Float64
 
 
 class DisplaySubscriberNode:
@@ -17,14 +14,14 @@ class DisplaySubscriberNode:
         self.initialized = False
         rospy.loginfo("Initializing Display node...")
 
-        # Construct subscribers
-        self.sub_bat = rospy.Subscriber(
-            "/Battery",
-            Float64,
-            self.set_battery_cb,
-            buff_size=2**24,
-            queue_size=10
-        )
+        # # Construct subscribers
+        # self.sub_bat = rospy.Subscriber(
+        #     "/Battery",
+        #     Float64,
+        #     self.set_battery_cb,
+        #     buff_size=2**24,
+        #     queue_size=10
+        # )
         self.sub_tof = rospy.Subscriber(
             "/tof",
             Float64,
@@ -63,11 +60,11 @@ class DisplaySubscriberNode:
 
 
 
-    def set_battery_cb(self, msg):
-        self.battery_soc = msg.data
-        rospy.loginfo("Battery state of charge: %f", self.battery_soc)
-        if self.initialized:
-            self.update_display()
+    # def set_battery_cb(self, msg):
+    #     self.battery_soc = msg.data
+    #     rospy.loginfo("Battery state of charge: %f", self.battery_soc)
+    #     if self.initialized:
+    #         self.update_display()
     
     def set_tof_cb(self, msg):
         self.tof = msg.data
@@ -90,7 +87,7 @@ class DisplaySubscriberNode:
 
 if __name__ == "__main__":
     # Initialize the node
-    rospy.init_node('display_node', anonymous=True, xmlrpc_port=45100, tcpros_port=45101)
+    rospy.init_node('display_node')
     display_node = DisplaySubscriberNode()
     try:
         rospy.spin()

@@ -1,6 +1,7 @@
 import serial
 import time
 import json
+import re
 INFO_COMMAND = b"??"
 SHUTDOWN_COMMAND = b"QQ"
 
@@ -25,31 +26,6 @@ def shutdown_duckiebattery(serial_port="/dev/ttyACM0", baud_rate=9600):
         if response:
             print("Duckiebattery response: {}".format(response))
 
-        # Try parsing JSON
-        
-        parsed_data = json.loads(response)
-        first_value = float(next(iter(parsed_data())))
-
-        # # Extract SOC(%)
-        # soc_key = next((key for key in parsed_data if "SOC" in key), None)
-        # if soc_key:
-        #     soc_percentage = float(parsed_data[soc_key])
-        #     print ("Duckiebattery percentage: {}".format(soc_percentage))
-        # else:
-        #     print("SOC key not found in data.")
-
-
-
-
-
-        # # Parse the JSON string into a dictionary
-        # parsed_data = json.loads(response)
-
-        # # Extract and convert SOC(%) to float
-        # soc_percentage = float(parsed_data["SOC(%)"])
-        # print ("Duckiebattery percentage: {}".format(soc_percentage))
-
-        # Close the serial connection
         ser.close()
 
     except serial.SerialException as e:
