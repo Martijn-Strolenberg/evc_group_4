@@ -25,7 +25,7 @@ class MotorSubscriberNode:
             buff_size=2**24,
             queue_size=10
         )
-
+        self.rotate_dir = 0
         self.gain, self.trim = self.load_param()
 
         self.initialized = True
@@ -42,17 +42,27 @@ class MotorSubscriberNode:
         angle  = data.abs_angle
         new_mesg = data.new_mesg
         velocity_cmd = data.velocity_cmd
+        # To turn left or right
+        if angle < 0:
+            self.rotate_dir = 1
+        else:
+            self.rotate_dir = 0
+        
+        if self.rotate_dir == 1:
+            angle = -angle
+
         if new_mesg != self.prev_mesg:
             motor = DaguWheelsDriver() # initialize motor drivers
 
             # step 1 turn the robot to the required angle
-            if angle > 0:
-                #motor.set_wheels_speed(left=-(self.gain - self.trim)*velocity_cmd, right=(self.gain + self.trim)*velocity_cmd) # GO LEFT!
-                motor.set_wheels_speed(left=(self.gain - self.trim)*velocity_cmd, right=-(self.gain + self.trim)*velocity_cmd) # GO RIGHT!
+            if angle > 0 and self.rotate_dir == 0:
+                #motor.set_wheels_speed(left=-(self.gain - self.trim)*0.1, right=(self.gain + self.trim)*0.1) # GO LEFT!
+                motor.set_wheels_speed(left=(self.gain - self.trim)*0.15, right=-(self.gain + self.trim)*0.15) # GO RIGHT!
+            elif angle > 0 and self.rotate_dir == 1:
+                motor.set_wheels_speed(left=-(self.gain - self.trim)*0.1, right=(self.gain + self.trim)*0.1) # GO LEFT!
             elif distance > 0:
-                motor.set_wheels_speed(left=(self.gain - self.trim)*velocity_cmd, right=(self.gain + self.trim)*velocity_cmd) # GO STRAIGHT
-
-
+                motor.set_wheels_speed(left=(self.gain - self.trim)*0.1, right=(self.gain + self.trim)*0.1) # GO STRAIGHT
+        
         if angle <= 0.0 and new_mesg != self.prev_mesg:  # STOP CONDITION
             rospy.loginfo("Destination reached")
             self.prev_mesg = new_mesg

@@ -115,10 +115,10 @@ class OdometryPublisherNode:
         delta_ticks_right = R_ticks - self.R_ticks_prev
 
         # Edge case for rotation in the same position
-        #if direction_left < 0:
-        #    delta_ticks_left=delta_ticks_left*-1
-        #if direction_right < 0:
-        #    delta_ticks_right=delta_ticks_right*-1
+        if self.angle > 0:
+            delta_ticks_left=delta_ticks_left*-1
+        if self.angle < 0:
+            delta_ticks_right=delta_ticks_right*-1
 
         # Update previous ticks with new tick values
         self.L_ticks_prev = L_ticks
@@ -139,7 +139,7 @@ class OdometryPublisherNode:
         d_v_A = d_A / (1/self.sample_rate) 
 
         ## How much the robot has turned (delta  )  [rads]
-        d_theta = (d_right + d_left)/(self.baseline)
+        d_theta = (d_right - d_left)/(self.baseline)
 
         self.x = self.x + self.wheel_radius * (rotation_wheel_left + rotation_wheel_right) * np.cos(self.theta)/2
         self.y = self.y + self.wheel_radius * (rotation_wheel_left + rotation_wheel_right) * np.sin(self.theta)/2
