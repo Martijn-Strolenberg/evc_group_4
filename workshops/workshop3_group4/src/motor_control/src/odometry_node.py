@@ -134,11 +134,14 @@ class OdometryPublisherNode:
         ## Average distance travelled by the robot in [m]
         d_A = (d_right + d_left)/2
 
+        ## Average velocity of the robot in [m/s]
+        d_v_A = d_A / d_A
+
         ## How much the robot has turned (delta  )  [rads]
         d_theta = (d_right - d_left)/(self.baseline)
 
-        self.x = self.x + self.wheel_radius * (rotation_wheel_left + rotation_wheel_right)*np.cos(self.theta)/2
-        self.y = self.y + self.wheel_radius * (rotation_wheel_left + rotation_wheel_right)*np.sin(self.theta)/2
+        self.x = self.x + self.wheel_radius * (rotation_wheel_left + rotation_wheel_right) * np.cos(self.theta)/2
+        self.y = self.y + self.wheel_radius * (rotation_wheel_left + rotation_wheel_right) * np.sin(self.theta)/2
         self.theta = self.theta + self.wheel_radius * (rotation_wheel_right - rotation_wheel_left)/(self.baseline)
 
         ## Filling the Odometry message
