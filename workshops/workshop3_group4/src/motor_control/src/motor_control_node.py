@@ -1,58 +1,51 @@
 #!/usr/bin/env python2
+
 import time
 import hat
 from hat import *
-import motorDriver                       # import motor driver
-from motorDriver import * # import motor driver functions
-import cv2
+import motorDriver
+from motorDriver import DaguWheelsDriver
 import rospy
 import numpy as np
-
 from sensor_msgs.msg import CompressedImage
 from jetson_camera.msg import twovids
-from motor_control.msg import motor_cmd
-from nav_msgs.msg import Odometry
-
+from motor_control.msg import motor_cmd,encoder
 
 class MotorSubscriberNode:
+ 
     def __init__(self):
         self.initialized = False
         rospy.loginfo("Initializing motor control node...")
-        self.start_odometry = False
-        
+
         # Construct subscriber
         self.sub_cmd = rospy.Subscriber(
-            "/motor_control",
-            motor_cmd,
+            "/encoder",
+            encoder,
             self.motor_cb,
             buff_size=2**24,
             queue_size=10
         )
+        self.rotate_dir = 0
 
-        # Encoder pins 
-        self.GPIO_MOTOR_ENCODER_1=18
-        self.GPIO_MOTOR_ENCODER_2=19
-        self.gpio_pin = 19
-        #self.driver_L = WheelEncoderDriver(self.GPIO_MOTOR_ENCODER_1)
-        #self.driver_R = WheelEncoderDriver(self.GPIO_MOTOR_ENCODER_2)
-
-        ## Get intrinsic Robot params
-        self.config = self.load_param()
-        self.y = 0
-        self.x = 0
-        self.theta = 0
-        
-        # Radians per tick
-        self.alpha = 2 * np.pi / self.config["encoder_res"]
-        
-        self.first_image_received = False
         self.initialized = True
-        
-        # Init prev ticks
-        self.L_ticks_prev = 0
-        self.R_ticks_prev = 0
+        self.prev_mesg = 0
+
         rospy.loginfo("motor control node initialized!")
 
+        self.state = 0
+
+        self.config = self.load_param()
+        self.wheel_radius = self.config["wheel_rad"]
+        self.baseline = self.config["baseline"]
+        self.encoder_resolution = self.config["encoder_res"]
+        self.gain = self.config["gain"]
+        self.trim = self.config["trim"]
+
+        self.target_enc_L = 0
+        self.target_enc_R = 0
+        self.alpha = 2 * np.pi / self.encoder_resolution
+
+        self.curr_msg = -1
 
     def motor_cb(self, data):
         if not self.initialized:
@@ -60,117 +53,117 @@ class MotorSubscriberNode:
 
         motor = DaguWheelsDriver()
 
-        # Get command values
-        in_velocity = data.velocity
-        in_distance = data.distance   # can be negative
-        in_angle = data.angle         # can be negative
+        # Extract updated encoder ticks from the incoming message
+        current_left_ticks = data.enc_L
+        current_right_ticks = data.enc_R
 
-        angle_rad = np.deg2rad(in_angle)
+        # === State 0: Command received ===
+        if self.state == 0:
+            if (self.curr_msg == data.new_mesg):
+                rospy.loginfo("State = 0, data frame is the same as before, doing nothing...")
+                return
+            self.abs_distance_old = data.abs_distance
+            self.abs_angle_old = data.abs_angle
+            rospy.loginfo("State = 0 Running Initialization")
 
-        # Compute desired wheel rotation (in radians) for in-place turn
-        rotate_left = angle_rad / 2.0
-        rotate_right = -angle_rad / 2.0
+            rospy.loginfo("curr_msg: {:.2f} new_mesg: {:.2f}".format(self.curr_msg, self.new_mesg))
 
-        # Convert rotation to ticks (ticks = radians / alpha)
-        left_target_ticks = abs(rotate_left / self.alpha)
-        right_target_ticks = abs(rotate_right / self.alpha)
+            # Cache input command
+            self.in_distance = data.abs_distance
+            self.in_angle_deg = data.abs_angle
+            self.in_angle_rad = np.deg2rad(self.in_angle_deg)
 
-        # Record start tick positions
-        left_start = self.driver_L._ticks
-        right_start = self.driver_R._ticks
+            # Cache initial encoder readings
+            self.left_start_ticks = current_left_ticks
+            self.right_start_ticks = current_right_ticks
 
-        # Perform rotation
-        while True:
-            left_progress = abs(self.driver_L._ticks - left_start)
-            right_progress = abs(self.driver_R._ticks - right_start)
+            # Compute target ticks for rotation
+            self.rotate_left = self.in_angle_rad / 2.0
+            self.rotate_right = -self.in_angle_rad / 2.0
 
-            curr_wheel_speed_left = 0.1 if left_progress < left_target_ticks else 0
-            curr_wheel_speed_right = 0.1 if right_progress < right_target_ticks else 0
+            self.left_target_rot_ticks = abs(self.rotate_left / self.alpha)
+            self.right_target_rot_ticks = abs(self.rotate_right / self.alpha)
+
+            rospy.loginfo("in_distance: {:.2f} \tin_angle_rad: {:.2f}".format(self.in_distance, self.in_angle_rad))
+
+            self.rot_speed = 0.1
+            self.drive_speed = 0.2
+
+            self.state = 1  # Go to rotation phase
+            return
+
+        # === State 1: Rotate in place ===
+        if self.state == 1:
+            rospy.loginfo("State = 1 Rotating in Place")
+            
+            left_rot_progress = abs(current_left_ticks - self.left_start_ticks)
+            right_rot_progress = abs(current_right_ticks - self.right_start_ticks)
+
+            left_done = left_rot_progress >= self.left_target_rot_ticks
+            right_done = right_rot_progress >= self.right_target_rot_ticks
+
+            # Speed zero if wheel is done
+            curr_wheel_speed_left = self.rot_speed if not left_done else 0
+            curr_wheel_speed_right = self.rot_speed if not right_done else 0
+
+            # Set directions explicitly based on angle sign
+            if self.in_angle_rad > 0:
+                # Turn left: left forward, right backward
+                left_speed = curr_wheel_speed_left
+                right_speed = -curr_wheel_speed_right
+            else:
+                # Turn right: left backward, right forward
+                left_speed = -curr_wheel_speed_left
+                right_speed = curr_wheel_speed_right
 
             motor.set_wheels_speed(
-                left=(self.config["gain"] - self.config["trim"]) * np.sign(rotate_left) * curr_wheel_speed_left,
-                right=(self.config["gain"] + self.config["trim"]) * np.sign(rotate_right) * curr_wheel_speed_right
+                left=(self.config["gain"] - self.config["trim"]) * left_speed,
+                right=(self.config["gain"] + self.config["trim"]) * right_speed
             )
 
-            if left_progress >= left_target_ticks and right_progress >= right_target_ticks:
-                break
+            if left_done and right_done:
+                rospy.loginfo("\tDone rotating")
+                self.state = 2  # Prepare for drive
+                self.left_start_ticks = current_left_ticks
+                self.right_start_ticks = current_right_ticks
+            return
 
-        # Reset encoder baselines for forward/backward driving
-        left_start = self.driver_L._ticks
-        right_start = self.driver_R._ticks
+        # === State 2: Drive straight ===
+        if self.state == 2:
+            rospy.loginfo("State = 2 Driving Straight Distance")
+            wheel_rotations = self.in_distance / (2 * np.pi * self.config["wheel_rad"])
+            target_drive_ticks = abs(wheel_rotations * self.config["encoder_res"])
 
-        # Convert linear distance to wheel ticks
-        wheel_rotations = in_distance / (2 * np.pi * self.config["wheel_rad"])  # can be negative
-        target_ticks = abs(wheel_rotations * self.config["encoder_res"])
+            left_drive_progress = abs(current_left_ticks - self.left_start_ticks)
+            right_drive_progress = abs(current_right_ticks - self.right_start_ticks)
 
-        while True:
-            left_progress = abs(self.driver_L._ticks - left_start)
-            right_progress = abs(self.driver_R._ticks - right_start)
+            left_done = left_drive_progress >= target_drive_ticks
+            right_done = right_drive_progress >= target_drive_ticks
 
-            curr_wheel_speed_left = 0.1 if left_progress < target_ticks else 0
-            curr_wheel_speed_right = 0.1 if right_progress < target_ticks else 0
+            direction = np.sign(self.in_distance)
 
-            # Distance affects direction (positive: forward, negative: backward)
-            direction = np.sign(in_distance)
-            
+            curr_wheel_speed_left = self.drive_speed if not left_done else 0
+            curr_wheel_speed_right = self.drive_speed if not right_done else 0
+
             motor.set_wheels_speed(
                 left=(self.config["gain"] - self.config["trim"]) * direction * curr_wheel_speed_left,
                 right=(self.config["gain"] + self.config["trim"]) * direction * curr_wheel_speed_right
             )
 
-            if left_progress >= target_ticks and right_progress >= target_ticks:
-                break
+            if left_done and right_done:
+                motor.set_wheels_speed(left=0, right=0)
+                motor.close()
+                self.state = 3  # Finished
+            return
 
-        motor.close()
+        # === State 3: Finished ===
+        if self.state == 3:
+            rospy.loginfo("State = 3 Motion is Complete.")
+            rospy.loginfo("Motion complete.")
+            self.state = 0  # Ready for next command
+            self.curr_msg = data.new_mesg
+            return
 
-    ## Measures the odometry and returns values since last measurement.
-    # @param direction 1 for forward 0 for backwards
-    ## Measures the odometry and returns values since last measurement.
-    # @param direction 1 for forward 0 for backwards
-    def odometry(self,L_ticks,R_ticks,direction_left,direction_right):
-        msg = Odometry()
-        
-        # Difference in encoder tics from previous measurement                
-        delta_ticks_left = L_ticks - self.L_ticks_prev
-        delta_ticks_right = R_ticks - self.R_ticks_prev
-
-        # Edge case for rotation in the same position
-        if direction_left < 0:
-            delta_ticks_left=delta_ticks_left*-1
-        if direction_right < 0:
-            delta_ticks_right=delta_ticks_right*-1
-
-        # Update previous ticks with new tick values
-        self.L_ticks_prev = L_ticks
-        self.R_ticks_prev = R_ticks
-        
-        # Calculate rotation distance of left and right wheel in radiants
-        rotation_wheel_left = delta_ticks_left * self.alpha 
-        rotation_wheel_right = delta_ticks_right * self.alpha
-
-        # Calculate distance each wheel has travelled since last measurement
-        d_left = self.config["wheel_rad"] * rotation_wheel_left
-        d_right = self.config["wheel_rad"] * rotation_wheel_right
-
-        ## Average distance travelled by the robot
-        d_A = (d_right + d_left)/2
-
-        ## How much the robot has turned (delta  )
-        d_theta = (d_right - d_left)/(2*self.config["baseline"])
-
-        ## Filling the Odometry message
-        # fill absolute position relative to the origin 
-
-        self.x = self.x + self.config["wheel_rad"] * (rotation_wheel_left + rotation_wheel_right)*np.cos(self.theta)/2
-        self.y = self.y + self.config["wheel_rad"] * (rotation_wheel_left + rotation_wheel_right)*np.sin(self.theta)/2
-        self.theta = self.theta + self.config["wheel_rad"]*(rotation_wheel_right - rotation_wheel_left)/(self.config["baseline"])
-
-        msg.pose.pose.position.x = self.x #x
-        msg.pose.pose.position.y = self.y #y
-        msg.pose.pose.position.z = 0.0  #z is always zeros as we don't drive into the air
-
-        return d_A,d_theta
-    
     def load_param(self):
         config = {}
         config["gain"] = rospy.get_param("~gain")
@@ -181,14 +174,14 @@ class MotorSubscriberNode:
         config["velocity"] = rospy.get_param("~velocity")
         
         rospy.loginfo("Loaded config: %s", config)
-        return config
-        
+        return config   
+    
 
 if __name__ == "__main__":
     # Initialize the node
-    rospy.init_node('motor_control_node', anonymous=True, xmlrpc_port=45102, tcpros_port=45103)
+    rospy.init_node('motor_control_node', anonymous=True, xmlrpc_port=45100, tcpros_port=45101)
     camera_node = MotorSubscriberNode()
     try:
         rospy.spin()
     except KeyboardInterrupt:
-        rospy.loginfo("Shutting down image viewer node.")
+        rospy.loginfo("Shutting down motor_control_node.")

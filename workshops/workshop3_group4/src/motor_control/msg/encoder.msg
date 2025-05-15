@@ -6,3 +6,4 @@ float64 abs_distance
 float64 abs_angle
 float64 velocity_cmd
 uint32 new_mesg
+uint8 move_cmd

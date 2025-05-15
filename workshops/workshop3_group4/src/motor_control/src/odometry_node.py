@@ -7,6 +7,12 @@ from motor_control.msg import motor_cmd, encoder
 from nav_msgs.msg import Odometry # maybe for future use
 from encoderDriver import *
 
+DEBUG_MODE = False
+
+def debug_print(msg):
+    if DEBUG_MODE:
+        rospy.loginfo(msg)
+
 class OdometryPublisherNode:
     def __init__(self):
         self.initialized = False
@@ -55,8 +61,10 @@ class OdometryPublisherNode:
         self.velocity = 0
         self.distance = 0
         self.angle = 0
-        self.new_mesg = 0
 
+        self.new_mesg = 0
+        self.prev_mesg = 0
+        self.action = 0
         ## absolute position parameters
         self.x = 0
         self.y = 0
@@ -66,13 +74,41 @@ class OdometryPublisherNode:
         rospy.loginfo("odem node initialized!")
         self.timer = rospy.Timer(rospy.Duration(0.02), self.read_encoder) # publishing at sample rate
 
+    #def read_topic(self,data):
+    #    debug_print("read_topic")
+    #    self.velocity = data.velocity
+    #    self.distance = data.distance
+    #    self.angle = data.angle
+    #    self.new_mesg = data.new_mesg
     def read_topic(self,data):
+    #    debug_print("read_topic")
         self.velocity = data.velocity
         self.distance = data.distance
         self.angle = data.angle
-        self.new_mesg = data.new_mesg
-        
+        self.new_mesg = data.new_mesg   
+    # Forward: 1, Backward: 2, Left: 3, Right: 4, Dont move: 0 
+        rospy.loginfo("Yes") 
+        if self.distance > 0:
+             rospy.loginfo("Forwards")
+             self.action = 1
+        elif self.distance < 0:
+             rospy.loginfo("Backwards")
+             self.action = 2
+             self.distance = -self.distance
+        if self.angle < 0:
+             rospy.loginfo("Left")
+             self.action = 3
+             self.angle = -self.angle
+        elif self.angle > 0:
+             rospy.loginfo("Right")
+             self.action = 4    
+        if  self.distance == 0.0 and self.angle == 0.0:
+            rospy.loginfo("Stop")
+            self.action = 0
+
+            
     def read_encoder(self,event):
+        #debug_print("read_encoder")
         msg = encoder() 
 
         # read the encoders
@@ -85,7 +121,22 @@ class OdometryPublisherNode:
 
         self.distance -= d_A
         self.angle -= d_theta
-
+        #rospy.loginfo("Distance Left:{dist}".format(dist = self.distance))
+        #rospy.loginfo("Distance Left:{theta}".format(theta = self.angle ))
+        #if self.distance <= 0.0 and self.angle <= 0.0 and self.prev_mesg != self.new_mesg:
+        #   self.action = 0
+        #   rospy.loginfo("Wrong")
+        #   self.prev_mesg = self.new_mesg
+        straight = (self.action == 1 or self.action == 2)
+        if self.distance <= 0.0 and straight and self.prev_mesg != self.new_mesg:
+                        self.action = 0
+                        rospy.loginfo("End straight")
+                        self.prev_mesg = self.new_mesg
+        turn = (self.action == 3 or self.action == 4)
+        if self.angle <= 0.0 and turn and self.prev_mesg != self.new_mesg:
+                        self.action = 0
+                        rospy.loginfo("End Turn")
+                        self.prev_mesg = self.new_mesg
         msg.enc_L = self.ticks_left
         msg.enc_R = self.ticks_right
         msg.d_A = d_A
@@ -94,10 +145,11 @@ class OdometryPublisherNode:
         msg.abs_angle = self.angle
         msg.new_mesg = self.new_mesg
         msg.velocity_cmd = self.velocity
-        
+        msg.move_cmd = self.action
+        #rospy.loginfo("Move command = {move}".format(move=self.action))
         self.pub_odom.publish(msg)
 
-        """
+
         # Difference in encoder tics from previous measurement                
         delta_ticks_left = self.ticks_left - self.prev_ticks_L
         delta_ticks_right = self.ticks_right - self.prev_ticks_R
@@ -105,11 +157,12 @@ class OdometryPublisherNode:
         # update the prev ticks
         self.prev_ticks_L = self.ticks_left
         self.prev_ticks_R = self.ticks_right        
-        """
+
         
         
     
     def odometry(self, L_ticks, R_ticks):
+        #debug_print("odometry")
         msg = Odometry()
         
         # Difference in encoder tics from previous measurement                
@@ -135,14 +188,14 @@ class OdometryPublisherNode:
         d_right = self.wheel_radius * rotation_wheel_right
 
         ## Average distance travelled by the robot in [m]
-        # d_A = (d_right + d_left)/2
+        d_A = (d_right + d_left)/2
 
         # This formula for d_A takes into account wheels not turning
-        if (d_right - d_left) == 0:
-            d_A = (d_right + d_left)/2
-        else:
-            R = (self.baseline / 2.0) * (d_left + d_right) / (d_right - d_left)
-            d_A = abs(R * d_theta)
+        # if (d_right - d_left) == 0:
+        #     d_A = (d_right + d_left)/2
+        # else:
+        #     R = (self.baseline / 2.0) * (d_left + d_right) / (d_right - d_left)
+        #     d_A = abs(R * d_theta)
 
         ## Average velocity of the robot in [m/s]
         d_v_A = d_A / 0.02
@@ -169,6 +222,7 @@ class OdometryPublisherNode:
 
 
     def load_param(self):
+        debug_print("load_param")
         config = {}
         config["gain"] = rospy.get_param("~gain")
         config["trim"] = rospy.get_param("~trim")
