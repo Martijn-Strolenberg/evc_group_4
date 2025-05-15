@@ -81,6 +81,8 @@ class OdometryPublisherNode:
         d_A, d_theta = self.odometry(self.ticks_left,self.ticks_right)
         #rospy.loginfo("d_A: {delta_A},d_theta: {delta_theta} ".format(delta_A = d_A, delta_theta = d_theta))
         # Send encoder message
+
+
         self.distance -= d_A
         self.angle -= d_theta
 
@@ -133,7 +135,11 @@ class OdometryPublisherNode:
         d_right = self.wheel_radius * rotation_wheel_right
 
         ## Average distance travelled by the robot in [m]
-        d_A = (d_right + d_left)/2
+        # d_A = (d_right + d_left)/2
+
+        # This formula for d_A takes into account wheels not turning
+        R = (self.baseline / 2.0) * (d_left + d_right) / (d_right - d_left)
+        d_A = abs(R * d_theta)
 
         ## Average velocity of the robot in [m/s]
         d_v_A = d_A / (1/self.sample_rate) 
