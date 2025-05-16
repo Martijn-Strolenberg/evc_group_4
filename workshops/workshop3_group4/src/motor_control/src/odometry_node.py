@@ -98,7 +98,7 @@ class OdometryPublisherNode:
         if self.angle < 0:
              rospy.loginfo("Left")
              self.action = 3
-             self.angle = -self.angle
+             self.angle = self.angle # changed minus sign
         elif self.angle > 0:
              rospy.loginfo("Right")
              self.action = 4    
