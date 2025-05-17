@@ -1,0 +1,4 @@
+<launch>
+  <node pkg="sensor_reading" type="display_node.py" name="display_node" output="screen">
+  </node>
+</launch>
