@@ -94,11 +94,11 @@ class OdometryPublisherNode:
         elif self.distance < 0:
              rospy.loginfo("Backwards")
              self.action = 2
-             self.distance = -self.distance
+             self.distance = self.distance # removed minus sign --> marti
         if self.angle < 0:
              rospy.loginfo("Left")
              self.action = 3
-             self.angle = self.angle # changed minus sign
+             self.angle = self.angle # removed minus sign --> marti
         elif self.angle > 0:
              rospy.loginfo("Right")
              self.action = 4    
