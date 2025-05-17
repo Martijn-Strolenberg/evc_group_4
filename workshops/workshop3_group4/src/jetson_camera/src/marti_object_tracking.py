@@ -31,7 +31,7 @@ class CameraSubscriberNode:
             queue_size=10
         )
 
-        self.cmd_rate = 2.0 # generate move commands at 5Hz
+        self.cmd_rate = 10.0 # generate move commands at 5Hz
         self.cmd_dt = 1.0 / self.cmd_rate
         self.last_cmd_ts = rospy.Time.now()
         self.latest_center = None  # updated every frame
@@ -39,6 +39,8 @@ class CameraSubscriberNode:
         self.new_cmd = 0 
         self.distance_cmd = 0.08
         self.angle_cmd = 0.3
+        self.turn_vel = 0.5
+        self.move_vel = 0.6
 
         self.initialized = True
         rospy.loginfo("Camera object detection node initialized!")
@@ -55,7 +57,7 @@ class CameraSubscriberNode:
             # only decode the undistorted image
             undis_image = cv2.imdecode(np.frombuffer(data.undist_img.data, np.uint8), cv2.IMREAD_COLOR)
 
-            # START: Image Processing
+            # <================= START: Image Processing ======================>
             # Convert to HSV color space
             hsv = cv2.cvtColor(undis_image, cv2.COLOR_BGR2HSV)
 
@@ -97,11 +99,7 @@ class CameraSubscriberNode:
                     # If no object is detected, set latest center to None
                     #rospy.loginfo("No object detected!.")
                     self.latest_center = None
-            # END: Image Processing
-
-            # SHOW THE RESULTS:
-            # Stack the images horizontally
-            # side_by_side = np.hstack((raw_image, undis_image))
+            # <===================== END: Image Processing =====================>
 
             # Add a label to each half (optional)
             cv2.putText(undis_image, "Object Tracking", (5, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
@@ -117,7 +115,7 @@ class CameraSubscriberNode:
             return
 
 
-# <============== Motor control =================>
+# <=================== Motor control =========================>
     def timer_cb(self, event):
         if not self.initialized:
             return
@@ -142,73 +140,70 @@ class CameraSubscriberNode:
         if ((center_x < left_thresh) and (center_y < top_thresh)):
             rospy.loginfo("Blue pen is in the left upper corner.")
             # move forward + turn left
-            # generate motor command
-            new_motor_cmd.velocity = 0.3
-            new_motor_cmd.distance = 0.0
-            new_motor_cmd.angle = -self.angle_cmd
+            # generate motor 
+            self.motor_cmd(self.turn_vel, 0.0, -self.angle_cmd) # turn left
+            #self.motor_cmd(0.5, self.distance_cmd/2, 0.0) # move forward
 
         elif ((left_thresh <= center_x < right_thresh) and (center_y < top_thresh)):
             rospy.loginfo("Blue pen is in the middle up.")
             # move forward (i think)
-            new_motor_cmd.velocity = 0.5
-            new_motor_cmd.distance = self.distance_cmd
-            new_motor_cmd.angle = 0.0
+            self.motor_cmd(self.move_vel, self.distance_cmd, 0.0) # move forward
 
         elif ((center_x >= right_thresh) and (center_y < top_thresh)):
             rospy.loginfo("Blue pen is in the right upper corner.")
             # move forward + turn right
-            new_motor_cmd.velocity = 0.3
-            new_motor_cmd.distance = 0.0
-            new_motor_cmd.angle = self.angle_cmd
+            self.motor_cmd(self.turn_vel, 0.0, self.angle_cmd) # turn right
+            #self.motor_cmd(0.5, self.distance_cmd/2, 0.0) # move forward
 
         # <================= Movement logic middle row =================>
         elif ((center_x < left_thresh) and (top_thresh <= center_y < bottom_thresh)):
             rospy.loginfo("Blue pen is in the middle left.")
             # turn left
-            new_motor_cmd.velocity = 0.3
-            new_motor_cmd.distance = 0.0
-            new_motor_cmd.angle = -self.angle_cmd
+            self.motor_cmd(self.turn_vel, 0.0, -self.angle_cmd) # turn left
 
         elif ((left_thresh <= center_x < right_thresh) and (top_thresh <= center_y < bottom_thresh)):
             rospy.loginfo("Blue pen is in the middle.")
             # do nothing
-            new_motor_cmd.velocity = 0.0
-            new_motor_cmd.distance = 0.0
-            new_motor_cmd.angle = 0.0
+            self.motor_cmd(0.0, 0.0, 0.0) # turn left
 
         elif ((center_x >= right_thresh) and (top_thresh <= center_y < bottom_thresh)):
             rospy.loginfo("Blue pen is in the middle right.")
             # turn right
-            new_motor_cmd.velocity = 0.3
-            new_motor_cmd.distance = 0.0
-            new_motor_cmd.angle = self.angle_cmd
+            self.motor_cmd(self.turn_vel, 0.0, self.angle_cmd) # turn right
 
         # <================= Movement logic lower row =================>
         elif ((center_x < left_thresh) and (center_y >= bottom_thresh)):
             rospy.loginfo("Blue pen is in the left lower corner.")
             # move backward + turn left
-            new_motor_cmd.velocity = 0.3
-            new_motor_cmd.distance = 0.0
-            new_motor_cmd.angle = -self.angle_cmd
+            self.motor_cmd(self.turn_vel, 0.0, -self.angle_cmd) # turn left
+            #self.motor_cmd(0.5, -self.distance_cmd/2, 0.0) # move backwards
 
         elif ((left_thresh <= center_x < right_thresh) and (center_y >= bottom_thresh)):
             rospy.loginfo("Blue pen is in the middle down.")
             # move backward (i think)
-            new_motor_cmd.velocity = 0.5
-            new_motor_cmd.distance = -self.distance_cmd
-            new_motor_cmd.angle = 0.0
+            self.motor_cmd(self.move_vel, -self.distance_cmd/2, 0.0) # move backwards
 
         elif ((center_x >= right_thresh) and (center_y >= bottom_thresh)):
             rospy.loginfo("Blue pen is in the right lower corner.")
             # move backward + turn right
-            new_motor_cmd.velocity = 0.3
-            new_motor_cmd.distance = 0.0
-            new_motor_cmd.angle = self.angle_cmd
-
+            self.motor_cmd(self.turn_vel, 0.0, self.angle_cmd) # turn right
+            #self.motor_cmd(0.5, -self.distance_cmd/2, 0.0) # move backwards
+        # this should never be possible
         else:
             rospy.loginfo_throttle(2.0, "Pen in unknown position.")
             return
 
+    # <================= Motor command function =================>
+    def motor_cmd(self, velocity, distance, angle):
+        # Create a new motor_cmd message
+        new_motor_cmd = motor_cmd()
+        self.new_cmd += 1
+        new_motor_cmd.new_mesg = self.new_cmd
+        new_motor_cmd.velocity = velocity
+        new_motor_cmd.distance = distance
+        new_motor_cmd.angle = angle
+
+        # Publish the command
         self.pub_cmd.publish(new_motor_cmd)
 
 
