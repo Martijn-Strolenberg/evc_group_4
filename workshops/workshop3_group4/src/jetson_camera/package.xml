@@ -2,7 +2,7 @@
 <package format="2">
     <name>jetson_camera</name>
     <version>0.1.0</version>
-    <description>Group 4 Workshop2 package</description>
+    <description>Group 4 Workshop3 package</description>
 
     <!-- Maintainership Information -->
     <maintainer email="v.rizeakos@student.tue.nl">V.Rizeakos</maintainer>
