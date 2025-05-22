@@ -1,0 +1,5 @@
+<launch>
+  <node pkg="motor_control" type="martijn_control_node.py" name="martijn_control_node" output="screen">
+    <rosparam command="load" file="$(find motor_control)/config/motor_param.yaml" />
+  </node>
+</launch>

@@ -40,14 +40,18 @@ class MotorSubscriberNode:
         self.target_enc_L = 0
         self.target_enc_R = 0
         self.alpha = 2 * np.pi / self.encoder_resolution
-
         self.curr_msg = -1
         self.initialized = True
 
     def motor_cb(self, data):
         if not self.initialized:
             return
+        if data.new_mesg > self.curr_msg:
+            self.curr_msg = data.new_mesg
 
+        if not data.blocking and self.curr_msg != data.new_mesg:
+            return
+        
         motor = DaguWheelsDriver()
 
         # Extract updated encoder ticks from the incoming message
@@ -68,6 +72,9 @@ class MotorSubscriberNode:
 
                 # Cache input command
                 self.in_distance = data.abs_distance
+                if not data.blocking:
+                    self.in_distance = 100000000
+
                 self.in_angle_rad = data.abs_angle
 
                 # Cache initial encoder readings
