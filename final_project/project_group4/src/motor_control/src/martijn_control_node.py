@@ -1,15 +1,13 @@
 #!/usr/bin/env python2
 
 import time
-import hat
+#import hat
 from hat import *
 import motorDriver
 from motorDriver import DaguWheelsDriver
 import rospy
 import numpy as np
-from sensor_msgs.msg import CompressedImage
-from jetson_camera.msg import twovids
-from motor_control.msg import motor_cmd,encoder
+from motor_control.msg import motor_cmd, encoder
 
 class MotorSubscriberNode:
  
@@ -26,8 +24,6 @@ class MotorSubscriberNode:
             queue_size=10
         )
         self.rotate_dir = 0
-
-        self.initialized = True
         self.prev_mesg = 0
 
         rospy.loginfo("motor control node initialized!")
@@ -46,6 +42,7 @@ class MotorSubscriberNode:
         self.alpha = 2 * np.pi / self.encoder_resolution
 
         self.curr_msg = -1
+        self.initialized = True
 
     def motor_cb(self, data):
         if not self.initialized:
@@ -72,7 +69,6 @@ class MotorSubscriberNode:
                 # Cache input command
                 self.in_distance = data.abs_distance
                 self.in_angle_rad = data.abs_angle
-                #self.in_angle_rad = np.deg2rad(self.in_angle_deg)
 
                 # Cache initial encoder readings
                 self.left_start_ticks = current_left_ticks
@@ -82,7 +78,7 @@ class MotorSubscriberNode:
                 self.rotate_left = self.in_angle_rad
                 self.rotate_right = -self.in_angle_rad
 
-                self.left_target_rot_ticks = abs(self.rotate_left / self.alpha)*2
+                self.left_target_rot_ticks = abs(self.rotate_left / self.alpha)*2    # calculate theoretical encoder values
                 self.right_target_rot_ticks = abs(self.rotate_right / self.alpha)*2
 
                 rospy.loginfo("in_distance: {:.2f} \tin_angle_rad: {:.2f}".format(self.in_distance, self.in_angle_rad))
@@ -126,7 +122,7 @@ class MotorSubscriberNode:
 
             if left_done and right_done:
                 rospy.loginfo("\tDone rotating")
-                self.state = 2  # Prepare for drive
+                self.state = 2  # Prepare for driving straght
                 self.left_start_ticks = current_left_ticks
                 self.right_start_ticks = current_right_ticks
             return
