@@ -6,11 +6,19 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   sensor_msgs
   std_msgs
+  message_generation
 )
 # add_message_files(
 #   FILES
 # )
 # Declare a catkin package
+
+add_service_files(
+  FILES
+  # our custom services
+  BatteryInfo.srv
+)
+
 generate_messages(
   DEPENDENCIES
   sensor_msgs
@@ -32,12 +40,10 @@ install(DIRECTORY launch/
 
 # Install Python scripts
 catkin_install_python(PROGRAMS
-  # src/temp_control_node.py
-  # src/motor_pub_node.py
-  # src/motor_control_node.py
-  # src/odometry_node.py
+  src/battery_test.py
+  src/battery_monitor_service.py
   src/display_node.py
-  # src/battery_node.py
+  src/battery_pub_node.py
   src/tof_pub_node.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )

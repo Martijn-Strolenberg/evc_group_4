@@ -2,7 +2,7 @@
 <package format="2">
     <name>motor_control</name>
     <version>0.1.0</version>
-    <description>Group 4 assignment 3 package</description>
+    <description>Group 4 final project package</description>
 
     <!-- Maintainership Information -->
     <maintainer email="v.rizeakos@student.tue.nl">V.Rizeakos</maintainer>

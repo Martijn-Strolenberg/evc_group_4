@@ -20,6 +20,16 @@ add_message_files(
   encoder.msg
 )
 
+add_service_files(
+  FILES
+  # our custom services
+  Stop.srv
+  MoveStraight.srv
+  Rotate.srv
+  LeftWheelDir.srv
+  RightWheelDir.srv
+)
+
 # add_action_files(
 #   DIRECTORY action
 #   FILES CountUntil.action
@@ -48,6 +58,8 @@ install(DIRECTORY launch/
 
 # Install Python scripts
 catkin_install_python(PROGRAMS
+  src/marti_odometry_node.py
+  src/martijn_control_nodeV2.py
   src/martijn_control_node.py
   src/motor_command_node.py
   src/temp_control_node.py

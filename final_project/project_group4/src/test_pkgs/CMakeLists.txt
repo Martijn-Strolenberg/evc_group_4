@@ -21,7 +21,9 @@ add_message_files(
 add_service_files(
   FILES
   # our custom services
-  StopRobot.srv
+  Stop.srv
+  MoveStraight.srv
+  Rotate.srv
 )
 
 add_action_files(
@@ -54,5 +56,7 @@ install(DIRECTORY launch/
 catkin_install_python(PROGRAMS
   src/count_until_server.py
   src/count_until_client.py
+  src/robot_move_API.py
+  src/robot_control_script.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )

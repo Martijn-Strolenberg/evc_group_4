@@ -107,7 +107,7 @@ class OdometryPublisherNode:
             self.action = 0
 
             
-    def read_encoder(self,event):
+    def read_encoder(self, event):
         #debug_print("read_encoder")
         msg = encoder() 
 
