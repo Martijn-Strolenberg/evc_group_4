@@ -1,10 +1,10 @@
 int64 enc_L
 int64 enc_R
-float64 d_A
-float64 d_theta
-float64 abs_distance
-float64 abs_angle
-float64 velocity_cmd
+float32 d_A
+float32 d_theta
+float32 abs_distance
+float32 abs_angle
+float32 velocity_cmd
 uint32 new_mesg
 uint8 move_cmd
 uint8 blocking
