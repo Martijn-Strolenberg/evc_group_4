@@ -1,0 +1,8 @@
+<launch>
+  <node pkg="assignment_3_ocr" type="OCR_node.py" name="OCR_node" output="screen">
+    <param name="confidence" value="50" />
+    <param name="video_save" value="False" />
+    <param name="commando_execution" value="True" />
+    
+  </node>
+</launch>

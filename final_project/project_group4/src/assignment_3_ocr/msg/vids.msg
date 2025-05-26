@@ -1,0 +1,2 @@
+sensor_msgs/CompressedImage raw_img
+sensor_msgs/CompressedImage proc_img
