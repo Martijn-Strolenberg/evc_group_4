@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(jetson_camera)
+project(camera)
 
 # Find catkin and any catkin packages
 find_package(catkin REQUIRED COMPONENTS
@@ -11,7 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
 )
 add_message_files(
   FILES
-  twovids.msg
+  #twovids.msg
   test.msg
   motor_cmd.msg
 )
@@ -37,7 +37,7 @@ install(DIRECTORY launch/
 
 # Install Python scripts
 catkin_install_python(PROGRAMS
-  src/camera_processor_node.py
+  src/camera_processor_node_undis.py
   src/camera_publisher_node.py
   src/camera_viewer_node.py
   src/line_follower.py
