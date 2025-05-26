@@ -98,7 +98,7 @@ class OdometryPublisherNode:
     self.prev_ticks_R = self.ticks_R
 
     # calculate the current pose estimation
-    [self.x_curr, self.y_curr, self.theta_curr] = self.pose_estimation(self.wheel_radius, self.baseline, self.x_prev, self.y_prev, self.theta_prev, self.delta_phi_left, self.delta_phi_right)
+    [self.x_curr, self.y_curr, self.theta_curr, d_average, d_theta] = self.pose_estimation(self.wheel_radius, self.baseline, self.x_prev, self.y_prev, self.theta_prev, self.delta_phi_left, self.delta_phi_right)
     # update the current pose estimation parameters
     self.x_prev = self.x_curr
     self.y_prev = self.y_curr
@@ -111,7 +111,7 @@ class OdometryPublisherNode:
     d_theta = (d_right - d_left) / self.baseline
 
     # publish the odometry data and the tf transform
-    self.publish_odometry(self.x_curr, self.y_curr, self.theta_curr)
+    self.publish_odometry(self.x_curr, self.y_curr, self.theta_curr, d_average, d_theta)
 
 
   def delta_phi(self, ticks, prev_ticks):
@@ -163,10 +163,10 @@ class OdometryPublisherNode:
     #theta_curr = theta_prev + d_theta  # new orientation
     theta_curr = (theta_prev + d_theta + np.pi) % (2*np.pi) - np.pi  # new orientation
 
-    return x_curr, y_curr, theta_curr
+    return x_curr, y_curr, theta_curr, d_average, d_theta
 
   # Function to publish the odometry data and the tf transform
-  def publish_odometry(self, x, y, theta):
+  def publish_odometry(self, x, y, theta, d_average, d_theta):
     # time stamp
     now = rospy.Time.now()
 

@@ -243,15 +243,15 @@ class MotorSubscriberNode:
                 self.state = 5 # Set the state to stop the robot
             else:
                 # Set the wheel speeds for driving straight forwards
-                self.motor.set_wheels_speed(left=(self.gain - self.trim)*self.goal_speed, right=(self.gain + self.trim)*self.goal_speed)
-                '''
+                # self.motor.set_wheels_speed(left=(self.gain - self.trim)*self.goal_speed, right=(self.gain + self.trim)*self.goal_speed)
+
                 # -------- PID heading control -----------
                 v_nom =  self.goal_speed                 # positive forward
                 v, omega = self.pid_heading_control(v_nom, self.start_theta, self.last_odom_theta)
                 left_cmd, right_cmd = self.v_omega_to_motor_cmd(v, omega)
                 left_cmd, right_cmd = self.acceleration(left_cmd, right_cmd) # Apply acceleration limits
                 self.motor.set_wheels_speed(left_cmd, right_cmd)
-                '''
+
             
 
         # === State 4: Drive straight backwards ===
