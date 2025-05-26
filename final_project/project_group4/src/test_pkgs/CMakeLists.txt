@@ -13,10 +13,10 @@ find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   nav_msgs
 )
-add_message_files(
-  FILES
-  # our custom messages
-)
+# add_message_files(
+#   FILES
+#   # our custom messages
+# )
 
 add_service_files(
   FILES

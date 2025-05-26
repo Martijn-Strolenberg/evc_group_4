@@ -104,11 +104,17 @@ class OdometryPublisherNode:
     self.y_prev = self.y_curr
     self.theta_prev = self.theta_curr
 
+    # recompute distances to use in odometry
+    d_right = self.wheel_radius * self.delta_phi_right
+    d_left = self.wheel_radius * self.delta_phi_left
+    d_average = (d_right + d_left) / 2
+    d_theta = (d_right - d_left) / self.baseline
+
     # publish the odometry data and the tf transform
     self.publish_odometry(self.x_curr, self.y_curr, self.theta_curr)
 
 
-  def delta_phi(self, ticks: int, prev_ticks: int) -> float:
+  def delta_phi(self, ticks, prev_ticks):
     """
     Args:
       ticks: Current tick count from the encoders.
@@ -124,7 +130,7 @@ class OdometryPublisherNode:
 
     return delta_phi
 
-  def pose_estimation(self, R: float, baseline: float, x_prev: float, y_prev: float, theta_prev: float, delta_phi_left: float, delta_phi_right: float,) -> Tuple[float, float, float]:
+  def pose_estimation(self, R, baseline, x_prev, y_prev, theta_prev, delta_phi_left, delta_phi_right):
     """
     Calculate the current robot pose using the dead-reckoning model.
 
