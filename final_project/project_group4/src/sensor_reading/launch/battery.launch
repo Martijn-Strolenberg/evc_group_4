@@ -1,0 +1,4 @@
+<launch>
+  <node pkg="sensor_reading" type="battery_pub_node.py" name="battery_pub_node" output="screen">
+  </node>
+</launch>

@@ -50,9 +50,11 @@ class MotorSubscriberNode:
         if not self.initialized:
             return
         if data.new_mesg > self.curr_msg:
+            rospy.loginfo("New message received")
             self.curr_msg = data.new_mesg
 
         if not data.blocking and self.curr_msg != data.new_mesg:
+            rospy.loginfo("Blocking thing")
             return
         
         motor = DaguWheelsDriver()
