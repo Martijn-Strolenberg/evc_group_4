@@ -1,0 +1,5 @@
+<launch>
+  <node pkg="motor_control" type="Luka_control_node.py" name="luka_control_node" output="screen">
+    <rosparam command="load" file="$(find motor_control)/config/motor_param.yaml" />
+  </node>
+</launch>

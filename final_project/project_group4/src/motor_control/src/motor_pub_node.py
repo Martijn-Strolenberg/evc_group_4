@@ -52,6 +52,12 @@ class MotorPublisherNode:
                         break
                     angle = float(a_input)
 
+                    b_input = raw_input("Blocking: ")
+                    if b_input.strip().lower() == 'q':
+                        rospy.loginfo("Exiting motor command publisher.")
+                        break
+                    block = float(b_input)
+
                     self.new_cmd = self.new_cmd + 1
 
                     msg = motor_cmd()
@@ -59,6 +65,7 @@ class MotorPublisherNode:
                     msg.distance = position
                     msg.angle = np.deg2rad(angle)
                     msg.new_mesg = self.new_cmd
+                    msg.blocking = block
                     
 
                     rospy.loginfo("Publishing motor command: v=%.2f, p=%.2f, a=%.2f", velocity, position, angle)
