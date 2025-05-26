@@ -11,3 +11,13 @@ encoder_res: 137
 
 ## Movement params
 velocity: 0.1
+
+## Movement params
+max_velocity: 1
+acceleration: 0.5
+deceleration: 0.5
+
+## PID Params (tune!)
+Kp: 2.0
+Ki: 0.0
+Kd: 0.0
