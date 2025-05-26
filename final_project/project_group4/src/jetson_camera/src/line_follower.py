@@ -62,11 +62,18 @@ class CameraSubscriberNode:
             # Convert to HSV color space
             hsv = cv2.cvtColor(undis_image, cv2.COLOR_BGR2HSV)
 
-            # Define HSV range for white (adjust if needed) THIS IS FOR DETECTING THE Line
-            lower_white = np.array([0, 0, 200])  # Lower bound for white
-            upper_white = np.array([180, 30, 255])  # Upper bound for white
+            v_channel = hsv[:,:,2]  # brightness
 
-            # Threshold the HSV image to get only blue colors IT MASK ALL OTHER COLORS EXCEPT WHITE (as defined above)
+            # Compute adaptive thresholds for V channel
+            mean_v = np.mean(v_channel)
+            std_v = np.std(v_channel)
+
+            lower_v = max(0, mean_v - 1.5 * std_v)
+            upper_v = min(255, mean_v + 1.5 * std_v)
+
+            lower_white = np.array([0, 0, lower_v])
+            upper_white = np.array([180, 40, upper_v])
+
             mask = cv2.inRange(hsv, lower_white, upper_white)
 
             # Morphological operations to clean noise
