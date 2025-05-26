@@ -41,6 +41,8 @@ class CameraSubscriberNode:
         self.turn_vel = 0.5
         self.move_vel = 0.6
 
+        self.middle = rospy.get_param("~width") / 2
+
         self.initialized = True
         rospy.loginfo("Camera object detection node initialized!")
 
@@ -72,19 +74,32 @@ class CameraSubscriberNode:
             mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
             mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
 
-            # Find contours in the mask
-            _, contours, _ = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            segmented_image = cv2.bitwise_and(undis_image, undis_image, mask=mask)
+           
 
-            # if there are no contours, set latest center to None
-            if not contours:
-                self.latest_center = None  # No blue object detected
-                #return  # Exit early
+            MIN_AREA_TRACK = 20  # Minimum area for track marks
 
-            
+            # get a list of contours
+            contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
-            # Display the result
-            cv2.imshow("Object tracking", undis_image)
-            
+            lines = []
+
+            for contour in contours:
+                M = cv2.moments(contour)
+
+                if (M['m00'] > MIN_AREA_TRACK):
+                    # Contour is part of the track
+                    cx = int(M["m10"]/M["m00"])
+                    xy = int(M["m01"]/M["m00"])
+                    lines.append({'x': cx, 'y': xy})
+
+            if lines:
+                cv2.circle(segmented_image, (lines[0]['x'], lines[0]['y']), 5, (0, 255, 0), -1)
+                self.latest_center = (lines[0]['x'], lines[0]['y'])
+            else:
+                self.latest_center = None
+
+            cv2.imshow("Segmented Image", segmented_image)
             cv2.waitKey(1)  # Non-blocking update
 
         except CvBridgeError as err:
@@ -103,72 +118,24 @@ class CameraSubscriberNode:
 
         center_x, center_y = self.latest_center
 
-        # Define thresholds for 3x3 grid regions in the image
-        left_thresh = 214
-        right_thresh = 426
-        top_thresh = 160
-        bottom_thresh = 320
+        error = center_x - self.middle
+        
+        # Lets determine the angle, negative means turn left, positive means turn right
+        # angle is in radians
+        angle = np.arctan2(error, 100)  # 100 is a scaling factor for the angle, 320 error is 1.26 radians == 72 degrees
+        
+        # scale speed based on the absolute error
+        velocity = max(self.move_vel * (1 - min(abs(error) / self.middle, 1)), 0.5)  # Scale velocity based on error, min speed is 0.5
+
 
         self.new_cmd += 1
         new_motor_cmd = motor_cmd()
         new_motor_cmd.new_mesg = self.new_cmd
 
-        # # <================= Movement logic upper row =================>
-        # if ((center_x < left_thresh) and (center_y < top_thresh)):
-        #     rospy.loginfo("Blue pen is in the left upper corner.")
-        #     # move forward + turn left
-        #     # generate motor 
-        #     self.motor_cmd(self.turn_vel, 0.0, -self.angle_cmd) # turn left
-        #     #self.motor_cmd(0.5, self.distance_cmd/2, 0.0) # move forward
-
-        # elif ((left_thresh <= center_x < right_thresh) and (center_y < top_thresh)):
-        #     rospy.loginfo("Blue pen is in the middle up.")
-        #     # move forward (i think)
-        #     self.motor_cmd(self.move_vel, self.distance_cmd, 0.0) # move forward
-
-        # elif ((center_x >= right_thresh) and (center_y < top_thresh)):
-        #     rospy.loginfo("Blue pen is in the right upper corner.")
-        #     # move forward + turn right
-        #     self.motor_cmd(self.turn_vel, 0.0, self.angle_cmd) # turn right
-        #     #self.motor_cmd(0.5, self.distance_cmd/2, 0.0) # move forward
-
-        # # <================= Movement logic middle row =================>
-        # elif ((center_x < left_thresh) and (top_thresh <= center_y < bottom_thresh)):
-        #     rospy.loginfo("Blue pen is in the middle left.")
-        #     # turn left
-        #     self.motor_cmd(self.turn_vel, 0.0, -self.angle_cmd) # turn left
-
-        # elif ((left_thresh <= center_x < right_thresh) and (top_thresh <= center_y < bottom_thresh)):
-        #     rospy.loginfo("Blue pen is in the middle.")
-        #     # do nothing
-        #     self.motor_cmd(0.0, 0.0, 0.0) # turn left
-
-        # elif ((center_x >= right_thresh) and (top_thresh <= center_y < bottom_thresh)):
-        #     rospy.loginfo("Blue pen is in the middle right.")
-        #     # turn right
-        #     self.motor_cmd(self.turn_vel, 0.0, self.angle_cmd) # turn right
-
-        # # <================= Movement logic lower row =================>
-        # elif ((center_x < left_thresh) and (center_y >= bottom_thresh)):
-        #     rospy.loginfo("Blue pen is in the left lower corner.")
-        #     # move backward + turn left
-        #     self.motor_cmd(self.turn_vel, 0.0, -self.angle_cmd) # turn left
-        #     #self.motor_cmd(0.5, -self.distance_cmd/2, 0.0) # move backwards
-
-        # elif ((left_thresh <= center_x < right_thresh) and (center_y >= bottom_thresh)):
-        #     rospy.loginfo("Blue pen is in the middle down.")
-        #     # move backward (i think)
-        #     self.motor_cmd(self.move_vel, -self.distance_cmd/2, 0.0) # move backwards
-
-        # elif ((center_x >= right_thresh) and (center_y >= bottom_thresh)):
-        #     rospy.loginfo("Blue pen is in the right lower corner.")
-        #     # move backward + turn right
-        #     self.motor_cmd(self.turn_vel, 0.0, self.angle_cmd) # turn right
-        #     #self.motor_cmd(0.5, -self.distance_cmd/2, 0.0) # move backwards
-        # # this should never be possible
-        # else:
-        #     rospy.loginfo_throttle(2.0, "Pen in unknown position.")
-        #     return
+        new_motor_cmd.velocity = velocity
+        new_motor_cmd.distance = self.distance_cmd
+        new_motor_cmd.angle = angle
+        new_motor_cmd.blocking = 0
 
     # <================= Motor command function =================>
     def motor_cmd(self, velocity, distance, angle):

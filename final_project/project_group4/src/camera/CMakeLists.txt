@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(motor_control)
+project(camera)
 
 # Find catkin and any catkin packages
 find_package(catkin REQUIRED COMPONENTS
@@ -8,14 +8,12 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   std_msgs
   message_generation
-  geometry_msgs
-  nav_msgs
 )
 add_message_files(
   FILES
-  twovids.msg
+  #twovids.msg
+  test.msg
   motor_cmd.msg
-  encoder.msg
 )
 # Declare a catkin package
 generate_messages(
@@ -25,7 +23,7 @@ generate_messages(
 )
 
 catkin_package(
-  CATKIN_DEPENDS message_runtime sensor_msgs std_msgs geometry_msgs nav_msgs
+  CATKIN_DEPENDS message_runtime sensor_msgs std_msgs
 )
 
 # Include directories
@@ -39,10 +37,9 @@ install(DIRECTORY launch/
 
 # Install Python scripts
 catkin_install_python(PROGRAMS
-  src/martijn_control_node.py
-  src/temp_control_node.py
-  src/motor_pub_node.py
-  src/motor_control_node.py
-  src/odometry_node.py
+  src/camera_processor_node_undis.py
+  src/camera_publisher_node.py
+  src/camera_viewer_node.py
+  src/line_follower.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(jetson_camera)
+project(assignment_3_ocr)
 
 # Find catkin and any catkin packages
 find_package(catkin REQUIRED COMPONENTS
@@ -11,17 +11,17 @@ find_package(catkin REQUIRED COMPONENTS
 )
 add_message_files(
   FILES
+  vids.msg
   twovids.msg
-  test.msg
   motor_cmd.msg
 )
-# Declare a catkin package
+# Declare a catkin package 
 generate_messages(
   DEPENDENCIES
   sensor_msgs
   std_msgs
 )
-
+# Declare a catkin package
 catkin_package(
   CATKIN_DEPENDS message_runtime sensor_msgs std_msgs
 )
@@ -37,9 +37,10 @@ install(DIRECTORY launch/
 
 # Install Python scripts
 catkin_install_python(PROGRAMS
-  src/camera_processor_node.py
-  src/camera_publisher_node.py
-  src/camera_viewer_node.py
-  src/line_follower.py
+  src/movie_publisher.py
+  src/movie_processor_subscriber.py
+  src/movie_processor.py
+  src/OCR_node.py
+  src/Motor_OCR_node.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )

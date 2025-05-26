@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package format="2">
-    <name>jetson_camera</name>
+    <name>camera</name>
     <version>0.1.0</version>
     <description>Group 4 Workshop3 package</description>
 
