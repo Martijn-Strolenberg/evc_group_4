@@ -2,7 +2,7 @@
 <package format="2">
     <name>motor_control</name>
     <version>0.1.0</version>
-    <description>Group 4 assignment 3 package</description>
+    <description>Group 4 final project package</description>
 
     <!-- Maintainership Information -->
     <maintainer email="v.rizeakos@student.tue.nl">V.Rizeakos</maintainer>
@@ -17,6 +17,8 @@
     <build_depend>std_msgs</build_depend>
     <build_depend>nav_msgs</build_depend>
     <build_depend>geometry_msgs</build_depend>
+    <build_depend>actionlib</build_depend>
+    <build_depend>actionlib_msgs</build_depend>
 
     <!-- Runtime dependencies -->
     <exec_depend>cv_bridge</exec_depend>
@@ -26,6 +28,8 @@
     <exec_depend>geometry_msgs</exec_depend>
     <exec_depend>std_msgs</exec_depend>
     <exec_depend>message_runtime</exec_depend>
+    <exec_depend>actionlib</exec_depend>
+    <exec_depend>actionlib_msgs</exec_depend>
 
     <!-- Optional: testing dependencies -->
     <test_depend>rostest</test_depend>

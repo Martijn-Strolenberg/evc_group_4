@@ -64,8 +64,11 @@ class OdometryPublisherNode:
 
         self.new_mesg = 0
         self.prev_mesg = 0
-        self.action = 0
-        self.block_cmd = 0
+        self.action = 0 # Used in nonblocking implementation
+
+        # Non-blocking: 0, Blocking: 1
+        self.blocking = 0 # If next input is blocking or not
+
         ## absolute position parameters
         self.x = 0
         self.y = 0
@@ -75,38 +78,41 @@ class OdometryPublisherNode:
         rospy.loginfo("odem node initialized!")
         self.timer = rospy.Timer(rospy.Duration(0.02), self.read_encoder) # publishing at sample rate
 
-    #def read_topic(self,data):
-    #    debug_print("read_topic")
-    #    self.velocity = data.velocity
-    #    self.distance = data.distance
-    #    self.angle = data.angle
-    #    self.new_mesg = data.new_mesg
+
     def read_topic(self,data):
-    #    debug_print("read_topic")
         self.velocity = data.velocity
         self.distance = data.distance
         self.angle = data.angle
         self.new_mesg = data.new_mesg
-        self.block_cmd = data.blocking
+        self.blocking = data.blocking   
     # Forward: 1, Backward: 2, Left: 3, Right: 4, Dont move: 0 
         rospy.loginfo("Yes") 
         if self.distance > 0:
              rospy.loginfo("Forwards")
              self.action = 1
+             #self.baction = 1
         elif self.distance < 0:
              rospy.loginfo("Backwards")
              self.action = 2
+             #self.baction = 2
              self.distance = self.distance # removed minus sign --> marti
         if self.angle < 0:
              rospy.loginfo("Left")
              self.action = 3
+             #self.baction = 3
              self.angle = self.angle # removed minus sign --> marti
         elif self.angle > 0:
              rospy.loginfo("Right")
-             self.action = 4    
+             self.action = 4
+             #self.baction = 5    
         if  self.distance == 0.0 and self.angle == 0.0:
             rospy.loginfo("Stop")
             self.action = 0
+            #self.baction = 0
+
+        if not self.blocking:
+            self.distance = 0
+            self.angle = 0 ## Reset values to track how far robot has gone
 
             
     def read_encoder(self, event):
@@ -116,40 +122,51 @@ class OdometryPublisherNode:
         # read the encoders
         self.ticks_left = self.driver_L._ticks
         self.ticks_right = self.driver_R._ticks
+
+        # Perform odometry for robot position
         d_A, d_theta = self.odometry(self.ticks_left,self.ticks_right)
-        #rospy.loginfo("d_A: {delta_A},d_theta: {delta_theta} ".format(delta_A = d_A, delta_theta = d_theta))
-        # Send encoder message
+        
 
+        ## Blocking or nonblocking assignment:
+        if not self.blocking: # Non-blocking
+            # Keep track of how far the robot has moved.
+            self.distance += d_A
+            self.angle += d_theta
+        else:
+            # Send encoder message
+            self.distance -= d_A
+            self.angle -= d_theta
 
-        self.distance -= d_A
-        self.angle -= d_theta
-        #rospy.loginfo("Distance Left:{dist}".format(dist = self.distance))
-        #rospy.loginfo("Distance Left:{theta}".format(theta = self.angle ))
-        #if self.distance <= 0.0 and self.angle <= 0.0 and self.prev_mesg != self.new_mesg:
-        #   self.action = 0
-        #   rospy.loginfo("Wrong")
-        #   self.prev_mesg = self.new_mesg
-        straight = (self.action == 1 or self.action == 2)
-        if self.distance <= 0.0 and straight and self.prev_mesg != self.new_mesg:
-                        self.action = 0
-                        rospy.loginfo("End straight")
-                        self.prev_mesg = self.new_mesg
-        turn = (self.action == 3 or self.action == 4)
-        if self.angle <= 0.0 and turn and self.prev_mesg != self.new_mesg:
-                        self.action = 0
-                        rospy.loginfo("End Turn")
-                        self.prev_mesg = self.new_mesg
+            straight = (self.action == 1 or self.action == 2)
+            if self.distance <= 0.0 and straight and self.prev_mesg != self.new_mesg:
+                            self.action = 0
+                            rospy.loginfo("End straight")
+                            self.prev_mesg = self.new_mesg
+
+            turn = (self.action == 3 or self.action == 4)
+            if self.angle <= 0.0 and turn and self.prev_mesg != self.new_mesg:
+                            self.action = 0
+                            rospy.loginfo("End rotation")
+                            self.prev_mesg = self.new_mesg
+        ## Publishing 
+        
+        # Tick value
         msg.enc_L = self.ticks_left
         msg.enc_R = self.ticks_right
+
+        # Distance travelled since previous message
         msg.d_A = d_A
         msg.d_theta = d_theta
+
+        # Total distance travelled by the robot
         msg.abs_distance = self.distance
         msg.abs_angle = self.angle
+
+        # Additional functions
         msg.new_mesg = self.new_mesg
         msg.velocity_cmd = self.velocity
         msg.move_cmd = self.action
-        msg.blocking = self.block_cmd
-        #rospy.loginfo("Move command = {move}".format(move=self.action))
+        
         self.pub_odom.publish(msg)
 
 
@@ -165,7 +182,7 @@ class OdometryPublisherNode:
         
     
     def odometry(self, L_ticks, R_ticks):
-        #debug_print("odometry")
+        
         msg = Odometry()
         
         # Difference in encoder tics from previous measurement                
@@ -202,7 +219,6 @@ class OdometryPublisherNode:
 
         ## Average velocity of the robot in [m/s]
         d_v_A = d_A / 0.02
-        #rospy.loginfo("current robot velocity: {vel} \n".format(vel=d_v_A))
 
         ## How much the robot has turned (delta  )  [rads]
         d_theta = (d_right - d_left)/(self.baseline)
@@ -215,6 +231,7 @@ class OdometryPublisherNode:
         msg.header.stamp = rospy.Time.now()  # Fill the time stamp
         msg.header.frame_id = "odom"  # Fill the frame id
         msg.child_frame_id = "base_link"  # Fill the child frame id
+
         # fill absolute position relative to the origin 
         msg.pose.pose.position.x = self.x   # Absolute x position
         msg.pose.pose.position.y = self.y   # Absolute y position
@@ -225,7 +242,6 @@ class OdometryPublisherNode:
 
 
     def load_param(self):
-        debug_print("load_param")
         config = {}
         config["gain"] = rospy.get_param("~gain")
         config["trim"] = rospy.get_param("~trim")

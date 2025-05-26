@@ -5,7 +5,6 @@ import rospy
 import numpy as np
 from cv_bridge import CvBridge, CvBridgeError
 from sensor_msgs.msg import CompressedImage
-from jetson_camera.msg import twovids
 from motor_control.msg import motor_cmd
 
 
@@ -18,7 +17,7 @@ class CameraSubscriberNode:
         # Construct subscriber
         self.sub_image = rospy.Subscriber(
             "/camera/image_proc",
-            twovids,
+            CompressedImage,
             self.image_cb,
             buff_size=2**24,
             queue_size=1
@@ -55,7 +54,7 @@ class CameraSubscriberNode:
             #raw_image = cv2.imdecode(np.frombuffer(data.raw_img.data, np.uint8), cv2.IMREAD_COLOR)
 
             # only decode the undistorted image
-            undis_image = cv2.imdecode(np.frombuffer(data.undist_img.data, np.uint8), cv2.IMREAD_COLOR)
+            undis_image = cv2.imdecode(np.frombuffer(data.data, np.uint8), cv2.IMREAD_COLOR)
 
             # <================= START: Image Processing ======================>
             # Convert to HSV color space

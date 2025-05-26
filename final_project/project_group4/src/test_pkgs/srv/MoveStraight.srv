@@ -1,0 +1,4 @@
+float32 distance      # meters (+ forward, – backwards)
+float32 speed         # m/s    (must be > 0)
+---
+bool success

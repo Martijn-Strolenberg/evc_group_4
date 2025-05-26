@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(motor_control)
+project(test_pkgs)
 
 # Find catkin and any catkin packages
 find_package(catkin REQUIRED COMPONENTS
@@ -15,9 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
 )
 add_message_files(
   FILES
-  twovids.msg
-  motor_cmd.msg
-  encoder.msg
+  # our custom messages
 )
 
 add_service_files(
@@ -26,14 +24,12 @@ add_service_files(
   Stop.srv
   MoveStraight.srv
   Rotate.srv
-  LeftWheelDir.srv
-  RightWheelDir.srv
 )
 
-# add_action_files(
-#   DIRECTORY action
-#   FILES CountUntil.action
-# )
+add_action_files(
+  DIRECTORY action
+  FILES CountUntil.action
+)
 
 # Declare a catkin package
 generate_messages(
@@ -58,13 +54,9 @@ install(DIRECTORY launch/
 
 # Install Python scripts
 catkin_install_python(PROGRAMS
-  src/marti_odometry_node.py
-  src/martijn_control_nodeV2.py
-  src/martijn_control_node.py
-  src/motor_command_node.py
-  src/temp_control_node.py
-  src/motor_pub_node.py
-  src/motor_control_node.py
-  src/odometry_node.py
+  src/count_until_server.py
+  src/count_until_client.py
+  src/robot_move_API.py
+  src/robot_control_script.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )

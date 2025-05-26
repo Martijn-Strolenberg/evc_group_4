@@ -1,0 +1,3 @@
+int8 direction  # -1 = backwards, 1 = forwards
+---
+bool success
