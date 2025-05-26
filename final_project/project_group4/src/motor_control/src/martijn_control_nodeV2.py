@@ -54,6 +54,22 @@ class MotorSubscriberNode:
         self.last_odom_y = 0.0
         self.last_odom_theta = 0.0
 
+        # PID state variables
+        self.Kp = self.config["Kp"]  # Proportional gain
+        self.Ki = self.config["Ki"]  # Integral gain
+        self.Kd = self.config["Kd"]  # Derivative gain
+        self.prev_theta_error = 0.0  # Previous heading error
+        self.integral_error = 0.0    # Integral of error
+        self.last_pid_time = rospy.Time.now()  # Last time PID was computed
+
+        # Motor limit parameters
+        self.max_velocity = self.config["max_velocity"]  # Maximum velocity for the robot
+        self.acceleration = self.config["acceleration"]  # Acceleration limit
+        self.deceleration = self.config["deceleration"]  # Deceleration limit
+        self.cmd_left = 0.0                              # Current command for left wheel
+        self.cmd_right = 0.0                             # Current command for right wheel
+        self.last_cmd_time = rospy.Time.now()            # Last time a command was sent
+
         # Initialize motor command services
         rospy.Service('move_straight', MoveStraight, self.handle_move_straight)
         rospy.Service('rotate', Rotate, self.handle_rotate)
@@ -62,13 +78,13 @@ class MotorSubscriberNode:
         self.motor = DaguWheelsDriver() # Initialize motor driver
 
         rospy.on_shutdown(self.shutdown) # Register shutdown function to clean up GPIO
-        rospy.loginfo("motor control node initialized!")
+        rospy.loginfo("Motor control node initialized!")
         self.initialized = True
 
-    @staticmethod
-    def angle_diff(a,b):
-        d = (a-b + np.pi) % (2*np.pi) - np.pi
-        return d
+    @staticmethod # Function to calculate the difference between two angles
+    def angle_diff(a, b):
+        difference = (a-b + np.pi) % (2*np.pi) - np.pi
+        return difference
 
     # ------------- service calls -------------
     def call_left_wheel_dir(self, direction):
@@ -186,7 +202,13 @@ class MotorSubscriberNode:
                 self.state = 5 # Set the state to stop the robot
             else:
                 # Set the wheel speeds for rotation right
-                self.motor.set_wheels_speed(left=-(self.gain - self.trim), right=(self.gain + self.trim))
+                self.motor.set_wheels_speed(left=-(self.gain - self.trim)*self.goal_speed, right=(self.gain + self.trim)*self.goal_speed)
+                '''
+                target_left = -self.goal_speed
+                target_right = self.goal_speed
+                left_cmd, right_cmd = self.acceleration(target_left, target_right) # Apply acceleration limits
+                self.motor.set_wheels_speed(left=(self.gain - self.trim)*left_cmd, right=(self.gain - self.trim)*right_cmd)
+                '''
                 
 
         # === State 2: Rotate in place counter_clockwise (left) ===
@@ -202,7 +224,7 @@ class MotorSubscriberNode:
                 self.state = 5 # Set the state to stop the robot
             else:
                 # Set the wheel speeds for rotation left
-                self.motor.set_wheels_speed(left=(self.gain - self.trim), right=-(self.gain + self.trim))
+                self.motor.set_wheels_speed(left=(self.gain - self.trim)*self.goal_speed, right=-(self.gain + self.trim)*self.goal_speed)
 
         # === State 3: Drive straight forwards ===
         if self.state == 3:
@@ -212,6 +234,7 @@ class MotorSubscriberNode:
                 # update the wheel directions
                 self.call_left_wheel_dir(1)  # Set left wheel direction to forward
                 self.call_right_wheel_dir(1) # Set right wheel direction to forward
+                self.start_theta = self.last_odom_theta # Store the initial orientation
 
             dx = self.last_odom_x - self.start_x
             dy = self.last_odom_y - self.start_y
@@ -220,7 +243,15 @@ class MotorSubscriberNode:
                 self.state = 5 # Set the state to stop the robot
             else:
                 # Set the wheel speeds for driving straight forwards
-                self.motor.set_wheels_speed(left=(self.gain - self.trim), right=(self.gain + self.trim))
+                self.motor.set_wheels_speed(left=(self.gain - self.trim)*self.goal_speed, right=(self.gain + self.trim)*self.goal_speed)
+                '''
+                # -------- PID heading control -----------
+                v_nom =  self.goal_speed                 # positive forward
+                v, omega = self.pid_heading_control(v_nom, self.start_theta, self.last_odom_theta)
+                left_cmd, right_cmd = self.v_omega_to_motor_cmd(v, omega)
+                left_cmd, right_cmd = self.acceleration(left_cmd, right_cmd) # Apply acceleration limits
+                self.motor.set_wheels_speed(left_cmd, right_cmd)
+                '''
             
 
         # === State 4: Drive straight backwards ===
@@ -231,6 +262,7 @@ class MotorSubscriberNode:
                 # update the wheel directions
                 self.call_left_wheel_dir(-1)  # Set left wheel direction to backward
                 self.call_right_wheel_dir(-1) # Set right wheel direction to backward
+                self.start_theta = self.last_odom_theta # Store the initial orientation
 
             dx = self.last_odom_x - self.start_x
             dy = self.last_odom_y - self.start_y
@@ -239,7 +271,15 @@ class MotorSubscriberNode:
                 self.state = 5 # Set the state to stop the robot
             else:
                 # Set the wheel speeds for driving straight backwards
-                self.motor.set_wheels_speed(left=-(self.gain - self.trim), right=-(self.gain + self.trim))
+                self.motor.set_wheels_speed(left=-(self.gain - self.trim)*self.goal_speed, right=-(self.gain + self.trim)*self.goal_speed)
+                '''
+                # -------- PID heading control -----------
+                v_nom =  -self.goal_speed                 # positive forward
+                v, omega = self.pid_heading_control(v_nom, self.start_theta, self.last_odom_theta)
+                left_cmd, right_cmd = self.v_omega_to_motor_cmd(v, omega)
+                left_cmd, right_cmd = self.acceleration(left_cmd, right_cmd) # Apply acceleration limits
+                self.motor.set_wheels_speed(left_cmd, right_cmd)
+                '''
 
 
         # === State 5: Finished stop robot ===
@@ -250,7 +290,70 @@ class MotorSubscriberNode:
             # Stop the robot
             self.motor.set_wheels_speed(left=0, right=0)
             self.state = 0 # Reset state to idle, ready for next command
-            
+
+    def pid_heading_control(self, v_nom, theta_ref, theta_hat):
+        """
+        PID heading controller.
+        v_nom      : desired linear speed  (m/s; positive forward, negative back)
+        theta_ref  : desired heading (rad)
+        theta_hat  : current heading (rad)
+        returns (v_nom, omega)  where omega is angular speed (rad/s)
+        """
+        now      = rospy.Time.now()
+        dt       = (now - self.last_pid).to_sec()       # delta time since last PID call
+        dt       = max(dt, 1e-3)                        # avoid division by zero
+        self.last_pid_time = now                             # update last PID time
+
+        # ----- error terms ---------------------------------------------------
+        theta_error   = self.angle_diff(theta_ref, theta_hat)     # signed error
+        de  = (theta_error - self.prev_theta_error) / dt          # derivative
+        self.integral_error += theta_error * dt                   # integral (grows unbounded, so we need to clip it or reset it)
+        #self.integral_error = np.clip(self.integral_error, -I_MAX, I_MAX) # or we can reset the integral error if the state changes
+
+        # ----- PID -----------------------------------------------------------
+        omega = (self.Kp * theta_error + self.Kd * de + self.Ki * self.integral_error) 
+
+        self.prev_theta_error = theta_error    # update previous error for next iteration
+        return v_nom, omega
+
+    def v_omega_to_motor_cmd(self, v, omega):
+        """
+        Convert desired (v, omega) to left/right wheel commands in [-1, 1].
+        Simple differential drive model: v = (v_r + v_l)/2, omega = (v_r - v_l)/baseline
+        """
+        v_r = v + 0.5 * omega * self.baseline
+        v_l = v - 0.5 * omega * self.baseline
+
+        # normalise by a nominal max wheel speed (m/s) that maps to PWM = 1
+        right_cmd = np.clip(v_r / self.max_velocity, -1.0, 1.0)
+        left_cmd  = np.clip(v_l / self.max_velocity, -1.0, 1.0)
+        return left_cmd, right_cmd
+
+    def acceleration(self, desired_left, desired_right):
+        """
+        Limit how fast wheel commands change to fight wheel slip.
+        Inputs & outputs are in the same normalized range [-1, 1].
+        """
+        now  = rospy.Time.now()
+        dt   = (now - self.last_cmd_time).to_sec()
+        dt   = max(dt, 1e-3)
+        self.last_cmd_time = now
+
+        def limit(prev, desired):
+            limit_up   = self.acceleration * dt
+            limit_down = self.deceleration * dt
+            delta = desired - prev
+            if   delta >  limit_up:
+                delta =  limit_up
+            elif delta < -limit_down:
+                delta = -limit_down
+            return np.clip(prev + delta, -1.0, 1.0)
+
+        self.cmd_left  = limit(self.cmd_left,  desired_left) 
+        self.cmd_right = limit(self.cmd_right, desired_right) 
+
+        return self.cmd_left, self.cmd_right
+                
 
     def load_param(self):
         config = {}
@@ -259,7 +362,12 @@ class MotorSubscriberNode:
         config["baseline"] = rospy.get_param("~baseline")
         config["wheel_rad"] = rospy.get_param("~wheel_rad")
         config["encoder_res"] = rospy.get_param("~encoder_res")
-        config["velocity"] = rospy.get_param("~velocity")
+        config["Kp"] = rospy.get_param("~Kp")
+        config["Ki"] = rospy.get_param("~Ki")
+        config["Kd"] = rospy.get_param("~Kd")
+        config["max_velocity"] = rospy.get_param("~max_velocity")
+        config["acceleration"] = rospy.get_param("~acceleration")
+        config["deceleration"] = rospy.get_param("~deceleration")
         
         rospy.loginfo("Loaded config: %s", config)
         return config   

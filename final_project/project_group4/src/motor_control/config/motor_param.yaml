@@ -10,4 +10,3 @@ baseline: 0.163
 encoder_res: 137
 
 ## Movement params
-velocity: 0.1
