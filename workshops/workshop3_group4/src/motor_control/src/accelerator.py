@@ -4,9 +4,9 @@ def accelerate(current_speed, target_speed, max_acceleration):
     Accelerate the vehicle from current_speed to target_speed with a maximum acceleration limit.
 
     Parameters:
-    current_speed (float): The current speed of the vehicle.
-    target_speed (float): The desired target speed of the vehicle.
-    max_acceleration (float): The maximum acceleration limit.
+    current_speed (float): The current speed of the vehicle.        (current estimated speed)
+    target_speed (float): The desired target speed of the vehicle.  (speed set point)
+    max_acceleration (float): The maximum acceleration limit.       (step size how much we increment)
 
     Returns:
     float: The new speed of the vehicle after acceleration.

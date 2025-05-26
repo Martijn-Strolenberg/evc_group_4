@@ -15,6 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
 )
 add_message_files(
   FILES
+  # our custom messages
   twovids.msg
   motor_cmd.msg
   encoder.msg
@@ -58,6 +59,8 @@ install(DIRECTORY launch/
 
 # Install Python scripts
 catkin_install_python(PROGRAMS
+  src/Luka_control_node.py
+  src/Luka_odometry_node.py
   src/marti_odometry_node.py
   src/martijn_control_nodeV2.py
   src/martijn_control_node.py

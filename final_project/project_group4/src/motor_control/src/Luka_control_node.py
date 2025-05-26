@@ -49,13 +49,14 @@ class MotorSubscriberNode:
         
         motor = DaguWheelsDriver()
         # Non-blocking motor assignment
-        if not data.blocking and self.curr_msg != data.new_mesg:
+        if not data.blocking:
             self.curr_msg = data.new_mesg
 
             
             # Forward: 1, Backward: 2, Left: 3, Right: 4, Dont move: 0
-            self.action = data.action
-            self.vel = data.velocity
+            self.action = data.move_cmd
+            self.vel = data.velocity_cmd
+            rospy.loginfo("action is {}".format(self.action))
 
             if self.action == 1: # going straight
                 rospy.loginfo("Moving Forward")
@@ -78,7 +79,7 @@ class MotorSubscriberNode:
                 rospy.loginfo("Stopping")
                 motor.set_wheels_speed(left=0.0, right=0.0)
 
-        else: # Blocking assignment (Karstens code)
+        elif data.blocking and self.curr_msg != data.new_mesg: # Blocking assignment (Karstens code)
             # Extract updated encoder ticks from the incoming message
             current_left_ticks = data.enc_L
             current_right_ticks = data.enc_R

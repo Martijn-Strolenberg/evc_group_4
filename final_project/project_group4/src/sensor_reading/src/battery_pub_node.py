@@ -37,7 +37,10 @@ class Battery_Node:
         # Command to be sent
         command = b"?"
 
+        rate = rospy.Rate(1)
+
         while not rospy.is_shutdown():
+            rate.sleep()
             try:
                 # Send the shutdown command
                 self.ser.write(command)
@@ -45,8 +48,8 @@ class Battery_Node:
 
                 # Optional: Read response from Duckiebattery
                 response = self.ser.readline().decode("utf-8").strip()
-                if response:
-                    rospy.loginfo("Duckiebattery response: {}".format(response))
+                # if response:
+                #     rospy.loginfo("Duckiebattery response: {}".format(response))
                 # Extract all numbers (int or float)
                 numbers = re.findall(r'\d+(?:\.\d+)?', response)
                 int_numbers = [int(num) for num in numbers]
@@ -64,8 +67,9 @@ class Battery_Node:
                 print("An error occurred while fetching info: {}".format(e))
         
     def cleanup(self):
-        self.ser.close()
-        
+        if hasattr(self, 'ser') and self.ser.is_open:
+            self.ser.close()
+            rospy.loginfo("Serial connection closed.")
 
 if __name__ == "__main__":
     node_name = "battery_publisher_node"

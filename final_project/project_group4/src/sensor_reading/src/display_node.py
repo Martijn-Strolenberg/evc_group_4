@@ -14,14 +14,14 @@ class DisplaySubscriberNode:
         self.initialized = False
         rospy.loginfo("Initializing Display node...")
 
-        # # Construct subscribers
-        # self.sub_bat = rospy.Subscriber(
-        #     "/Battery",
-        #     Float64,
-        #     self.set_battery_cb,
-        #     buff_size=2**24,
-        #     queue_size=10
-        # )
+        # Construct subscribers
+        self.sub_bat = rospy.Subscriber(
+            "/Battery",
+            Float64,
+            self.set_battery_cb,
+            buff_size=2**24,
+            queue_size=10
+        )
         self.sub_tof = rospy.Subscriber(
             "/tof",
             Float64,
@@ -60,11 +60,11 @@ class DisplaySubscriberNode:
 
 
 
-    # def set_battery_cb(self, msg):
-    #     self.battery_soc = msg.data
-    #     rospy.loginfo("Battery state of charge: %f", self.battery_soc)
-    #     if self.initialized:
-    #         self.update_display()
+    def set_battery_cb(self, msg):
+        self.battery_soc = msg.data
+        rospy.loginfo("Battery state of charge: %f", self.battery_soc)
+        if self.initialized:
+            self.update_display()
     
     def set_tof_cb(self, msg):
         self.tof = msg.data

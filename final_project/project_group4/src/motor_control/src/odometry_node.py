@@ -65,6 +65,7 @@ class OdometryPublisherNode:
         self.new_mesg = 0
         self.prev_mesg = 0
         self.action = 0
+        self.block_cmd = 0
         ## absolute position parameters
         self.x = 0
         self.y = 0
@@ -85,7 +86,8 @@ class OdometryPublisherNode:
         self.velocity = data.velocity
         self.distance = data.distance
         self.angle = data.angle
-        self.new_mesg = data.new_mesg   
+        self.new_mesg = data.new_mesg
+        self.block_cmd = data.blocking
     # Forward: 1, Backward: 2, Left: 3, Right: 4, Dont move: 0 
         rospy.loginfo("Yes") 
         if self.distance > 0:
@@ -146,6 +148,7 @@ class OdometryPublisherNode:
         msg.new_mesg = self.new_mesg
         msg.velocity_cmd = self.velocity
         msg.move_cmd = self.action
+        msg.blocking = self.block_cmd
         #rospy.loginfo("Move command = {move}".format(move=self.action))
         self.pub_odom.publish(msg)
 

@@ -40,6 +40,6 @@ catkin_install_python(PROGRAMS
   src/camera_processor_node.py
   src/camera_publisher_node.py
   src/camera_viewer_node.py
-  src/marti_object_tracking.py
+  src/line_follower.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
