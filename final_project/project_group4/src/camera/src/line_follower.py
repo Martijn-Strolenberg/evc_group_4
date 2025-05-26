@@ -72,19 +72,31 @@ class CameraSubscriberNode:
             mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
             mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
 
-            # Find contours in the mask
-            _, contours, _ = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            segmented_image = cv2.bitwise_and(undis_image, undis_image, mask=mask)
+           
 
-            # if there are no contours, set latest center to None
-            if not contours:
-                self.latest_center = None  # No blue object detected
-                #return  # Exit early
+            MIN_AREA_TRACK = 50  # Minimum area for track marks
 
-            
+            # get a list of contours
+            contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
-            # Display the result
-            cv2.imshow("Object tracking", undis_image)
-            
+            line = {}
+
+            for contour in contours:
+                M = cv2.moments(contour)
+
+                if (M['m00'] > MIN_AREA_TRACK):
+                    # Contour is part of the track
+                    line['x'] = int(M["m10"]/M["m00"])
+                    line['y'] = int(M["m01"]/M["m00"])
+
+            if line:
+                cv2.circle(segmented_image, (line['x'], line['y']), 5, (0, 0, 255), 7)
+                self.latest_center = (line['x'], line['y'])
+            else:
+                self.latest_center = None
+
+            cv2.imshow("Segmented Image", segmented_image)
             cv2.waitKey(1)  # Non-blocking update
 
         except CvBridgeError as err:
