@@ -41,7 +41,7 @@ class CameraSubscriberNode:
         self.turn_vel = 0.5
         self.move_vel = 0.6
 
-        self.middle = rospy.get_param("~width") / 2
+        self.middle = 640 / 2
 
         self.initialized = True
         rospy.loginfo("Camera object detection node initialized!")
@@ -87,7 +87,7 @@ class CameraSubscriberNode:
             MIN_AREA_TRACK = 20  # Minimum area for track marks
 
             # get a list of contours
-            contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+            _, contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
             lines = []
 

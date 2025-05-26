@@ -1,0 +1,4 @@
+<launch>
+  <node pkg="assignment_3_ocr" type="movie_processor.py" name="movie_processor" output="screen"/>
+    <param name="confidence" value="50" />
+</launch>

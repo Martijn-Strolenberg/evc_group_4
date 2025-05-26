@@ -10,6 +10,7 @@ from sensor_msgs.msg import CompressedImage
 class CameraProcessorNode:
     def __init__(self):
         self.initialized = False
+        self.first_image_received = False
         rospy.loginfo("Initializing camera processor node...")
         self.bridge = CvBridge()
         

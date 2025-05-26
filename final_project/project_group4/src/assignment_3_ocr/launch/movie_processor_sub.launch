@@ -1,0 +1,4 @@
+<launch>
+  <node pkg="assignment_3_ocr" type="movie_processor_subscriber.py" name="movie_processor_subscriber" output="screen"/>
+    <param name="video_save" value="False" />
+</launch>
