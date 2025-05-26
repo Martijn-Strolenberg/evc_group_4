@@ -41,7 +41,7 @@ class CameraSubscriberNode:
         self.turn_vel = 0.5
         self.move_vel = 0.6
 
-        self.middle = rospy.get_param("~width") / 2
+        self.middle = 640 / 2
 
         self.initialized = True
         rospy.loginfo("Camera object detection node initialized!")

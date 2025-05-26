@@ -37,8 +37,8 @@ install(DIRECTORY launch/
 
 # Install Python scripts
 catkin_install_python(PROGRAMS
-  src/camera_processor_node_undis.py
-  src/camera_publisher_node.py
+  src/processor_node.py
+  src/camera_pub_node.py
   src/camera_viewer_node.py
   src/line_follower.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
