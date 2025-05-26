@@ -80,7 +80,7 @@ class CameraSubscriberNode:
             MIN_AREA_TRACK = 20  # Minimum area for track marks
 
             # get a list of contours
-            contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+            _, contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
             lines = []
 
