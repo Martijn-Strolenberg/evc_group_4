@@ -45,7 +45,3 @@ class WheelEncoderDriver:
 
     def shutdown(self):
         GPIO.remove_event_detect(self._gpio_pin)
-
-    def get_ticks(self):
-        """Returns the current cumulative tick count."""
-        return self._ticks

@@ -2,246 +2,223 @@
 
 import rospy
 import numpy as np
-
-from motor_control.msg import motor_cmd, encoder
-from nav_msgs.msg import Odometry # maybe for future use
+from typing import Tuple
 from encoderDriver import *
 
-DEBUG_MODE = False
-
-def debug_print(msg):
-    if DEBUG_MODE:
-        rospy.loginfo(msg)
+from nav_msgs.msg import Odometry
+from geometry_msgs.msg import Quaternion, TransformStamped
+import tf
+import tf.transformations as tft
+from motor_control.msg import motor_cmd, encoder
+from motor_control.srv import LeftWheelDir, LeftWheelDirResponse
+from motor_control.srv import RightWheelDir, RightWheelDirResponse
 
 class OdometryPublisherNode:
-    def __init__(self):
-        self.initialized = False
-        rospy.loginfo("Initializing odometry node...")
-        self.start_odometry = False
-        
-        # Construct publisher
-        self.pub_odom = rospy.Publisher(
-            "/encoder",
-            encoder,
-            queue_size=10
-        )
-        
-        # Construct subscriber
-        self.sub_cmd = rospy.Subscriber(
-            "/motor_control",
-            motor_cmd,
-            self.read_topic,
-            buff_size=2**24,
-            queue_size=10
-        )
-        self.sample_rate = 50 # Hz
+  def __init__(self):
+    self.initialized = False
+    rospy.loginfo("Initializing odometry node...")
 
-        GPIO_MOTOR_ENCODER_1=18
-        GPIO_MOTOR_ENCODER_2=19
-        self.driver_L = WheelEncoderDriver(GPIO_MOTOR_ENCODER_1)
-        self.driver_R = WheelEncoderDriver(GPIO_MOTOR_ENCODER_2)
+    # Hardware for encoders
+    GPIO_MOTOR_ENCODER_1=18
+    GPIO_MOTOR_ENCODER_2=19
+    self.driver_L = WheelEncoderDriver(GPIO_MOTOR_ENCODER_1)
+    self.driver_R = WheelEncoderDriver(GPIO_MOTOR_ENCODER_2)
 
-        # Load and initialize parameters
-        self.config = self.load_param()
-        self.wheel_radius = self.config["wheel_rad"]
-        self.baseline = self.config["baseline"]
-        self.encoder_resolution = self.config["encoder_res"]
+    # Load and initialize parameters
+    self.config = self.load_param()
+    self.wheel_radius = self.config["wheel_rad"]
+    self.baseline = self.config["baseline"]
+    self.encoder_resolution = self.config["encoder_res"]
 
-        # Wheel encoder parameters
-        self.ticks_left = 0
-        self.prev_ticks_L = 0
-        self.ticks_right = 0
-        self.prev_ticks_R = 0
-        
-        ## Parameters for odom
-        self.L_ticks_prev = 0
-        self.R_ticks_prev = 0
-        self.alpha = 2 * np.pi / self.encoder_resolution
+    # Wheel encoder parameters
+    self.ticks_L = 0          # current left ticks
+    self.prev_ticks_L = 0     # previous left ticks
+    self.ticks_R = 0          # current right ticks
+    self.prev_ticks_R = 0     # previous right ticks
+    #self.alpha = 2 * np.pi / self.encoder_resolution  # radians per tick? used in delta_phi function so this is not needed here
+    self.delta_phi_left = 0   # rotation of the left wheel in radians
+    self.delta_phi_right = 0  # rotation of the right wheel in radians
 
-        self.velocity = 0
-        self.distance = 0
-        self.angle = 0
+    ## Parameters for odomemtry (pose estimation)
+    self.x_prev = 0           # previous x estimate
+    self.y_prev = 0           # previous y estimate
+    self.theta_prev = 0       # previous orientation estimate
+    self.x_curr = 0.0         # current x estimate
+    self.y_curr = 0.0         # current y estimate
+    self.theta_curr = 0.0     # current orientation estimate
 
-        self.new_mesg = 0
-        self.prev_mesg = 0
-        self.action = 0
-        self.block_cmd = 0
-        ## absolute position parameters
-        self.x = 0
-        self.y = 0
-        self.theta = 0
-        
-        self.initialized = True
-        rospy.loginfo("odem node initialized!")
-        self.timer = rospy.Timer(rospy.Duration(0.02), self.read_encoder) # publishing at sample rate
+    self.sample_period = 0.02 # seconds
 
-    #def read_topic(self,data):
-    #    debug_print("read_topic")
-    #    self.velocity = data.velocity
-    #    self.distance = data.distance
-    #    self.angle = data.angle
-    #    self.new_mesg = data.new_mesg
-    def read_topic(self,data):
-    #    debug_print("read_topic")
-        self.velocity = data.velocity
-        self.distance = data.distance
-        self.angle = data.angle
-        self.new_mesg = data.new_mesg
-        self.block_cmd = data.blocking
-    # Forward: 1, Backward: 2, Left: 3, Right: 4, Dont move: 0 
-        rospy.loginfo("Yes") 
-        if self.distance > 0:
-             rospy.loginfo("Forwards")
-             self.action = 1
-        elif self.distance < 0:
-             rospy.loginfo("Backwards")
-             self.action = 2
-             self.distance = self.distance # removed minus sign --> marti
-        if self.angle < 0:
-             rospy.loginfo("Left")
-             self.action = 3
-             self.angle = self.angle # removed minus sign --> marti
-        elif self.angle > 0:
-             rospy.loginfo("Right")
-             self.action = 4    
-        if  self.distance == 0.0 and self.angle == 0.0:
-            rospy.loginfo("Stop")
-            self.action = 0
+    # start reading the encoders periodically
+    self.timer = rospy.Timer(rospy.Duration(self.sample_period), self.read_encoder) # publishing at sample rate 50 Hz execute function read_encoder()
+    self.odom_pub = rospy.Publisher("/odom", Odometry, queue_size=10) # create publisher to publish odometry data to topic /odom
+    self.tf_broadcaster = tf.TransformBroadcaster() # create a tf broadcaster
+    rospy.Service('left_wheel_dir', LeftWheelDir, self.handle_left_wheel_dir)    # service to set the direction of the left wheel
+    rospy.Service('right_wheel_dir', RightWheelDir, self.handle_right_wheel_dir) # service to set the direction of the right wheel
+    rospy.on_shutdown(self.shutdown) # register shutdown function to clean up GPIO
+    rospy.loginfo("Odometry node initialized!")
+    self.initialized = True
 
-            
-    def read_encoder(self, event):
-        #debug_print("read_encoder")
-        msg = encoder() 
-
-        # read the encoders
-        self.ticks_left = self.driver_L._ticks
-        self.ticks_right = self.driver_R._ticks
-        d_A, d_theta = self.odometry(self.ticks_left,self.ticks_right)
-        #rospy.loginfo("d_A: {delta_A},d_theta: {delta_theta} ".format(delta_A = d_A, delta_theta = d_theta))
-        # Send encoder message
-
-
-        self.distance -= d_A
-        self.angle -= d_theta
-        #rospy.loginfo("Distance Left:{dist}".format(dist = self.distance))
-        #rospy.loginfo("Distance Left:{theta}".format(theta = self.angle ))
-        #if self.distance <= 0.0 and self.angle <= 0.0 and self.prev_mesg != self.new_mesg:
-        #   self.action = 0
-        #   rospy.loginfo("Wrong")
-        #   self.prev_mesg = self.new_mesg
-        straight = (self.action == 1 or self.action == 2)
-        if self.distance <= 0.0 and straight and self.prev_mesg != self.new_mesg:
-                        self.action = 0
-                        rospy.loginfo("End straight")
-                        self.prev_mesg = self.new_mesg
-        turn = (self.action == 3 or self.action == 4)
-        if self.angle <= 0.0 and turn and self.prev_mesg != self.new_mesg:
-                        self.action = 0
-                        rospy.loginfo("End Turn")
-                        self.prev_mesg = self.new_mesg
-        msg.enc_L = self.ticks_left
-        msg.enc_R = self.ticks_right
-        msg.d_A = d_A
-        msg.d_theta = d_theta
-        msg.abs_distance = self.distance
-        msg.abs_angle = self.angle
-        msg.new_mesg = self.new_mesg
-        msg.velocity_cmd = self.velocity
-        msg.move_cmd = self.action
-        msg.blocking = self.block_cmd
-        #rospy.loginfo("Move command = {move}".format(move=self.action))
-        self.pub_odom.publish(msg)
-
-
-        # Difference in encoder tics from previous measurement                
-        delta_ticks_left = self.ticks_left - self.prev_ticks_L
-        delta_ticks_right = self.ticks_right - self.prev_ticks_R
-
-        # update the prev ticks
-        self.prev_ticks_L = self.ticks_left
-        self.prev_ticks_R = self.ticks_right        
-
-        
-        
+  # ------------- service calls ------------- 
+  def handle_left_wheel_dir(self, req):
+    """ Service to set the direction of the left wheel."""
+    if   req.direction == 1:
+      self.driver_L.set_direction(WheelDirection.FORWARD)
+    elif req.direction == -1:
+      self.driver_L.set_direction(WheelDirection.REVERSE)
+    else:
+      rospy.logwarn("Invalid direction (-1 or 1 expected)")
+      return LeftWheelDirResponse(False)
+    return LeftWheelDirResponse(True)
     
-    def odometry(self, L_ticks, R_ticks):
-        #debug_print("odometry")
-        msg = Odometry()
-        
-        # Difference in encoder tics from previous measurement                
-        delta_ticks_left = L_ticks - self.L_ticks_prev
-        delta_ticks_right = R_ticks - self.R_ticks_prev
+  def handle_right_wheel_dir(self, req):
+    """ Service to set the direction of the right wheel."""
+    if   req.direction == 1:
+      self.driver_R.set_direction(WheelDirection.FORWARD)
+    elif req.direction == -1:
+      self.driver_R.set_direction(WheelDirection.REVERSE)
+    else:
+      rospy.logwarn("Invalid direction (-1 or 1 expected)")
+      return RightWheelDirResponse(False)
+    return RightWheelDirResponse(True)
 
-        # Edge case for rotation in the same position
-        if self.angle > 0:
-            delta_ticks_left=delta_ticks_left*-1
-        if self.angle < 0:
-            delta_ticks_right=delta_ticks_right*-1
+  # Function that gets called at the sample rate
+  def read_encoder(self, event):
+    # read the encoders
+    # self.ticks_L = self.driver_L._ticks # read latest value of the left encoder
+    # self.ticks_R = self.driver_R._ticks # read latest value of the right encoder
+    self.ticks_L = self.driver_L.get_ticks()
+    self.ticks_R = self.driver_R.get_ticks()
 
-        # Update previous ticks with new tick values
-        self.L_ticks_prev = L_ticks
-        self.R_ticks_prev = R_ticks
-        
-        # Calculate rotation distance of left and right wheel in [radians]
-        rotation_wheel_left = delta_ticks_left * self.alpha 
-        rotation_wheel_right = delta_ticks_right * self.alpha
+    # calculate the wheel rotation in the sample period
+    self.delta_phi_left = self.delta_phi(self.ticks_L, self.prev_ticks_L)
+    self.delta_phi_right = self.delta_phi(self.ticks_R, self.prev_ticks_R)
+    # update the previous ticks
+    self.prev_ticks_L = self.ticks_L
+    self.prev_ticks_R = self.ticks_R
 
-        # Calculate distance each wheel has travelled since last measurement in [m]
-        d_left = self.wheel_radius * rotation_wheel_left
-        d_right = self.wheel_radius * rotation_wheel_right
+    # calculate the current pose estimation
+    [self.x_curr, self.y_curr, self.theta_curr, d_average, d_theta] = self.pose_estimation(self.wheel_radius, self.baseline, self.x_prev, self.y_prev, self.theta_prev, self.delta_phi_left, self.delta_phi_right)
+    # update the current pose estimation parameters
+    self.x_prev = self.x_curr
+    self.y_prev = self.y_curr
+    self.theta_prev = self.theta_curr
 
-        ## Average distance travelled by the robot in [m]
-        d_A = (d_right + d_left)/2
+    # recompute distances to use in odometry
+    d_right = self.wheel_radius * self.delta_phi_right
+    d_left = self.wheel_radius * self.delta_phi_left
+    d_average = (d_right + d_left) / 2
+    d_theta = (d_right - d_left) / self.baseline
 
-        # This formula for d_A takes into account wheels not turning
-        # if (d_right - d_left) == 0:
-        #     d_A = (d_right + d_left)/2
-        # else:
-        #     R = (self.baseline / 2.0) * (d_left + d_right) / (d_right - d_left)
-        #     d_A = abs(R * d_theta)
-
-        ## Average velocity of the robot in [m/s]
-        d_v_A = d_A / 0.02
-        #rospy.loginfo("current robot velocity: {vel} \n".format(vel=d_v_A))
-
-        ## How much the robot has turned (delta  )  [rads]
-        d_theta = (d_right - d_left)/(self.baseline)
-
-        self.x = self.x + self.wheel_radius * (rotation_wheel_left + rotation_wheel_right) * np.cos(self.theta)/2
-        self.y = self.y + self.wheel_radius * (rotation_wheel_left + rotation_wheel_right) * np.sin(self.theta)/2
-        self.theta = self.theta + self.wheel_radius * (rotation_wheel_right - rotation_wheel_left)/(self.baseline)
-
-        ## Filling the Odometry message
-        msg.header.stamp = rospy.Time.now()  # Fill the time stamp
-        msg.header.frame_id = "odom"  # Fill the frame id
-        msg.child_frame_id = "base_link"  # Fill the child frame id
-        # fill absolute position relative to the origin 
-        msg.pose.pose.position.x = self.x   # Absolute x position
-        msg.pose.pose.position.y = self.y   # Absolute y position
-        msg.pose.pose.position.z = 0.0      #z is always zeros as we don't drive into the air
-        
-
-        return d_A, d_theta   # return the delta average distance and delta angle
+    # publish the odometry data and the tf transform
+    self.publish_odometry(self.x_curr, self.y_curr, self.theta_curr, d_average, d_theta)
 
 
-    def load_param(self):
-        debug_print("load_param")
-        config = {}
-        config["gain"] = rospy.get_param("~gain")
-        config["trim"] = rospy.get_param("~trim")
-        config["baseline"] = rospy.get_param("~baseline")
-        config["wheel_rad"] = rospy.get_param("~wheel_rad")
-        config["encoder_res"] = rospy.get_param("~encoder_res")
-        config["velocity"] = rospy.get_param("~velocity")
-        
-        rospy.loginfo("Loaded config: %s", config)
-        return config        
-{} 
+  def delta_phi(self, ticks, prev_ticks):
+    """
+    Args:
+      ticks: Current tick count from the encoders.
+      prev_ticks: Previous tick count from the encoders.
+    Return:
+      delta_phi: Rotation of the wheel in radians.
+    """
+    # ---
+    alpha = 2 * np.pi / self.encoder_resolution  # radians per tick
+    delta_ticks = ticks - prev_ticks
+
+    delta_phi = alpha * delta_ticks  # rotation of the wheel in radians
+
+    return delta_phi
+
+  def pose_estimation(self, R, baseline, x_prev, y_prev, theta_prev, delta_phi_left, delta_phi_right):
+    """
+    Calculate the current robot pose using the dead-reckoning model.
+
+    Args:
+      R:                  radius of wheel (both wheels are assumed to have the same size)
+      baseline:           distance from wheel to wheel; 2L of the theory
+      x_prev:             previous x estimate - assume given
+      y_prev:             previous y estimate - assume given
+      theta_prev:         previous orientation estimate - assume given
+      delta_phi_left:     left wheel rotation (rad)
+      delta_phi_right:    right wheel rotation (rad)
+
+    Return:
+      x_curr:                  estimated x coordinate
+      y_curr:                  estimated y coordinate
+      theta_curr:              estimated heading
+    """
+    # ---
+    d_right = R*delta_phi_right  # distance travelled by right wheel
+    d_left = R*delta_phi_left    # distance travelled by left wheel
+
+    d_average = (d_right + d_left) / 2  # average distance travelled
+    d_theta = (d_right - d_left) / baseline  # change in orientation
+
+    d_x = d_average * np.cos(theta_prev + d_theta/2)  # change in x
+    d_y = d_average * np.sin(theta_prev + d_theta/2)  # change in y ; d_y = d_average * np.sin(theta_prev + d_theta / 2)
+
+    x_curr = x_prev + d_x  # new x coordinate
+    y_curr = y_prev + d_y  # new y coordinate
+    #theta_curr = theta_prev + d_theta  # new orientation
+    theta_curr = (theta_prev + d_theta + np.pi) % (2*np.pi) - np.pi  # new orientation
+
+    return x_curr, y_curr, theta_curr, d_average, d_theta
+
+  # Function to publish the odometry data and the tf transform
+  def publish_odometry(self, x, y, theta, d_average, d_theta):
+    # time stamp
+    now = rospy.Time.now()
+
+    # quaternion from yaw
+    quat = tft.quaternion_from_euler(0, 0, theta)
+
+    # 1) TF -----------------------------------------------------------------
+    self.tf_broadcaster.sendTransform(
+      (x, y, 0.0),
+      quat,
+      now,
+      "base_link",    # child frame
+      "odom"          # parent frame
+    )
+
+    # 2) Odometry message ----------------------------------------------------
+    odom = Odometry()
+    odom.header.stamp = now
+    odom.header.frame_id = "odom"
+    odom.child_frame_id = "base_link"
+    odom.pose.pose.position.x = x
+    odom.pose.pose.position.y = y
+    odom.pose.pose.orientation = Quaternion(*quat)
+    odom.twist.twist.linear.x = d_average / self.sample_period  # linear velocity
+    odom.twist.twist.angular.z = d_theta / self.sample_period  # angular velocity
+
+    # (optional) set velocity if you compute it
+    self.odom_pub.publish(odom)
+
+  def load_param(self):
+    rospy.loginfo("Loading parameters...")
+    config = {}
+    config["baseline"] = rospy.get_param("~baseline")
+    config["wheel_rad"] = rospy.get_param("~wheel_rad")
+    config["encoder_res"] = rospy.get_param("~encoder_res")
+    config["velocity"] = rospy.get_param("~velocity")
+    
+    rospy.loginfo("Loaded config: %s", config)
+    return config  
+
+  def shutdown(self):
+    rospy.loginfo("Shutting down: cleaning up GPIO...")
+    self.driver_L.shutdown()
+    self.driver_R.shutdown()
+    GPIO.cleanup()  # cleanup GPIO pins
+
+
 if __name__ == "__main__":
-    # Initialize the node
-    rospy.init_node('odometry_node', anonymous=True, xmlrpc_port=45102, tcpros_port=45103)
-    odometry_node = OdometryPublisherNode()
-    try:
-        rospy.spin()
-    except KeyboardInterrupt:
-        rospy.loginfo("Shutting down odometry node.")
+  # Initialize the node
+  rospy.init_node('marti_odometry_node', anonymous=False, xmlrpc_port=45102, tcpros_port=45103)
+  odometry_node = OdometryPublisherNode()
+  try:
+    rospy.spin()
+  except KeyboardInterrupt:
+    rospy.loginfo("Shutting down marti odometry node.")
