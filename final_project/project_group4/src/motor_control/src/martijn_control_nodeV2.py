@@ -15,6 +15,8 @@ from motor_control.srv import MoveStraight, MoveStraightResponse
 from motor_control.srv import Rotate, RotateResponse
 from motor_control.srv import Stop, StopResponse
 from motor_control.srv import LeftWheelDir, RightWheelDir
+from motor_control.srv import ConstRotate, ConstRotateResponse
+from motor_control.srv import ConstStraight, ConstStraightResponse
 
 class MotorSubscriberNode:
     def __init__(self):
@@ -70,10 +72,12 @@ class MotorSubscriberNode:
         self.cmd_right = 0.0                             # Current command for right wheel
         self.last_cmd_time = rospy.Time.now()            # Last time a command was sent
 
-        # Initialize motor command services
+        # Initialize motor command services API
         rospy.Service('move_straight', MoveStraight, self.handle_move_straight)
         rospy.Service('rotate', Rotate, self.handle_rotate)
         rospy.Service('stop', Stop, self.handle_stop)
+        rospy.Service('const_rotate', ConstRotate, self.handle_const_rotate)
+        rospy.Service('const_straight', ConstStraight, self.handle_const_straight)
 
         self.motor = DaguWheelsDriver() # Initialize motor driver
 
@@ -163,7 +167,50 @@ class MotorSubscriberNode:
         # Set the state to stop the robot
         self.state = 5
         return StopResponse(True)
+        
+    
+    def handle_const_rotate(self, req):
+        if req.speed <= 0:
+            rospy.logwarn("Speed must be >0")
+            return ConstRotateResponse(False)
+        
+        self.goal_type = 'const_rotate'
+        self.goal_speed = req.angular_speed
 
+        if req.direction > 0: # Check if direction is positive (rotate clockwise) (right?)
+            # Rotate clockwise command
+            rospy.loginfo("CONSTANT ROTATING Clockwise: at %.2frad/s", req.speed)
+            self.state = 9 # Set the state to constant rotate clockwise
+            return ConstRotateResponse(True)
+        
+        if req.direction < 0: # Check if direction is negative (rotate counter-clockwise) (left?)
+            # Rotate counter-clockwise command
+            rospy.loginfo("CONSTANT ROTATING Counter-clockwise:  at %.2frad/s", req.speed)
+            self.state = 8 # Set the state to constant rotate counter-clockwise
+            return ConstRotateResponse(True)
+        return ConstRotateResponse(False)
+
+    def handle_const_straight(self, req):
+        if req.speed <= 0:
+            rospy.logwarn("Speed must be >0")
+            return ConstRotateResponse(False)
+        # Get the current status of the robot and set the goal parameters
+        
+        self.goal_type = 'const_straight'
+        self.goal_speed = req.speed
+
+        if req.direction > 0: # Check if distance is positive (drive forwards)
+            # Move straight forward command
+            rospy.loginfo("MOVING straight forwards %.2fm/s", req.speed)
+            self.state = 6 # Set the state to drive straight forwards
+            return ConstStraightResponse(True)
+
+        if req.direction < 0: # Check if distance is negative (drive backwards)
+            # Move straight backward command
+            rospy.loginfo("MOVING straight backwards %.2fm/s", req.speed)
+            self.state = 7 # Set the state to drive straight backwards
+            return ConstStraightResponse(True)
+        return ConstStraightResponse(False)
 
     # Callback function executes when a new message is received on the /odom topic 
     def curr_position_cb(self, data):
@@ -243,16 +290,17 @@ class MotorSubscriberNode:
                 self.state = 5 # Set the state to stop the robot
             else:
                 # Set the wheel speeds for driving straight forwards
-                # self.motor.set_wheels_speed(left=(self.gain - self.trim)*self.goal_speed, right=(self.gain + self.trim)*self.goal_speed)
+                self.motor.set_wheels_speed(left=(self.gain - self.trim)*self.goal_speed, right=(self.gain + self.trim)*self.goal_speed)
 
                 # -------- PID heading control -----------
+                '''
                 v_nom =  self.goal_speed                 # positive forward
                 v, omega = self.pid_heading_control(v_nom, self.start_theta, self.last_odom_theta)
                 left_cmd, right_cmd = self.v_omega_to_motor_cmd(v, omega)
                 left_cmd, right_cmd = self.acceleration(left_cmd, right_cmd) # Apply acceleration limits
                 self.motor.set_wheels_speed(left_cmd, right_cmd)
+                '''
 
-            
 
         # === State 4: Drive straight backwards ===
         if self.state == 4:
@@ -290,6 +338,55 @@ class MotorSubscriberNode:
             # Stop the robot
             self.motor.set_wheels_speed(left=0, right=0)
             self.state = 0 # Reset state to idle, ready for next command
+
+        # Forward: 6, Backward: 7, Left: 8, Right: 9.
+        if self.state == 6:
+            if self.prev_state != self.state:
+                rospy.loginfo("State 6: Drive constant Forwards")
+                self.prev_state = self.state
+                # update the wheel directions
+                self.call_left_wheel_dir(1)  # Set left wheel direction to forward
+                self.call_right_wheel_dir(1) # Set right wheel direction to forward
+                self.start_theta = self.last_odom_theta # Store the initial orientation
+
+            self.motor.set_wheels_speed(left=(self.gain - self.trim)*self.goal_speed, 
+                                        right=(self.gain + self.trim)*self.goal_speed) 
+              
+        if self.state == 7:
+            if self.prev_state != self.state:
+                rospy.loginfo("State 7: Drive constant backwards")
+                self.prev_state = self.state
+                # update the wheel directions
+                self.call_left_wheel_dir(-1)  # Set left wheel direction to backward
+                self.call_right_wheel_dir(-1) # Set right wheel direction to backward
+                self.start_theta = self.last_odom_theta # Store the initial orientation
+
+            self.motor.set_wheels_speed(left=-(self.gain - self.trim)*self.goal_speed, 
+                                        right=-(self.gain + self.trim)*self.goal_speed)            
+        if self.state == 8:
+            if self.prev_state != self.state:
+                rospy.loginfo("State 8: Rotate constant left") # (counter clockwise)
+                self.prev_state = self.state
+                # update the wheel directions
+                self.call_left_wheel_dir(1)  # Set left wheel direction to forward
+                self.call_right_wheel_dir(-1) # Set right wheel direction to backward
+                self.start_theta = self.last_odom_theta # Store the initial orientation
+
+            self.motor.set_wheels_speed(left=(self.gain - self.trim)*self.goal_speed, 
+                                        right=-(self.gain + self.trim)*self.goal_speed) 
+              
+        if self.state == 9:
+            if self.prev_state != self.state:
+                rospy.loginfo("State 9: Rotate constant right") # (clockwise)
+                self.prev_state = self.state
+                # update the wheel directions
+                self.call_left_wheel_dir(-1)  # Set left wheel direction to backward
+                self.call_right_wheel_dir(1) # Set right wheel direction to forward
+                self.start_theta = self.last_odom_theta # Store the initial orientation
+
+            self.motor.set_wheels_speed(left=-(self.gain - self.trim)*self.goal_speed, 
+                                        right=(self.gain + self.trim)*self.goal_speed)  
+            
 
     def pid_heading_control(self, v_nom, theta_ref, theta_hat):
         """
