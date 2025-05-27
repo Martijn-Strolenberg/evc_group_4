@@ -170,7 +170,7 @@ class MotorSubscriberNode:
         
     
     def handle_const_rotate(self, req):
-        if req.speed <= 0:
+        if req.angular_speed <= 0:
             rospy.logwarn("Speed must be >0")
             return ConstRotateResponse(False)
         
@@ -179,13 +179,13 @@ class MotorSubscriberNode:
 
         if req.direction > 0: # Check if direction is positive (rotate clockwise) (right?)
             # Rotate clockwise command
-            rospy.loginfo("CONSTANT ROTATING Clockwise: at %.2frad/s", req.speed)
+            rospy.loginfo("CONSTANT ROTATING Clockwise: at %.2frad/s", req.angular_speed)
             self.state = 9 # Set the state to constant rotate clockwise
             return ConstRotateResponse(True)
         
         if req.direction < 0: # Check if direction is negative (rotate counter-clockwise) (left?)
             # Rotate counter-clockwise command
-            rospy.loginfo("CONSTANT ROTATING Counter-clockwise:  at %.2frad/s", req.speed)
+            rospy.loginfo("CONSTANT ROTATING Counter-clockwise:  at %.2frad/s", req.angular_speed)
             self.state = 8 # Set the state to constant rotate counter-clockwise
             return ConstRotateResponse(True)
         return ConstRotateResponse(False)
@@ -201,13 +201,13 @@ class MotorSubscriberNode:
 
         if req.direction > 0: # Check if distance is positive (drive forwards)
             # Move straight forward command
-            rospy.loginfo("MOVING straight forwards %.2fm/s", req.speed)
+            rospy.loginfo("CONSTANT MOVING straight forwards %.2fm/s", req.speed)
             self.state = 6 # Set the state to drive straight forwards
             return ConstStraightResponse(True)
 
         if req.direction < 0: # Check if distance is negative (drive backwards)
             # Move straight backward command
-            rospy.loginfo("MOVING straight backwards %.2fm/s", req.speed)
+            rospy.loginfo("CONSTANT MOVING straight backwards %.2fm/s", req.speed)
             self.state = 7 # Set the state to drive straight backwards
             return ConstStraightResponse(True)
         return ConstStraightResponse(False)
@@ -290,16 +290,15 @@ class MotorSubscriberNode:
                 self.state = 5 # Set the state to stop the robot
             else:
                 # Set the wheel speeds for driving straight forwards
-                self.motor.set_wheels_speed(left=(self.gain - self.trim)*self.goal_speed, right=(self.gain + self.trim)*self.goal_speed)
+                # self.motor.set_wheels_speed(left=(self.gain - self.trim)*self.goal_speed, right=(self.gain + self.trim)*self.goal_speed)
 
                 # -------- PID heading control -----------
-                '''
                 v_nom =  self.goal_speed                 # positive forward
                 v, omega = self.pid_heading_control(v_nom, self.start_theta, self.last_odom_theta)
                 left_cmd, right_cmd = self.v_omega_to_motor_cmd(v, omega)
-                left_cmd, right_cmd = self.acceleration(left_cmd, right_cmd) # Apply acceleration limits
+                left_cmd, right_cmd = self.acceleration_func(left_cmd, right_cmd) # Apply acceleration limits
                 self.motor.set_wheels_speed(left_cmd, right_cmd)
-                '''
+                
 
 
         # === State 4: Drive straight backwards ===
@@ -319,15 +318,14 @@ class MotorSubscriberNode:
                 self.state = 5 # Set the state to stop the robot
             else:
                 # Set the wheel speeds for driving straight backwards
-                self.motor.set_wheels_speed(left=-(self.gain - self.trim)*self.goal_speed, right=-(self.gain + self.trim)*self.goal_speed)
-                '''
+                # self.motor.set_wheels_speed(left=-(self.gain - self.trim)*self.goal_speed, right=-(self.gain + self.trim)*self.goal_speed)
                 # -------- PID heading control -----------
                 v_nom =  -self.goal_speed                 # positive forward
                 v, omega = self.pid_heading_control(v_nom, self.start_theta, self.last_odom_theta)
                 left_cmd, right_cmd = self.v_omega_to_motor_cmd(v, omega)
                 left_cmd, right_cmd = self.acceleration(left_cmd, right_cmd) # Apply acceleration limits
                 self.motor.set_wheels_speed(left_cmd, right_cmd)
-                '''
+
 
 
         # === State 5: Finished stop robot ===
@@ -349,8 +347,13 @@ class MotorSubscriberNode:
                 self.call_right_wheel_dir(1) # Set right wheel direction to forward
                 self.start_theta = self.last_odom_theta # Store the initial orientation
 
-            self.motor.set_wheels_speed(left=(self.gain - self.trim)*self.goal_speed, 
-                                        right=(self.gain + self.trim)*self.goal_speed) 
+            # self.motor.set_wheels_speed(left=(self.gain - self.trim)*self.goal_speed, right=(self.gain + self.trim)*self.goal_speed) 
+            # -------- PID heading control -----------
+            v_nom =  self.goal_speed                 # positive forward
+            v, omega = self.pid_heading_control(v_nom, self.start_theta, self.last_odom_theta)
+            left_cmd, right_cmd = self.v_omega_to_motor_cmd(v, omega)
+            left_cmd, right_cmd = self.acceleration(left_cmd, right_cmd) # Apply acceleration limits
+            self.motor.set_wheels_speed(left_cmd, right_cmd)
               
         if self.state == 7:
             if self.prev_state != self.state:
@@ -361,8 +364,14 @@ class MotorSubscriberNode:
                 self.call_right_wheel_dir(-1) # Set right wheel direction to backward
                 self.start_theta = self.last_odom_theta # Store the initial orientation
 
-            self.motor.set_wheels_speed(left=-(self.gain - self.trim)*self.goal_speed, 
-                                        right=-(self.gain + self.trim)*self.goal_speed)            
+            # self.motor.set_wheels_speed(left=-(self.gain - self.trim)*self.goal_speed, right=-(self.gain + self.trim)*self.goal_speed)  
+            # -------- PID heading control -----------
+            v_nom =  -self.goal_speed                 # positive forward
+            v, omega = self.pid_heading_control(v_nom, self.start_theta, self.last_odom_theta)
+            left_cmd, right_cmd = self.v_omega_to_motor_cmd(v, omega)
+            left_cmd, right_cmd = self.acceleration(left_cmd, right_cmd) # Apply acceleration limits
+            self.motor.set_wheels_speed(left_cmd, right_cmd)
+
         if self.state == 8:
             if self.prev_state != self.state:
                 rospy.loginfo("State 8: Rotate constant left") # (counter clockwise)
@@ -397,7 +406,7 @@ class MotorSubscriberNode:
         returns (v_nom, omega)  where omega is angular speed (rad/s)
         """
         now      = rospy.Time.now()
-        dt       = (now - self.last_pid).to_sec()       # delta time since last PID call
+        dt       = (now - self.last_pid_time).to_sec()       # delta time since last PID call
         dt       = max(dt, 1e-3)                        # avoid division by zero
         self.last_pid_time = now                             # update last PID time
 
@@ -426,15 +435,17 @@ class MotorSubscriberNode:
         left_cmd  = np.clip(v_l / self.max_velocity, -1.0, 1.0)
         return left_cmd, right_cmd
 
-    def acceleration(self, desired_left, desired_right):
+    def acceleration_func(self, desired_left, desired_right):
         """
         Limit how fast wheel commands change to fight wheel slip.
         Inputs & outputs are in the same normalized range [-1, 1].
         """
-        now  = rospy.Time.now()
-        dt   = (now - self.last_cmd_time).to_sec()
-        dt   = max(dt, 1e-3)
-        self.last_cmd_time = now
+        
+        # now  = rospy.Time.now()
+        # dt   = (now - self.last_cmd_time).to_sec()
+        # dt   = max(dt, 1e-3)
+        dt = 0.02
+        # self.last_cmd_time = now
 
         def limit(prev, desired):
             limit_up   = self.acceleration * dt
@@ -448,6 +459,7 @@ class MotorSubscriberNode:
 
         self.cmd_left  = limit(self.cmd_left,  desired_left) 
         self.cmd_right = limit(self.cmd_right, desired_right) 
+        rospy.loginfo_throttle(1, "accel: dt=%.3f  desL=%.2f  prevL=%.2f  outL=%.2f  limit_up=%.3f", dt, desired_left, self.cmd_left, self.cmd_left, self.acceleration*dt)
 
         return self.cmd_left, self.cmd_right
                 

@@ -2,13 +2,13 @@
 
 import rospy
 import numpy as np
-from test_pkgs.srv import MoveStraight, Rotate, Stop, ConstRotate, ConstStraight
+from motor_control.srv import MoveStraight, Rotate, Stop, ConstRotate, ConstStraight
 
-def call_const_rotate(direction, speed):
+def call_const_rotate(direction, angular_speed):
   rospy.wait_for_service('const_rotate')
   try:
     proxy = rospy.ServiceProxy('const_rotate', ConstRotate)
-    resp = proxy(direction, speed)
+    resp = proxy(direction, angular_speed)
     print("Constant Rotate success:", resp.success)
   except rospy.ServiceException as e:
     print("Service call failed:", e)

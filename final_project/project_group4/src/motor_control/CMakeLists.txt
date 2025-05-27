@@ -29,6 +29,8 @@ add_service_files(
   Rotate.srv
   LeftWheelDir.srv
   RightWheelDir.srv
+  ConstRotate.srv
+  ConstStraight.srv
 )
 
 # add_action_files(

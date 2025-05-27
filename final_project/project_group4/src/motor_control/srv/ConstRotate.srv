@@ -1,4 +1,4 @@
 int8 direction # only rotate 1 = clockwise (right?); -1 = counter-clockwise (left?)
-float32 speed         # m/s    (must be > 0)
+float32 angular_speed         # m/s    (must be > 0)
 ---
 bool success

@@ -18,6 +18,6 @@ acceleration: 0.5
 deceleration: 0.5
 
 ## PID Params (tune!)
-Kp: 2.0
+Kp: 15.0
 Ki: 0.0
 Kd: 0.0
