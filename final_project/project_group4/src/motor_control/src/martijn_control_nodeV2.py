@@ -282,6 +282,8 @@ class MotorSubscriberNode:
                 self.call_left_wheel_dir(1)  # Set left wheel direction to forward
                 self.call_right_wheel_dir(1) # Set right wheel direction to forward
                 self.start_theta = self.last_odom_theta # Store the initial orientation
+                self.cmd_left = 0
+                self.cmd_right = 0
 
             dx = self.last_odom_x - self.start_x
             dy = self.last_odom_y - self.start_y
@@ -310,6 +312,8 @@ class MotorSubscriberNode:
                 self.call_left_wheel_dir(-1)  # Set left wheel direction to backward
                 self.call_right_wheel_dir(-1) # Set right wheel direction to backward
                 self.start_theta = self.last_odom_theta # Store the initial orientation
+                self.cmd_left = 0
+                self.cmd_right = 0
 
             dx = self.last_odom_x - self.start_x
             dy = self.last_odom_y - self.start_y
@@ -323,7 +327,7 @@ class MotorSubscriberNode:
                 v_nom =  -self.goal_speed                 # positive forward
                 v, omega = self.pid_heading_control(v_nom, self.start_theta, self.last_odom_theta)
                 left_cmd, right_cmd = self.v_omega_to_motor_cmd(v, omega)
-                left_cmd, right_cmd = self.acceleration(left_cmd, right_cmd) # Apply acceleration limits
+                left_cmd, right_cmd = self.acceleration_func(left_cmd, right_cmd) # Apply acceleration limits
                 self.motor.set_wheels_speed(left_cmd, right_cmd)
 
 
@@ -346,13 +350,15 @@ class MotorSubscriberNode:
                 self.call_left_wheel_dir(1)  # Set left wheel direction to forward
                 self.call_right_wheel_dir(1) # Set right wheel direction to forward
                 self.start_theta = self.last_odom_theta # Store the initial orientation
+                self.cmd_left = 0
+                self.cmd_right = 0
 
             # self.motor.set_wheels_speed(left=(self.gain - self.trim)*self.goal_speed, right=(self.gain + self.trim)*self.goal_speed) 
             # -------- PID heading control -----------
             v_nom =  self.goal_speed                 # positive forward
             v, omega = self.pid_heading_control(v_nom, self.start_theta, self.last_odom_theta)
             left_cmd, right_cmd = self.v_omega_to_motor_cmd(v, omega)
-            left_cmd, right_cmd = self.acceleration(left_cmd, right_cmd) # Apply acceleration limits
+            left_cmd, right_cmd = self.acceleration_func(left_cmd, right_cmd) # Apply acceleration limits
             self.motor.set_wheels_speed(left_cmd, right_cmd)
               
         if self.state == 7:
@@ -363,13 +369,15 @@ class MotorSubscriberNode:
                 self.call_left_wheel_dir(-1)  # Set left wheel direction to backward
                 self.call_right_wheel_dir(-1) # Set right wheel direction to backward
                 self.start_theta = self.last_odom_theta # Store the initial orientation
+                self.cmd_left = 0
+                self.cmd_right = 0
 
             # self.motor.set_wheels_speed(left=-(self.gain - self.trim)*self.goal_speed, right=-(self.gain + self.trim)*self.goal_speed)  
             # -------- PID heading control -----------
             v_nom =  -self.goal_speed                 # positive forward
             v, omega = self.pid_heading_control(v_nom, self.start_theta, self.last_odom_theta)
             left_cmd, right_cmd = self.v_omega_to_motor_cmd(v, omega)
-            left_cmd, right_cmd = self.acceleration(left_cmd, right_cmd) # Apply acceleration limits
+            left_cmd, right_cmd = self.acceleration_func(left_cmd, right_cmd) # Apply acceleration limits
             self.motor.set_wheels_speed(left_cmd, right_cmd)
 
         if self.state == 8:
@@ -379,6 +387,7 @@ class MotorSubscriberNode:
                 # update the wheel directions
                 self.call_left_wheel_dir(1)  # Set left wheel direction to forward
                 self.call_right_wheel_dir(-1) # Set right wheel direction to backward
+
                 self.start_theta = self.last_odom_theta # Store the initial orientation
 
             self.motor.set_wheels_speed(left=(self.gain - self.trim)*self.goal_speed, 
