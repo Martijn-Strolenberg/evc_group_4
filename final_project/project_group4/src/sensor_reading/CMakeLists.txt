@@ -8,6 +8,9 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   message_generation
 )
+
+catkin_python_setup()
+
 # add_message_files(
 #   FILES
 # )
@@ -41,12 +44,12 @@ install(DIRECTORY launch/
 
 # Install Python scripts
 catkin_install_python(PROGRAMS
-  src/battery_test.py
-  src/battery_monitor_service.py
-  src/display_node.py
-  src/battery_pub_node.py
-  src/tof_pub_node.py
-  src/imu_pub_node.py
-  src/collision_detection_node.py
+  src/sensor_reading/battery_test.py
+  src/sensor_reading/battery_monitor_service.py
+  src/sensor_reading/display_node.py
+  src/sensor_reading/battery_pub_node.py
+  src/sensor_reading/tof_pub_node.py
+  src/sensor_reading/imu_pub_node.py
+  src/sensor_reading/collision_detection_node.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )

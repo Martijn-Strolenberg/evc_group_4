@@ -1,10 +1,9 @@
 #!/usr/bin/env python2
 
 import rospy
+#from sensor_reading.drivers import Adafruit_SSD1306
 import Adafruit_SSD1306
 from PIL import Image, ImageDraw, ImageFont
-from time import sleep
-import time
 from std_msgs.msg import Float64
 
 

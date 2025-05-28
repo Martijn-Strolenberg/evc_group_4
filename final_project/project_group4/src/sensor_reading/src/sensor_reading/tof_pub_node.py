@@ -2,8 +2,9 @@
 
 import rospy
 import numpy as np
-from tofDriver import VL53L0X
+from sensor_reading.drivers.tofDriver import VL53L0X
 from std_msgs.msg import Float64
+from collections import deque
 
 
 class TofPublisherNode:
@@ -14,7 +15,7 @@ class TofPublisherNode:
         self.max_valid_distance   = rospy.get_param("~max_valid_distance", 1200.0)  # mm
         # Exponential Moving Average (EMA) filter parameters
         self.use_ema              = rospy.get_param("~use_ema", False)
-        self.ema_alpha            = rospy.get_param("~ema_alpha", 0.2)      # 0 < α ≤ 1
+        self.ema_alpha            = rospy.get_param("~ema_alpha", 0.2)      # 0 < alfa < 1
 
         self.buffer = deque(maxlen=self.window_size)  # for SMA
         self.ema    = None # for EMA (doesn't require a buffer!)
@@ -53,7 +54,7 @@ class TofPublisherNode:
         while not rospy.is_shutdown():
             try:
                 raw_distance = self.sensor.read_distance()
-                filtered     = self._filter(raw_distance)
+                filtered     = self.filter(raw_distance)
                 if filtered is not None:
                     self.pub_tof.publish(Float64(filtered))
             except rospy.ROSInterruptException:

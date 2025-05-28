@@ -1,6 +1,6 @@
 #!/usr/bin/env python2
 
-from imuDriver import mpu6050
+from sensor_reading.drivers.imuDriver import mpu6050
 import rospy
 from sensor_msgs.msg import Imu
 from std_srvs.srv import Empty, EmptyResponse
