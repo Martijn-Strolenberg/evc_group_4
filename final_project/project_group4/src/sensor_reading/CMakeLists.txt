@@ -17,6 +17,7 @@ add_service_files(
   FILES
   # our custom services
   BatteryInfo.srv
+  CollisionDetection.srv
 )
 
 generate_messages(
@@ -45,5 +46,7 @@ catkin_install_python(PROGRAMS
   src/display_node.py
   src/battery_pub_node.py
   src/tof_pub_node.py
+  src/imu_pub_node.py
+  src/collision_detection_node.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )

@@ -2,7 +2,7 @@
 <package format="2">
     <name>sensor_reading</name>
     <version>0.1.0</version>
-    <description>Group 4 assignment 3 package</description>
+    <description>Group 4 final project sensor package</description>
 
     <!-- Maintainership Information -->
     <maintainer email="v.rizeakos@student.tue.nl">V.Rizeakos</maintainer>
