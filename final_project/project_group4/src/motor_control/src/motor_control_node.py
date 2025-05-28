@@ -1,14 +1,14 @@
 #!/usr/bin/env python2
 
 import time
-# from drivers import hat
-# from drivers import motorDriver
+# from motor_control.drivers import hat # maybe this works?
+# from motor_control.drivers import motorDriver
 import hat
 import motorDriver
 from motorDriver import DaguWheelsDriver
 import rospy
 import numpy as np
-from motor_control.msg import motor_cmd, encoder
+from motor_control.msg import motor_cmd, encoder # not needed anymore?
 from nav_msgs.msg import Odometry
 import tf
 import tf.transformations as tft
