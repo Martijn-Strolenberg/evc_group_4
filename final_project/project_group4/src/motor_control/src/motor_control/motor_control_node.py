@@ -1,14 +1,8 @@
 #!/usr/bin/env python2
 
-#import time
-from drivers import hat
-from drivers import motorDriver
-#import hat
-#import motorDriver
-#from motorDriver import DaguWheelsDriver
+from motor_control.drivers.motorDriver import DaguWheelsDriver
 import rospy
 import numpy as np
-#from motor_control.msg import motor_cmd, encoder
 from nav_msgs.msg import Odometry
 import tf
 import tf.transformations as tft

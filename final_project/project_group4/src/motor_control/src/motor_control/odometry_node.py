@@ -3,13 +3,12 @@
 import rospy
 import numpy as np
 from typing import Tuple
-from encoderDriver import *
-
+from motor_control.drivers.encoderDriver import *
+# from encoderDriver import *
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Quaternion, TransformStamped
 import tf
 import tf.transformations as tft
-from motor_control.msg import motor_cmd, encoder
 from motor_control.srv import LeftWheelDir, LeftWheelDirResponse
 from motor_control.srv import RightWheelDir, RightWheelDirResponse
 
