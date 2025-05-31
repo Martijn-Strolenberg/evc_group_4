@@ -1,0 +1,4 @@
+int8 direction        # 1 = forwards; -1 = backwards
+float32 speed         # m/s    (must be > 0)
+---
+bool success

@@ -1,12 +1,9 @@
 #!/usr/bin/env python2
-#import serial
-import time
+
 import re
 import rospy
-import time
 from sensor_reading.srv import BatteryInfo, BatteryInfoResponse
 import serial
-import random # replace!
 
 INFO_COMMAND = b"?"
 

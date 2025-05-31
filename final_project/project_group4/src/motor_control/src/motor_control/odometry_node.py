@@ -4,7 +4,6 @@ import rospy
 import numpy as np
 from typing import Tuple
 from motor_control.drivers.encoderDriver import *
-# from encoderDriver import *
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Quaternion, TransformStamped
 import tf

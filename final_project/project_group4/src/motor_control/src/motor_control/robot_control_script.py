@@ -2,7 +2,26 @@
 
 import rospy
 import numpy as np
-from motor_control.srv import MoveStraight, Rotate, Stop, ConstRotate, ConstStraight
+from motor_control.srv import MoveStraight, Rotate, Stop, ConstRotate, ConstStraight, DriveLeftwheel, DriveRightwheel
+
+def call_left_wheel(direction, speed):
+  rospy.wait_for_service('left_wheel_vel')
+  try:
+    proxy = rospy.ServiceProxy('left_wheel_vel', DriveLeftwheel)
+    resp = proxy(direction, speed)
+    print("Left wheel command success:", resp.success)
+  except rospy.ServiceException as e:
+    print("Service call failed:", e)
+
+
+def call_right_wheel(direction, speed):
+  rospy.wait_for_service('right_wheel_vel')
+  try:
+    proxy = rospy.ServiceProxy('right_wheel_vel', DriveRightwheel)
+    resp = proxy(direction, speed)
+    print("Right wheel command success:", resp.success)
+  except rospy.ServiceException as e:
+    print("Service call failed:", e)
 
 def call_const_rotate(direction, angular_speed):
   rospy.wait_for_service('const_rotate')
@@ -56,6 +75,8 @@ def interactive_prompt():
   print("rotate <angle (deg)> <angular_speed>")
   print("const_rotate <direction> <speed>")
   print("const_straight <direction> <speed>")
+  print("left_wheel <direction> <speed>")
+  print("right_wheel <direction> <speed>")
   print("stop\n")
 
   while not rospy.is_shutdown():
@@ -66,6 +87,10 @@ def interactive_prompt():
       parts = user_input.split()
       cmd = parts[0]
 
+      if cmd == "left_wheel" and len(parts) == 3:
+        call_left_wheel(float(parts[1]), float(parts[2]))
+      if cmd == "right_wheel" and len(parts) == 3:
+        call_right_wheel(float(parts[1]), float(parts[2]))
       if cmd == "const_rotate" and len(parts) == 3:
         call_const_rotate(float(parts[1]), float(parts[2]))
       if cmd == "const_straight" and len(parts) == 3:

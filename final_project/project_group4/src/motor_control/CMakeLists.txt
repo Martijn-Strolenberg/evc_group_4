@@ -34,6 +34,8 @@ add_service_files(
   RightWheelDir.srv
   ConstRotate.srv
   ConstStraight.srv
+  DriveLeftwheel.srv
+  DriveRightwheel.srv
 )
 
 # add_action_files(
