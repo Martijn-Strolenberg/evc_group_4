@@ -40,6 +40,9 @@ class MotorSubscriberNode:
         
         # Initialize parameters for the robot's movement goal/target
         self.goal_type = None  # 'straight' or 'rotate'
+        self.goal_speed = 0.0   # speed in m/s or rad/s
+        self.goal_left_speed = 0.0  # speed for left wheel in m/s
+        self.goal_right_speed = 0.0 # speed for right wheel in m/s
         self.goal_distance = 0 # distance to travel in meters
         self.goal_angle = 0    # angle to rotate in radians
         self.start_x = 0.0     # initial x position
@@ -218,7 +221,7 @@ class MotorSubscriberNode:
             rospy.logwarn("Speed must be >0")
             return DriveLeftwheelResponse(False)
         
-        self.goal_speed = req.speed # Set the desired speed of the motors
+        self.goal_left_speed = req.speed # Set the desired speed of the motors
 
         if req.direction > 0: # Check if distance is positive (drive forwards)
             # Move straight forward command
@@ -238,7 +241,7 @@ class MotorSubscriberNode:
             rospy.logwarn("Speed must be >0")
             return DriveRightwheelResponse(False)
         
-        self.goal_speed = req.speed # Set the desired speed of the motors
+        self.goal_right_speed = req.speed # Set the desired speed of the motors
         
         if req.direction > 0: # Check if distance is positive (drive forwards)
             # Move straight forward command
@@ -454,14 +457,16 @@ class MotorSubscriberNode:
                 self.prev_state = self.state
                 # update left wheel direction
                 self.call_left_wheel_dir(1)  # Set left wheel direction to forwards
-            self.motor.set_wheels_speed(left=(self.gain - self.trim)*self.goal_speed, right=0) 
+            self.motor.set_wheels_speed(left=(self.gain - self.trim)*self.goal_left_speed, 
+                                        right=(self.gain + self.trim)*self.goal_right_speed) 
         if self.state == 11:
             if self.prev_state != self.state:
                 rospy.loginfo("State 11: command left wheel backwards")
                 self.prev_state = self.state
                 # update left wheel direction
                 self.call_left_wheel_dir(-1)  # Set left wheel direction to backwards
-            self.motor.set_wheels_speed(left=-(self.gain - self.trim)*self.goal_speed, right=0)
+            self.motor.set_wheels_speed(left=-(self.gain - self.trim)*self.goal_left_speed, 
+                                        right=(self.gain + self.trim)*self.goal_right_speed)
 
         if self.state == 12:
             if self.prev_state != self.state:
@@ -469,14 +474,16 @@ class MotorSubscriberNode:
                 self.prev_state = self.state
                 # update right wheel direction
                 self.call_right_wheel_dir(1)  # Set right wheel direction to forwards
-            self.motor.set_wheels_speed(left=0, right=(self.gain + self.trim)*self.goal_speed) 
+            self.motor.set_wheels_speed(left=(self.gain - self.trim)*self.goal_left_speed, 
+                                        right=(self.gain + self.trim)*self.goal_right_speed) 
         if self.state == 13:
             if self.prev_state != self.state:
                 rospy.loginfo("State 13: command right wheel backwards")
                 self.prev_state = self.state
                 # update right wheel direction
                 self.call_right_wheel_dir(-1)  # Set right wheel direction to backwards
-            self.motor.set_wheels_speed(left=0, right=-(self.gain + self.trim)*self.goal_speed) 
+            self.motor.set_wheels_speed(left=(self.gain - self.trim)*self.goal_left_speed, 
+                                        right=-(self.gain + self.trim)*self.goal_right_speed)
 
     def pid_heading_control(self, v_nom, theta_ref, theta_hat):
         """
