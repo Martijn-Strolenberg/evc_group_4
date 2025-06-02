@@ -40,7 +40,7 @@ class CameraSubscriberNode:
         self.distance_cmd = 0.08
         self.angle_cmd = 0.3
         self.turn_vel = 0.5
-        self.move_vel = 0.3
+        self.move_vel = 0.2
 
         self.middle = 640 / 2
         
@@ -128,14 +128,14 @@ class CameraSubscriberNode:
                         cx = int(M["m10"]/M["m00"])
                         cy = int(M["m01"]/M["m00"])
                         lines.append({'x': cx, 'y': cy})
-
-                        cv2.circle(undis_image, (cx, cy), 5, (0,255,0), -1)
                         cv2.drawContours(undis_image, [contour], -1, (255,0,0), 2)
 
             if lines:
                 # Take the line that is the most centered
                 lines = sorted(lines, key=lambda l: abs(l['x'] - self.middle))
+                
                 cv2.circle(edges, (lines[0]['x'], lines[0]['y']), 5, (0, 255, 0), -1)
+                cv2.circle(undis_image, (lines[0]['x'], lines[0]['y']), 5, (0, 255, 0), -1)
                 self.latest_center = (lines[0]['x'], lines[0]['y'])
             else:
                 self.latest_center = None
@@ -174,8 +174,8 @@ class CameraSubscriberNode:
         # scale speed based on the absolute error
         velocity = max(self.move_vel * (1 - min(abs(error) / self.middle, 1)), 0.5)  # Scale velocity based on error, min speed is 0.5
         # determine the 2 velocities for the left and right wheel
-        velocity_right = velocity * (1 - angle / np.pi)
-        velocity_left = velocity * (1 + angle / np.pi)
+        velocity_right = velocity * (1 - (angle / np.pi)/2)
+        velocity_left = velocity * (1 + (angle / np.pi)/2)
 
         self.call_left_wheel(1, velocity_left)
         self.call_right_wheel(1, velocity_right)
