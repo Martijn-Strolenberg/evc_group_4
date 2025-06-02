@@ -36,6 +36,7 @@ add_service_files(
   ConstStraight.srv
   DriveLeftwheel.srv
   DriveRightwheel.srv
+  SetMaxSpeed.srv
 )
 
 # add_action_files(

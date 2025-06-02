@@ -6,8 +6,8 @@ import numpy as np
 from cv_bridge import CvBridge, CvBridgeError
 from sensor_msgs.msg import CompressedImage
 from motor_control.msg import motor_cmd
-from motor_control.srv import MoveStraight, Rotate, Stop, ConstRotate, ConstStraight, DriveLeftwheel, DriveRightwheel
-from motor_control.srv import SetMaxSpeed, SetMaxSpeedResponse
+from motor_control.srv import MoveStraight, Rotate, Stop, ConstRotate, ConstStraight, DriveLeftwheel, DriveRightwheel, ChangeSpeed
+from motor_control.srv import ChangeSpeed, ChangeSpeedResponse
 
 class CameraSubscriberNode:
     def __init__(self):
@@ -31,7 +31,7 @@ class CameraSubscriberNode:
             queue_size=10
         )
 
-        self.cmd_rate = 4.0 # generate move commands at 10 Hz
+        self.cmd_rate = 2.0 # generate move commands at 2 Hz
         self.cmd_dt = 1.0 / self.cmd_rate
         self.last_cmd_ts = rospy.Time.now()
         self.latest_center = None  # updated every frame
@@ -40,11 +40,9 @@ class CameraSubscriberNode:
         self.distance_cmd = 0.08
         self.angle_cmd = 0.3
         self.turn_vel = 0.5
-        self.move_vel = 0.2
+        self.move_vel = 0.6
 
         self.middle = 640 / 2
-        
-        rospy.on_shutdown(self.shutdown) # Shutdown hook to clean up resources
 
         # Initialize motor command services API
         #services = MotorServices()
@@ -67,85 +65,61 @@ class CameraSubscriberNode:
 
             # <================= START: Image Processing ======================>
             # Convert to HSV color space
-            # hsv = cv2.cvtColor(undis_image, cv2.COLOR_BGR2HSV)
+            hsv = cv2.cvtColor(undis_image, cv2.COLOR_BGR2HSV)
 
-            # v_channel = hsv[:,:,2]  # brightness
+            v_channel = hsv[:,:,2]  # brightness
 
-            # # Compute adaptive thresholds for V channel
-            # mean_v = np.mean(v_channel)
-            # std_v = np.std(v_channel)
+            # Compute adaptive thresholds for V channel
+            mean_v = np.mean(v_channel)
+            std_v = np.std(v_channel)
 
-            # lower_v = max(0, mean_v - 1.5 * std_v)
-            # upper_v = min(255, mean_v + 1.5 * std_v)
+            lower_v = max(0, mean_v - 1.5 * std_v)
+            upper_v = min(255, mean_v + 1.5 * std_v)
 
-            # dtype = hsv.dtype
-            # # lower_white = np.array([0, 0, lower_v], dtype=dtype)
-            # # upper_white = np.array([180, 40, upper_v], dtype=dtype)
-            # lower_white = np.array([0, 0, 180])
-            # upper_white = np.array([180, 70, 255])
+            dtype = hsv.dtype
+            # lower_white = np.array([0, 0, lower_v], dtype=dtype)
+            # upper_white = np.array([180, 40, upper_v], dtype=dtype)
+            lower_white = np.array([0, 0, 180])
+            upper_white = np.array([180, 70, 255])
 
-            # # lower_white = np.array([0, 0, lower_v])
-            # # upper_white = np.array([180, 40, upper_v])
+            # lower_white = np.array([0, 0, lower_v])
+            # upper_white = np.array([180, 40, upper_v])
 
-            # mask = cv2.inRange(hsv, lower_white, upper_white)
+            mask = cv2.inRange(hsv, lower_white, upper_white)
 
-            # # Morphological operations to clean noise
-            # kernel = np.ones((5, 5), np.uint8)
-            # mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
-            # mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
+            # Morphological operations to clean noise
+            kernel = np.ones((5, 5), np.uint8)
+            mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
+            mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
 
-            # segmented_image = cv2.bitwise_and(undis_image, undis_image, mask=mask)
-
-            gray = cv2.cvtColor(undis_image, cv2.COLOR_BGR2GRAY)
-
-            # Apply Gaussian Blur to smooth noise
-            blurred = cv2.GaussianBlur(gray, (5,5), 0)
-
-            # Canny Edge Detection
-            edges = cv2.Canny(blurred, 50, 150)
+            segmented_image = cv2.bitwise_and(undis_image, undis_image, mask=mask)
            
 
             MIN_AREA_TRACK = 20  # Minimum area for track marks
 
             # get a list of contours
-            lines = cv2.HoughLinesP(edges, 1, np.pi/180, threshold=50, minLineLength=50, maxLineGap=20)
+            contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
-            lines_detected = []
+            lines = []
 
-            # get the line that is closest to the middle bottom of the image
-            if lines is not None:
-                for line in lines:
-                    x1, y1, x2, y2 = line[0]
-                    # Calculate the bottom middle point of the line
-                    mid_x = (x1 + x2) // 2
-                    bottom_y = y1 if y2 > y1 else y2
+            for contour in contours:
+                M = cv2.moments(contour)
 
-                    # Calculate the length of the line
-                    length = np.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
+                if (M['m00'] > MIN_AREA_TRACK):
+                    # Contour is part of the track
+                    cx = int(M["m10"]/M["m00"])
+                    xy = int(M["m01"]/M["m00"])
+                    lines.append({'x': cx, 'y': xy})
 
-                    if length > MIN_AREA_TRACK:
-                        lines_detected.append({'x': mid_x, 'y': bottom_y, 'length': length})
-
-                # draw the lines on the edges image
-                for line in lines_detected:
-                    cv2.circle(edges, (line['x'], line['y']), 5, (255, 0, 0), -1)
-                    cv2.circle(undis_image, (line['x'], line['y']), 5, (255, 0, 0), -1)
-
-
-            if lines_detected:
-                # Take the line that is the least euclidean distance from the middle bottom of the image
-                lines = sorted(lines_detected, key=lambda line: np.sqrt((line['x'] - self.middle) ** 2 + (line['y'] - undis_image.shape[0]) ** 2))
-
-                cv2.circle(edges, (lines[0]['x'], lines[0]['y']), 5, (0, 255, 0), -1)
-                cv2.circle(undis_image, (lines[0]['x'], lines[0]['y']), 5, (0, 255, 0), -1)
+            if lines:
+                cv2.circle(segmented_image, (lines[0]['x'], lines[0]['y']), 5, (0, 255, 0), -1)
                 self.latest_center = (lines[0]['x'], lines[0]['y'])
             else:
                 self.latest_center = None
 
-            #cv2.imshow("Segmented Image", segmented_image)
-            cv2.imshow("edges", edges)
-            cv2.imshow("Undistorted Image", undis_image)
-            #cv2.imshow("Mask", mask)
+            cv2.imshow("Segmented Image", segmented_image)
+            cv2.imshow("V Channel", v_channel)
+            cv2.imshow("Mask", mask)
 
             cv2.waitKey(1)  # Non-blocking update
 
@@ -174,14 +148,13 @@ class CameraSubscriberNode:
         angle = np.arctan2(error, 100)  # 100 is a scaling factor for the angle, 320 error is 1.26 radians == 72 degrees
         
         # scale speed based on the absolute error
-        #velocity = max(self.move_vel * (1 - min(abs(error) / self.middle, 1)), 0.3)  # Scale velocity based on error, min speed is 0.5
-        velocity = 0.25
-        # determine the 2 velocities for the left and right wheel
-        velocity_right = velocity * (1 - (angle / np.pi)*3)
-        velocity_left = velocity * (1 + (angle / np.pi)*3)
+        velocity = max(self.move_vel * (1 - min(abs(error) / self.middle, 1)), 0.5)  # Scale velocity based on error, min speed is 0.5
 
-        self.call_left_wheel(1, velocity_left)
-        self.call_right_wheel(1, velocity_right)
+        if abs(error) > 40:  # If the error is small, we can ignore angle correction
+            self.motor_cmd(velocity, self.distance_cmd, angle, 0)
+            #self.call_left_wheel(1, 0.3) # arguments: direction -1 or 1, speed [0,1]
+        else:
+            self.motor_cmd(velocity, self.distance_cmd, 0, 0)
 
     # <================= Motor command function =================>
     def motor_cmd(self, velocity, distance, angle, blocking):
@@ -216,7 +189,7 @@ class CameraSubscriberNode:
         except rospy.ServiceException as e:
             print("Service call failed:", e)
 
-    def call_stop(self):
+    def call_stop():
         rospy.wait_for_service('stop')
         try:
             proxy = rospy.ServiceProxy('stop', Stop)
@@ -224,25 +197,26 @@ class CameraSubscriberNode:
             print("Stop success:", resp.success)
         except rospy.ServiceException as e:
             print("Service call failed:", e)
-    # ----------------------------OCR-speed-set-----------------
-    def set_max_speed(self,req):
+
+    def set_max_speed(self,speed)
         if req.speed <= 0:
             rospy.logwarn("Speed must be >0")
             return SetMaxSpeedResponse(False)
         # Get the current status of the robot and set the goal parameters
+        
+        self.move_vel = req.speed
+        self.turn_vel = move_vel - 0.1
 
         if req.speed > 0: # Check if distance is positive (drive forwards)
             # Move straight forward command
 
             self.move_vel = req.speed
-            self.turn_vel = self.move_vel - 0.1
+            self.turn_vel = move_vel - 0.1
             rospy.loginfo("Chaning max speed to %.2fm/s", req.speed)
-            return SetMaxSpeedResponse(True)
+            return ConstStraightResponse(True)
 
-    def shutdown(self):
-        rospy.loginfo("Shutting down line follower node.")
-        self.call_stop()        # Stop the robot
-        cv2.destroyAllWindows() # Close all OpenCV windows
+    def cleanup(self):
+        cv2.destroyAllWindows()
 
 if __name__ == "__main__":
     # Initialize the node
@@ -253,5 +227,4 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         rospy.loginfo("Shutting down image viewer node.")
     finally:
-        camera_node.shutdown()
-    
+        camera_node.cleanup()
