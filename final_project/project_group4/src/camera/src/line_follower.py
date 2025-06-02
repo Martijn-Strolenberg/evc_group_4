@@ -31,7 +31,7 @@ class CameraSubscriberNode:
             queue_size=10
         )
 
-        self.cmd_rate = 2.0 # generate move commands at 2 Hz
+        self.cmd_rate = 4.0 # generate move commands at 10 Hz
         self.cmd_dt = 1.0 / self.cmd_rate
         self.last_cmd_ts = rospy.Time.now()
         self.latest_center = None  # updated every frame
@@ -130,7 +130,7 @@ class CameraSubscriberNode:
 
             if lines_detected:
                 # Take the line that is the least euclidean distance from the middle bottom of the image
-                lines = sorted(lines, key=lambda line: np.sqrt((line['x'] - self.middle) ** 2 + (line['y'] - undis_image.shape[0]) ** 2))
+                lines = sorted(lines_detected, key=lambda line: np.sqrt((line['x'] - self.middle) ** 2 + (line['y'] - undis_image.shape[0]) ** 2))
 
                 cv2.circle(edges, (lines[0]['x'], lines[0]['y']), 5, (0, 255, 0), -1)
                 cv2.circle(undis_image, (lines[0]['x'], lines[0]['y']), 5, (0, 255, 0), -1)
@@ -170,10 +170,11 @@ class CameraSubscriberNode:
         angle = np.arctan2(error, 100)  # 100 is a scaling factor for the angle, 320 error is 1.26 radians == 72 degrees
         
         # scale speed based on the absolute error
-        velocity = max(self.move_vel * (1 - min(abs(error) / self.middle, 1)), 0.5)  # Scale velocity based on error, min speed is 0.5
+        #velocity = max(self.move_vel * (1 - min(abs(error) / self.middle, 1)), 0.3)  # Scale velocity based on error, min speed is 0.5
+        velocity = 0.25
         # determine the 2 velocities for the left and right wheel
-        velocity_right = velocity * (1 - (angle / np.pi)/2)
-        velocity_left = velocity * (1 + (angle / np.pi)/2)
+        velocity_right = velocity * (1 - (angle / np.pi)*3)
+        velocity_left = velocity * (1 + (angle / np.pi)*3)
 
         self.call_left_wheel(1, velocity_left)
         self.call_right_wheel(1, velocity_right)
