@@ -18,7 +18,6 @@ class CollisionDetectionNode:
             buff_size=2**24,
             queue_size=10
         )
-        self.pub_tof
 
         self.initialized = True
         rospy.loginfo("Collision Detection node initialized!")
@@ -28,6 +27,8 @@ class CollisionDetectionNode:
     def set_tof_cb(self, data):
         self.tof = data.data
         rospy.loginfo("TOF distance: %f", self.tof)
+        self.state_tof()
+
     def state_tof(self):
         if self.tof <= 200:
             self.service_tof(True)
@@ -35,6 +36,7 @@ class CollisionDetectionNode:
             self.service_tof(False)
     
     def service_tof(self,collision):
+        rospy.wait_for_service('col_detect')
         try:
             proxy = rospy.ServiceProxy('col_detect', CollisionDetection)
             resp = proxy(collision)
