@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 import cv2
 import rospy
@@ -71,8 +71,11 @@ class CameraSubscriberNode:
             lower_v = max(0, mean_v - 1.5 * std_v)
             upper_v = min(255, mean_v + 1.5 * std_v)
 
-            lower_white = np.array([0, 0, lower_v])
-            upper_white = np.array([180, 40, upper_v])
+            dtype = hsv.dtype
+            lower_white = np.array([0, 0, lower_v], dtype=dtype)
+            upper_white = np.array([180, 40, upper_v], dtype=dtype)
+            # lower_white = np.array([0, 0, lower_v])
+            # upper_white = np.array([180, 40, upper_v])
 
             mask = cv2.inRange(hsv, lower_white, upper_white)
 
@@ -87,7 +90,7 @@ class CameraSubscriberNode:
             MIN_AREA_TRACK = 20  # Minimum area for track marks
 
             # get a list of contours
-            _, contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+            contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
             lines = []
 
