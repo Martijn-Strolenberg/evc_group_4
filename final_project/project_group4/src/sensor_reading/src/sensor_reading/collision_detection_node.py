@@ -34,15 +34,18 @@ class CollisionDetectionNode:
         self.state_tof()
 
     def state_tof(self):
-        
+        rospy.loginfo("check")
         if self.tof <= self.dist and self.curr_mesg != self.prev_mesg:
+            rospy.loginfo("Collision detected!")
             self.service_tof(True)
             self.prev_mesg = self.curr_mesg
         elif self.tof > self.dist and self.prev_mesg == self.curr_mesg:
+            rospy.loginfo("no collision")
             self.service_tof(False)
             self.curr_mesg += 1
     
     def service_tof(self,collision):
+        rospy.loginfo("sending service")
         rospy.wait_for_service('col_detect')
         try:
             proxy = rospy.ServiceProxy('col_detect', CollisionDetection)
@@ -50,7 +53,6 @@ class CollisionDetectionNode:
             print("Detected Wall:", resp.success)
         except rospy.ServiceException as e:
             print("Service call failed:", e)
-
         
 if __name__ == "__main__":
     # Initialize the node

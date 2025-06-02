@@ -66,6 +66,7 @@ install(DIRECTORY launch/
 
 # Install Python scripts
 catkin_install_python(PROGRAMS
+  src/motor_control/motor_control_node_det.py
   src/motor_control/odometry_node.py
   src/motor_control/motor_control_node.py
   src/motor_control/robot_control_script.py
