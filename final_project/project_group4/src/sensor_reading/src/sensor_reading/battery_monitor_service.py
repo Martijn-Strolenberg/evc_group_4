@@ -1,20 +1,18 @@
 #!/usr/bin/env python2
-#import serial
-import time
+
 import re
 import rospy
-import time
 from sensor_reading.srv import BatteryInfo, BatteryInfoResponse
-import random # replace!
+import serial
 
 INFO_COMMAND = b"?"
 
 def handle_battery_info(req, serial_port="/dev/ttyACM0", baud_rate=9600):
-    percentage = float(random.uniform(0.0, 100.0)) # replace with actual battery percentage readings
+    percentage = get_battery_info(serial_port, baud_rate)
     rospy.loginfo("Battery status requested, returning {}".format(percentage))
     return BatteryInfoResponse(percentage)
         
-def get_battery_info():
+def get_battery_info(serial_port, baud_rate):
     try:
         # Open serial connection to the Duckiebattery
         ser = serial.Serial(port=serial_port, baudrate=baud_rate, timeout=10)

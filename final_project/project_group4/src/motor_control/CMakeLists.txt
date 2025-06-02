@@ -13,6 +13,9 @@ find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   nav_msgs
 )
+
+catkin_python_setup()
+
 add_message_files(
   FILES
   # our custom messages
@@ -29,6 +32,10 @@ add_service_files(
   Rotate.srv
   LeftWheelDir.srv
   RightWheelDir.srv
+  ConstRotate.srv
+  ConstStraight.srv
+  DriveLeftwheel.srv
+  DriveRightwheel.srv
 )
 
 # add_action_files(
@@ -45,7 +52,7 @@ generate_messages(
 )
 
 catkin_package(
-  CATKIN_DEPENDS message_runtime sensor_msgs std_msgs geometry_msgs nav_msgs actionlib actionlib_msgs
+  CATKIN_DEPENDS message_runtime sensor_msgs std_msgs geometry_msgs nav_msgs actionlib actionlib_msgs 
 )
 
 # Include directories
@@ -59,15 +66,8 @@ install(DIRECTORY launch/
 
 # Install Python scripts
 catkin_install_python(PROGRAMS
-  src/Luka_control_node.py
-  src/Luka_odometry_node.py
-  src/marti_odometry_node.py
-  src/martijn_control_nodeV2.py
-  src/martijn_control_node.py
-  src/motor_command_node.py
-  src/temp_control_node.py
-  src/motor_pub_node.py
-  src/motor_control_node.py
-  src/odometry_node.py
+  src/motor_control/odometry_node.py
+  src/motor_control/motor_control_node.py
+  src/motor_control/robot_control_script.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )

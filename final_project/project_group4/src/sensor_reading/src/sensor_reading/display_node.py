@@ -3,9 +3,8 @@
 import rospy
 import Adafruit_SSD1306
 from PIL import Image, ImageDraw, ImageFont
-from time import sleep
-import time
 from std_msgs.msg import Float64
+from sensor_reading.srv import BatteryInfo
 
 
 class DisplaySubscriberNode:
@@ -13,22 +12,6 @@ class DisplaySubscriberNode:
     def __init__(self):
         self.initialized = False
         rospy.loginfo("Initializing Display node...")
-
-        # Construct subscribers
-        self.sub_bat = rospy.Subscriber(
-            "/Battery",
-            Float64,
-            self.set_battery_cb,
-            buff_size=2**24,
-            queue_size=10
-        )
-        self.sub_tof = rospy.Subscriber(
-            "/tof",
-            Float64,
-            self.set_tof_cb,
-            buff_size=2**24,
-            queue_size=10
-        )
 
         self.tof = -1
         self.battery_soc = -1
@@ -54,17 +37,32 @@ class DisplaySubscriberNode:
         # Load a font
         self.font = ImageFont.load_default()
 
+        self.sub_tof = rospy.Subscriber(
+            "/tof",
+            Float64,
+            self.set_tof_cb,
+            buff_size=2**24,
+            queue_size=10
+        )
+        rospy.loginfo("Waiting for battery_info service ...")
+        rospy.wait_for_service("battery_info")
+        self.batt_srv = rospy.ServiceProxy("battery_info", BatteryInfo)
+        rospy.loginfo("battery_info service found")
+        # Poll the service every 30 s
+        rospy.Timer(rospy.Duration(30.0), self.query_battery)
+
         self.initialized = True
 
         rospy.loginfo("Display node initialized!")
 
-
-
-    def set_battery_cb(self, msg):
-        self.battery_soc = msg.data
-        rospy.loginfo("Battery state of charge: %f", self.battery_soc)
-        if self.initialized:
+    def query_battery(self, _evt):
+        try:
+            resp = self.batt_srv()
+            self.battery_soc = resp.percentage
+            rospy.logdebug("Battery %.1f %%", self.battery_soc)
             self.update_display()
+        except rospy.ServiceException as e:
+            rospy.logwarn("Battery service call failed: %s", e)
     
     def set_tof_cb(self, msg):
         self.tof = msg.data
@@ -78,7 +76,7 @@ class DisplaySubscriberNode:
         # Draw dynamic text
         self.draw.rectangle((0, 0, self.width, self.height), outline=0, fill=0)  # Clear the image
         self.draw.text((10, 5), "Battery: " + str(self.battery_soc), font=self.font, fill=255)
-        self.draw.text((10, 20), "Connection: ??", font=self.font, fill=255)
+        self.draw.text((10, 20), "Connection: OK", font=self.font, fill=255)
         self.draw.text((10, 35), "ToF: Distance =" + str(self.tof) , font=self.font, fill=255)
 
         # Display the image

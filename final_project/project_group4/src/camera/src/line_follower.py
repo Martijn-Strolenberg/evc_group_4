@@ -121,6 +121,8 @@ class CameraSubscriberNode:
         
         if self.latest_center is None:
             rospy.loginfo_throttle(2.0, "No line detected recently. No movement.")
+            self.motor_cmd(0.5, 0, 1, 0)
+
             return
 
         center_x, center_y = self.latest_center
@@ -135,17 +137,10 @@ class CameraSubscriberNode:
         velocity = max(self.move_vel * (1 - min(abs(error) / self.middle, 1)), 0.5)  # Scale velocity based on error, min speed is 0.5
 
 
-        self.new_cmd += 1
-        new_motor_cmd = motor_cmd()
-        new_motor_cmd.new_mesg = self.new_cmd
-
-        new_motor_cmd.velocity = velocity
-        new_motor_cmd.distance = self.distance_cmd
-        new_motor_cmd.angle = angle
-        new_motor_cmd.blocking = 0
+        self.motor_cmd(velocity, self.distance_cmd, angle, 0)
 
     # <================= Motor command function =================>
-    def motor_cmd(self, velocity, distance, angle):
+    def motor_cmd(self, velocity, distance, angle, blocking):
         # Create a new motor_cmd message
         new_motor_cmd = motor_cmd()
         self.new_cmd += 1
@@ -153,6 +148,7 @@ class CameraSubscriberNode:
         new_motor_cmd.velocity = velocity
         new_motor_cmd.distance = distance
         new_motor_cmd.angle = angle
+        new_motor_cmd.blocking = blocking
 
         # Publish the command
         self.pub_cmd.publish(new_motor_cmd)

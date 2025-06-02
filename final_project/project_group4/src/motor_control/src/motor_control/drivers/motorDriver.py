@@ -83,4 +83,4 @@ class DaguWheelsDriver:
         """Releases the motors and cleans up resources."""
         self.leftMotor.set(hat.MotorDirection.RELEASE)
         self.rightMotor.set(hat.MotorDirection.RELEASE)
-        #GPIO.cleanup() <-- commented out for now, as it causes issues with the GPIO pins
+        GPIO.cleanup()
