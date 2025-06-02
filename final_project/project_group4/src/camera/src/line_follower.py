@@ -189,7 +189,7 @@ class CameraSubscriberNode:
         except rospy.ServiceException as e:
             print("Service call failed:", e)
 
-    def call_stop():
+    def call_stop(self):
         rospy.wait_for_service('stop')
         try:
             proxy = rospy.ServiceProxy('stop', Stop)
@@ -201,6 +201,7 @@ class CameraSubscriberNode:
 
     def cleanup(self):
         cv2.destroyAllWindows()
+        self.call_stop()
 
 if __name__ == "__main__":
     # Initialize the node

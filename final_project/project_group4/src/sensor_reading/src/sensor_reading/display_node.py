@@ -66,7 +66,7 @@ class DisplaySubscriberNode:
     
     def set_tof_cb(self, msg):
         self.tof = msg.data
-        rospy.loginfo("TOF distance: %f", self.tof)
+        #rospy.loginfo("TOF distance: %f", self.tof)
 
         # Update the display with the latest data
         if self.initialized:

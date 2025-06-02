@@ -6,6 +6,7 @@ import numpy as np
 from nav_msgs.msg import Odometry
 import tf
 import tf.transformations as tft
+from time import sleep
 #from motor_control import MotorServices
 from motor_control.srv import MoveStraight, MoveStraightResponse
 from motor_control.srv import Rotate, RotateResponse
@@ -43,6 +44,8 @@ class MotorSubscriberNode:
         self.goal_speed = 0.0   # speed in m/s or rad/s
         self.goal_left_speed = 0.0  # speed for left wheel in m/s
         self.goal_right_speed = 0.0 # speed for right wheel in m/s
+        self.left_direction = 1 
+        self.right_direction = 1
         self.goal_distance = 0 # distance to travel in meters
         self.goal_angle = 0    # angle to rotate in radians
         self.start_x = 0.0     # initial x position
@@ -226,12 +229,14 @@ class MotorSubscriberNode:
         if req.direction > 0: # Check if distance is positive (drive forwards)
             # Move straight forward command
             rospy.loginfo("Left wheel forwards %.2fm/s", req.speed)
+            self.left_direction = 1
             self.state = 10 # Set the state to drive left wheel forwards
             return DriveLeftwheelResponse(True)
         
         if req.direction < 0: # Check if distance is negative (drive backwards)
             # Move straight backward command
             rospy.loginfo("Left wheel backwards %.2fm/s", req.speed)
+            self.left_direction = -1
             self.state = 11 # Set the state to drive left wheel backwards
             return DriveLeftwheelResponse(True)
         return DriveLeftwheelResponse(False)
@@ -246,12 +251,14 @@ class MotorSubscriberNode:
         if req.direction > 0: # Check if distance is positive (drive forwards)
             # Move straight forward command
             rospy.loginfo("Right wheel forwards %.2fm/s", req.speed)
+            self.right_direction = 1
             self.state = 12 # Set the state to drive right wheel forwards
             return DriveRightwheelResponse(True)
         
         if req.direction < 0: # Check if distance is negative (drive backwards)
             # Move straight backward command
             rospy.loginfo("Right wheel backwards %.2fm/s", req.speed)
+            self.right_direction = -1
             self.state = 13 # Set the state to drive right wheel backwards
             return DriveRightwheelResponse(True)
         return DriveRightwheelResponse(False)
@@ -385,7 +392,12 @@ class MotorSubscriberNode:
             #self.motor.set_wheels_speed(left=0, right=0) # Stop the robot without any deceleration
             cmd_left, cmd_right = self.acceleration_func(0, 0) # Apply acceleration limits to stop
             self.motor.set_wheels_speed(left=cmd_left, right=cmd_right) # Stop the robot
-            self.state = 0 # Reset state to idle, ready for next command
+            #self.state = 0 # Reset state to idle, ready for next command
+
+            if abs(cmd_left) < 1e-2 and abs(cmd_right) < 1e-2:
+                self.state = 0          # Idle, reset state to idle, ready for next command
+                self.cmd_left = 0.0     # make sure the cache is truly zero
+                self.cmd_right = 0.0
 
         # === State 6: constant drive robot forwards ===
         if self.state == 6:
@@ -462,8 +474,8 @@ class MotorSubscriberNode:
                 # update left wheel direction
                 self.call_left_wheel_dir(1)  # Set left wheel direction to forwards
             #self.motor.set_wheels_speed(left=(self.gain - self.trim)*self.goal_left_speed, right=(self.gain + self.trim)*self.goal_right_speed)
-            desired_left = (self.gain - self.trim)*self.goal_left_speed
-            desired_right = (self.gain + self.trim)*self.goal_right_speed
+            desired_left = (self.gain - self.trim)*self.goal_left_speed*self.left_direction
+            desired_right = (self.gain + self.trim)*self.goal_right_speed*self.right_direction
             left_cmd, right_cmd = self.acceleration_func(desired_left, desired_right) # Apply acceleration limits
             self.motor.set_wheels_speed(left=left_cmd, right=right_cmd) # Set the wheel speeds
 
@@ -475,8 +487,8 @@ class MotorSubscriberNode:
                 # update left wheel direction
                 self.call_left_wheel_dir(-1)  # Set left wheel direction to backwards
             #self.motor.set_wheels_speed(left=-(self.gain - self.trim)*self.goal_left_speed, right=(self.gain + self.trim)*self.goal_right_speed)
-            desired_left = (self.gain - self.trim)*self.goal_left_speed
-            desired_right = (self.gain + self.trim)*self.goal_right_speed
+            desired_left = (self.gain - self.trim)*self.goal_left_speed*self.left_direction
+            desired_right = (self.gain + self.trim)*self.goal_right_speed*self.right_direction
             left_cmd, right_cmd = self.acceleration_func(desired_left, desired_right) # Apply acceleration limits
             self.motor.set_wheels_speed(left=left_cmd, right=right_cmd) # Set the wheel speeds
 
@@ -488,8 +500,8 @@ class MotorSubscriberNode:
                 # update right wheel direction
                 self.call_right_wheel_dir(1)  # Set right wheel direction to forwards
             #self.motor.set_wheels_speed(left=(self.gain - self.trim)*self.goal_left_speed, right=(self.gain + self.trim)*self.goal_right_speed)
-            desired_left = (self.gain - self.trim)*self.goal_left_speed
-            desired_right = (self.gain + self.trim)*self.goal_right_speed
+            desired_left = (self.gain - self.trim)*self.goal_left_speed*self.left_direction
+            desired_right = (self.gain + self.trim)*self.goal_right_speed*self.right_direction
             left_cmd, right_cmd = self.acceleration_func(desired_left, desired_right) # Apply acceleration limits
             self.motor.set_wheels_speed(left=left_cmd, right=right_cmd) # Set the wheel speeds
         
@@ -501,8 +513,8 @@ class MotorSubscriberNode:
                 # update right wheel direction
                 self.call_right_wheel_dir(-1)  # Set right wheel direction to backwards
             #self.motor.set_wheels_speed(left=(self.gain - self.trim)*self.goal_left_speed, right=-(self.gain + self.trim)*self.goal_right_speed)
-            desired_left = (self.gain - self.trim)*self.goal_left_speed
-            desired_right = (self.gain + self.trim)*self.goal_right_speed
+            desired_left = (self.gain - self.trim)*self.goal_left_speed*self.left_direction
+            desired_right = (self.gain + self.trim)*self.goal_right_speed*self.right_direction
             left_cmd, right_cmd = self.acceleration_func(desired_left, desired_right) # Apply acceleration limits
             self.motor.set_wheels_speed(left=left_cmd, right=right_cmd) # Set the wheel speeds
 
@@ -554,15 +566,15 @@ class MotorSubscriberNode:
         now  = rospy.Time.now()
 
         # Initialize last_cmd_time on first call
-        if not hasattr(self, 'last_cmd_time') or self.last_cmd_time is None:
-            self.last_cmd_time = now
-            dt = 0.02  # assume first run is 20ms
-        else:
-            dt = (now - self.last_cmd_time).to_sec()
-            dt = max(dt, 1e-3)  # Avoid zero or tiny dt values
+        # if not hasattr(self, 'last_cmd_time') or self.last_cmd_time is None:
+        #     self.last_cmd_time = now
+        #     dt = 0.02  # assume first run is 20ms
+        # else:
+        #     dt = (now - self.last_cmd_time).to_sec()
+        #     dt = max(dt, 1e-3)  # Avoid zero or tiny dt values
         
-        self.last_cmd_time = now  # Update timestamp for next call
-        # dt = 0.02 # statically set the time step to 20ms (50Hz)
+        # self.last_cmd_time = now  # Update timestamp for next call
+        dt = 0.02 # statically set the time step to 20ms (50Hz)
 
         def limit(prev, desired):
             limit_up   = self.acceleration * dt
@@ -602,6 +614,7 @@ class MotorSubscriberNode:
         # Stop the robot and close the motor driver
         rospy.loginfo("Motor control node shutting down ...")
         self.motor.set_wheels_speed(left=0, right=0) # Stop the motors
+        sleep(1)
         self.motor.close()                           # Close the motor driver                                    
         rospy.loginfo("Motor control node shut down.")
     
