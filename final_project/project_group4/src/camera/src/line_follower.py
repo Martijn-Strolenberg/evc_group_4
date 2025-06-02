@@ -99,15 +99,22 @@ class CameraSubscriberNode:
             lines = []
 
             for contour in contours:
+                area = cv2.contourArea(contour)
+                if area < MIN_AREA_TRACK:
+                    continue  # Skip small blobs
                 M = cv2.moments(contour)
+                if M['m00'] != 0:
+                    cx = int(M["m10"] / M["m00"])
+                    cy = int(M["m01"] / M["m00"])
+                    lines.append({'x': cx, 'y': cy, 'area': area})
 
-                if (M['m00'] > MIN_AREA_TRACK):
-                    # Contour is part of the track
-                    cx = int(M["m10"]/M["m00"])
-                    xy = int(M["m01"]/M["m00"])
-                    lines.append({'x': cx, 'y': xy})
+                    # Debug draw
+                    cv2.circle(segmented_image, (cx, cy), 5, (0, 255, 0), -1)
+                    cv2.drawContours(segmented_image, [contour], -1, (255, 0, 0), 2)
 
             if lines:
+                # Take the biggest area as the line center
+                lines = sorted(lines, key=lambda x: x['area'], reverse=True)
                 cv2.circle(segmented_image, (lines[0]['x'], lines[0]['y']), 5, (0, 255, 0), -1)
                 self.latest_center = (lines[0]['x'], lines[0]['y'])
             else:
@@ -146,12 +153,8 @@ class CameraSubscriberNode:
         # scale speed based on the absolute error
         velocity = max(self.move_vel * (1 - min(abs(error) / self.middle, 1)), 0.5)  # Scale velocity based on error, min speed is 0.5
         # determine the 2 velocities for the left and right wheel
-        if abs(error) < 20:  # If the error is small, we can move straight
-            velocity_right = self.move_vel
-            velocity_left = self.move_vel
-        else:
-            velocity_right = velocity * (1 - angle / np.pi)
-            velocity_left = velocity * (1 + angle / np.pi)
+        velocity_right = velocity * (1 - angle / np.pi)
+        velocity_left = velocity * (1 + angle / np.pi)
 
         self.call_left_wheel(1, velocity_left)
         self.call_right_wheel(1, velocity_right)    
