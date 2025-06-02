@@ -73,8 +73,11 @@ class CameraSubscriberNode:
             upper_v = min(255, mean_v + 1.5 * std_v)
 
             dtype = hsv.dtype
-            lower_white = np.array([0, 0, lower_v], dtype=dtype)
-            upper_white = np.array([180, 40, upper_v], dtype=dtype)
+            # lower_white = np.array([0, 0, lower_v], dtype=dtype)
+            # upper_white = np.array([180, 40, upper_v], dtype=dtype)
+            lower_white = np.array([0, 0, 180])
+            upper_white = np.array([180, 70, 255])
+
             # lower_white = np.array([0, 0, lower_v])
             # upper_white = np.array([180, 40, upper_v])
 
