@@ -31,7 +31,7 @@ class CameraSubscriberNode:
             queue_size=10
         )
 
-        self.cmd_rate = 2.0 # generate move commands at 2 Hz
+        self.cmd_rate = 4.0 # generate move commands at 10 Hz
         self.cmd_dt = 1.0 / self.cmd_rate
         self.last_cmd_ts = rospy.Time.now()
         self.latest_center = None  # updated every frame
@@ -104,35 +104,33 @@ class CameraSubscriberNode:
             MIN_AREA_TRACK = 20  # Minimum area for track marks
 
             # get a list of contours
-            contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+            lines = cv2.HoughLinesP(edges, 1, np.pi/180, threshold=50, minLineLength=50, maxLineGap=20)
 
-            lines = []
+            lines_detected = []
 
-            for contour in contours:
-                area = cv2.contourArea(contour)
-                if area < 50:  # Skip tiny noise
-                    continue
+            # get the line that is closest to the middle bottom of the image
+            if lines is not None:
+                for line in lines:
+                    x1, y1, x2, y2 = line[0]
+                    # Calculate the bottom middle point of the line
+                    mid_x = (x1 + x2) // 2
+                    bottom_y = y1 if y2 > y1 else y2
 
-                x, y, w, h = cv2.boundingRect(contour)
-                if h < 20:  # Skip very flat shapes
-                    continue
+                    # Calculate the length of the line
+                    length = np.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
 
-                # Optional: Filter by angle
-                [vx, vy, x0, y0] = cv2.fitLine(contour, cv2.DIST_L2, 0, 0.01, 0.01)
-                angle = np.arctan2(vy, vx) * 180 / np.pi
+                    if length > MIN_AREA_TRACK:
+                        lines_detected.append({'x': mid_x, 'y': bottom_y, 'length': length})
 
-                # Accept lines with angles between -70 and +70 degrees
-                if -70 < angle < 70:
-                    M = cv2.moments(contour)
-                    if M['m00'] != 0:
-                        cx = int(M["m10"]/M["m00"])
-                        cy = int(M["m01"]/M["m00"])
-                        lines.append({'x': cx, 'y': cy})
-                        cv2.drawContours(undis_image, [contour], -1, (255,0,0), 2)
+                # draw the lines on the edges image
+                for line in lines_detected:
+                    cv2.circle(edges, (line['x'], line['y']), 5, (255, 0, 0), -1)
+                    cv2.circle(undis_image, (line['x'], line['y']), 5, (255, 0, 0), -1)
 
-            if lines:
+
+            if lines_detected:
                 # Take the line that is the least euclidean distance from the middle bottom of the image
-                lines = sorted(lines, key=lambda line: np.sqrt((line['x'] - self.middle) ** 2 + (line['y'] - undis_image.shape[0]) ** 2))
+                lines = sorted(lines_detected, key=lambda line: np.sqrt((line['x'] - self.middle) ** 2 + (line['y'] - undis_image.shape[0]) ** 2))
 
                 cv2.circle(edges, (lines[0]['x'], lines[0]['y']), 5, (0, 255, 0), -1)
                 cv2.circle(undis_image, (lines[0]['x'], lines[0]['y']), 5, (0, 255, 0), -1)
@@ -172,10 +170,11 @@ class CameraSubscriberNode:
         angle = np.arctan2(error, 100)  # 100 is a scaling factor for the angle, 320 error is 1.26 radians == 72 degrees
         
         # scale speed based on the absolute error
-        velocity = max(self.move_vel * (1 - min(abs(error) / self.middle, 1)), 0.5)  # Scale velocity based on error, min speed is 0.5
+        #velocity = max(self.move_vel * (1 - min(abs(error) / self.middle, 1)), 0.3)  # Scale velocity based on error, min speed is 0.5
+        velocity = 0.25
         # determine the 2 velocities for the left and right wheel
-        velocity_right = velocity * (1 - (angle / np.pi)/2)
-        velocity_left = velocity * (1 + (angle / np.pi)/2)
+        velocity_right = velocity * (1 - (angle / np.pi)*3)
+        velocity_left = velocity * (1 + (angle / np.pi)*3)
 
         self.call_left_wheel(1, velocity_left)
         self.call_right_wheel(1, velocity_right)
