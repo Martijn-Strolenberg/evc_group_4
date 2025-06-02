@@ -40,7 +40,7 @@ class CameraSubscriberNode:
         self.distance_cmd = 0.08
         self.angle_cmd = 0.3
         self.turn_vel = 0.5
-        self.move_vel = 0.6
+        self.move_vel = 0.3
 
         self.middle = 640 / 2
 
