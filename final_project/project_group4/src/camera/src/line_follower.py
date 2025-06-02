@@ -131,9 +131,9 @@ class CameraSubscriberNode:
                         cv2.drawContours(undis_image, [contour], -1, (255,0,0), 2)
 
             if lines:
-                # Take the line that is the most centered
-                lines = sorted(lines, key=lambda l: abs(l['x'] - self.middle))
-                
+                # Take the line that is the least euclidean distance from the middle bottom of the image
+                lines = sorted(lines, key=lambda line: np.sqrt((line['x'] - self.middle) ** 2 + (line['y'] - undis_image.shape[0]) ** 2))
+
                 cv2.circle(edges, (lines[0]['x'], lines[0]['y']), 5, (0, 255, 0), -1)
                 cv2.circle(undis_image, (lines[0]['x'], lines[0]['y']), 5, (0, 255, 0), -1)
                 self.latest_center = (lines[0]['x'], lines[0]['y'])
