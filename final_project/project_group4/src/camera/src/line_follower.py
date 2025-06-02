@@ -119,20 +119,20 @@ class CameraSubscriberNode:
                     lines.append({'x': cx, 'y': cy, 'area': area})
 
                     # Debug draw
-                    cv2.circle(segmented_image, (cx, cy), 5, (0, 255, 0), -1)
-                    cv2.drawContours(segmented_image, [contour], -1, (255, 0, 0), 2)
+                    cv2.circle(edges, (cx, cy), 5, (0, 255, 0), -1)
+                    cv2.drawContours(edges, [contour], -1, (255, 0, 0), 2)
 
             if lines:
                 # Take the biggest area as the line center
                 lines = sorted(lines, key=lambda x: x['area'], reverse=True)
-                cv2.circle(segmented_image, (lines[0]['x'], lines[0]['y']), 5, (0, 255, 0), -1)
+                cv2.circle(edges, (lines[0]['x'], lines[0]['y']), 5, (0, 255, 0), -1)
                 self.latest_center = (lines[0]['x'], lines[0]['y'])
             else:
                 self.latest_center = None
 
-            cv2.imshow("Segmented Image", segmented_image)
-            cv2.imshow("V Channel", v_channel)
-            cv2.imshow("Mask", mask)
+            #cv2.imshow("Segmented Image", segmented_image)
+            cv2.imshow("edges", edges)
+            #cv2.imshow("Mask", mask)
 
             cv2.waitKey(1)  # Non-blocking update
 
