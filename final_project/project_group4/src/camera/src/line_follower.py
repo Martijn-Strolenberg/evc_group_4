@@ -63,40 +63,48 @@ class CameraSubscriberNode:
 
             # <================= START: Image Processing ======================>
             # Convert to HSV color space
-            hsv = cv2.cvtColor(undis_image, cv2.COLOR_BGR2HSV)
+            # hsv = cv2.cvtColor(undis_image, cv2.COLOR_BGR2HSV)
 
-            v_channel = hsv[:,:,2]  # brightness
+            # v_channel = hsv[:,:,2]  # brightness
 
-            # Compute adaptive thresholds for V channel
-            mean_v = np.mean(v_channel)
-            std_v = np.std(v_channel)
+            # # Compute adaptive thresholds for V channel
+            # mean_v = np.mean(v_channel)
+            # std_v = np.std(v_channel)
 
-            lower_v = max(0, mean_v - 1.5 * std_v)
-            upper_v = min(255, mean_v + 1.5 * std_v)
+            # lower_v = max(0, mean_v - 1.5 * std_v)
+            # upper_v = min(255, mean_v + 1.5 * std_v)
 
-            dtype = hsv.dtype
-            # lower_white = np.array([0, 0, lower_v], dtype=dtype)
-            # upper_white = np.array([180, 40, upper_v], dtype=dtype)
-            lower_white = np.array([0, 0, 180])
-            upper_white = np.array([180, 70, 255])
+            # dtype = hsv.dtype
+            # # lower_white = np.array([0, 0, lower_v], dtype=dtype)
+            # # upper_white = np.array([180, 40, upper_v], dtype=dtype)
+            # lower_white = np.array([0, 0, 180])
+            # upper_white = np.array([180, 70, 255])
 
-            # lower_white = np.array([0, 0, lower_v])
-            # upper_white = np.array([180, 40, upper_v])
+            # # lower_white = np.array([0, 0, lower_v])
+            # # upper_white = np.array([180, 40, upper_v])
 
-            mask = cv2.inRange(hsv, lower_white, upper_white)
+            # mask = cv2.inRange(hsv, lower_white, upper_white)
 
-            # Morphological operations to clean noise
-            kernel = np.ones((5, 5), np.uint8)
-            mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
-            mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
+            # # Morphological operations to clean noise
+            # kernel = np.ones((5, 5), np.uint8)
+            # mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
+            # mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
 
-            segmented_image = cv2.bitwise_and(undis_image, undis_image, mask=mask)
+            # segmented_image = cv2.bitwise_and(undis_image, undis_image, mask=mask)
+
+            gray = cv2.cvtColor(undis_image, cv2.COLOR_BGR2GRAY)
+
+            # Apply Gaussian Blur to smooth noise
+            blurred = cv2.GaussianBlur(gray, (5,5), 0)
+
+            # Canny Edge Detection
+            edges = cv2.Canny(blurred, 50, 150)
            
 
             MIN_AREA_TRACK = 20  # Minimum area for track marks
 
             # get a list of contours
-            contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+            contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
             lines = []
 
