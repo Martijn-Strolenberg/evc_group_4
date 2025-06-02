@@ -30,7 +30,7 @@ class CameraSubscriberNode:
             queue_size=10
         )
 
-        self.cmd_rate = 10.0 # generate move commands at 5Hz
+        self.cmd_rate = 2.0 # generate move commands at 2 Hz
         self.cmd_dt = 1.0 / self.cmd_rate
         self.last_cmd_ts = rospy.Time.now()
         self.latest_center = None  # updated every frame
@@ -136,8 +136,8 @@ class CameraSubscriberNode:
         # scale speed based on the absolute error
         velocity = max(self.move_vel * (1 - min(abs(error) / self.middle, 1)), 0.5)  # Scale velocity based on error, min speed is 0.5
 
-
-        self.motor_cmd(velocity, self.distance_cmd, angle, 0)
+        if abs(error) > 40:  # If the error is small, we can 
+            self.motor_cmd(velocity, self.distance_cmd, angle, 0)
 
     # <================= Motor command function =================>
     def motor_cmd(self, velocity, distance, angle, blocking):
