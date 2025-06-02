@@ -110,21 +110,31 @@ class CameraSubscriberNode:
 
             for contour in contours:
                 area = cv2.contourArea(contour)
-                if area < MIN_AREA_TRACK:
-                    continue  # Skip small blobs
-                M = cv2.moments(contour)
-                if M['m00'] != 0:
-                    cx = int(M["m10"] / M["m00"])
-                    cy = int(M["m01"] / M["m00"])
-                    lines.append({'x': cx, 'y': cy, 'area': area})
+                if area < 50:  # Skip tiny noise
+                    continue
 
-                    # Debug draw
-                    cv2.circle(edges, (cx, cy), 5, (0, 255, 0), -1)
-                    cv2.drawContours(edges, [contour], -1, (255, 0, 0), 2)
+                x, y, w, h = cv2.boundingRect(contour)
+                if h < 20:  # Skip very flat shapes
+                    continue
+
+                # Optional: Filter by angle
+                [vx, vy, x0, y0] = cv2.fitLine(contour, cv2.DIST_L2, 0, 0.01, 0.01)
+                angle = np.arctan2(vy, vx) * 180 / np.pi
+
+                # Accept lines with angles between -70 and +70 degrees
+                if -70 < angle < 70:
+                    M = cv2.moments(contour)
+                    if M['m00'] != 0:
+                        cx = int(M["m10"]/M["m00"])
+                        cy = int(M["m01"]/M["m00"])
+                        lines.append({'x': cx, 'y': cy})
+
+                        cv2.circle(undis_image, (cx, cy), 5, (0,255,0), -1)
+                        cv2.drawContours(undis_image, [contour], -1, (255,0,0), 2)
 
             if lines:
-                # Take the biggest area as the line center
-                lines = sorted(lines, key=lambda x: x['area'], reverse=True)
+                # Take the line that is the most centered
+                lines = sorted(lines, key=lambda l: abs(l['x'] - self.middle))
                 cv2.circle(edges, (lines[0]['x'], lines[0]['y']), 5, (0, 255, 0), -1)
                 self.latest_center = (lines[0]['x'], lines[0]['y'])
             else:
@@ -132,6 +142,7 @@ class CameraSubscriberNode:
 
             #cv2.imshow("Segmented Image", segmented_image)
             cv2.imshow("edges", edges)
+            cv2.imshow("Undistorted Image", undis_image)
             #cv2.imshow("Mask", mask)
 
             cv2.waitKey(1)  # Non-blocking update
