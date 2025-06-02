@@ -154,7 +154,7 @@ class CameraSubscriberNode:
             velocity_left = velocity * (1 - angle / np.pi)
 
         self.call_left_wheel(1, velocity_left)
-        self.call_right_wheel(1, velocity_right)    
+        self.call_right_wheel(1, velocity_right)
 
     # <================= Motor command function =================>
     def motor_cmd(self, velocity, distance, angle, blocking):
