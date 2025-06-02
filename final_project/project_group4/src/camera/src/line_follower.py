@@ -150,8 +150,8 @@ class CameraSubscriberNode:
             velocity_right = self.move_vel
             velocity_left = self.move_vel
         else:
-            velocity_right = velocity * (1 + angle / np.pi)
-            velocity_left = velocity * (1 - angle / np.pi)
+            velocity_right = velocity * (1 - angle / np.pi)
+            velocity_left = velocity * (1 + angle / np.pi)
 
         self.call_left_wheel(1, velocity_left)
         self.call_right_wheel(1, velocity_right)    
