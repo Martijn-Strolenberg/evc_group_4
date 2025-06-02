@@ -43,6 +43,8 @@ class CameraSubscriberNode:
         self.move_vel = 0.3
 
         self.middle = 640 / 2
+        
+        rospy.on_shutdown(self.shutdown) # Shutdown hook to clean up resources
 
         self.initialized = True
         rospy.loginfo("Camera object detection node initialized!")
@@ -157,7 +159,7 @@ class CameraSubscriberNode:
         velocity_left = velocity * (1 + angle / np.pi)
 
         self.call_left_wheel(1, velocity_left)
-        self.call_right_wheel(1, velocity_right)    
+        self.call_right_wheel(1, velocity_right)
 
     # <================= Motor command function =================>
     def motor_cmd(self, velocity, distance, angle, blocking):
@@ -202,8 +204,10 @@ class CameraSubscriberNode:
             print("Service call failed:", e)
 
 
-    def cleanup(self):
-        cv2.destroyAllWindows()
+    def shutdown(self):
+        rospy.loginfo("Shutting down line follower node.")
+        self.call_stop()        # Stop the robot
+        cv2.destroyAllWindows() # Close all OpenCV windows
 
 if __name__ == "__main__":
     # Initialize the node
@@ -213,5 +217,4 @@ if __name__ == "__main__":
         rospy.spin()
     except KeyboardInterrupt:
         rospy.loginfo("Shutting down image viewer node.")
-    finally:
-        camera_node.cleanup()
+    
