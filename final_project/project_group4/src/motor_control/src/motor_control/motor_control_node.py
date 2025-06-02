@@ -295,13 +295,11 @@ class MotorSubscriberNode:
                 self.state = 5 # Set the state to stop the robot
             else:
                 # Set the wheel speeds for rotation right
-                self.motor.set_wheels_speed(left=-(self.gain - self.trim)*self.goal_speed, right=(self.gain + self.trim)*self.goal_speed)
-                '''
+                #self.motor.set_wheels_speed(left=-(self.gain - self.trim)*self.goal_speed, right=(self.gain + self.trim)*self.goal_speed)
                 target_left = -self.goal_speed
                 target_right = self.goal_speed
-                left_cmd, right_cmd = self.acceleration(target_left, target_right) # Apply acceleration limits
+                left_cmd, right_cmd = self.acceleration_func(target_left, target_right) # Apply acceleration limits
                 self.motor.set_wheels_speed(left=(self.gain - self.trim)*left_cmd, right=(self.gain - self.trim)*right_cmd)
-                '''
                 
 
         # === State 2: Rotate in place counter_clockwise (left) ===
@@ -317,7 +315,11 @@ class MotorSubscriberNode:
                 self.state = 5 # Set the state to stop the robot
             else:
                 # Set the wheel speeds for rotation left
-                self.motor.set_wheels_speed(left=(self.gain - self.trim)*self.goal_speed, right=-(self.gain + self.trim)*self.goal_speed)
+                #self.motor.set_wheels_speed(left=(self.gain - self.trim)*self.goal_speed, right=-(self.gain + self.trim)*self.goal_speed)
+                target_left = self.goal_speed
+                target_right = -self.goal_speed
+                left_cmd, right_cmd = self.acceleration_func(target_left, target_right) # Apply acceleration limits
+                self.motor.set_wheels_speed(left=(self.gain - self.trim)*left_cmd, right=(self.gain - self.trim)*right_cmd)
 
         # === State 3: Drive straight forwards ===
         if self.state == 3:
@@ -347,8 +349,6 @@ class MotorSubscriberNode:
                 left_cmd, right_cmd = self.acceleration_func(left_cmd, right_cmd) # Apply acceleration limits
                 self.motor.set_wheels_speed(left_cmd, right_cmd)
                 
-
-
         # === State 4: Drive straight backwards ===
         if self.state == 4:
             if self.prev_state != self.state:
@@ -376,18 +376,18 @@ class MotorSubscriberNode:
                 left_cmd, right_cmd = self.acceleration_func(left_cmd, right_cmd) # Apply acceleration limits
                 self.motor.set_wheels_speed(left_cmd, right_cmd)
 
-
-
         # === State 5: Finished stop robot ===
         if self.state == 5:
             if self.prev_state != self.state:
                 rospy.loginfo("State 5: Stop robot")
                 self.prev_state = self.state
             # Stop the robot
-            self.motor.set_wheels_speed(left=0, right=0)
+            #self.motor.set_wheels_speed(left=0, right=0) # Stop the robot without any deceleration
+            cmd_left, cmd_right = self.acceleration_func(0, 0) # Apply acceleration limits to stop
+            self.motor.set_wheels_speed(left=cmd_left, right=cmd_right) # Stop the robot
             self.state = 0 # Reset state to idle, ready for next command
 
-        # Forward: 6, Backward: 7, Left: 8, Right: 9.
+        # === State 6: constant drive robot forwards ===
         if self.state == 6:
             if self.prev_state != self.state:
                 rospy.loginfo("State 6: Drive constant Forwards")
@@ -406,7 +406,8 @@ class MotorSubscriberNode:
             left_cmd, right_cmd = self.v_omega_to_motor_cmd(v, omega)
             left_cmd, right_cmd = self.acceleration_func(left_cmd, right_cmd) # Apply acceleration limits
             self.motor.set_wheels_speed(left_cmd, right_cmd)
-              
+
+        # === State 7: constant drive robot backwards ===      
         if self.state == 7:
             if self.prev_state != self.state:
                 rospy.loginfo("State 7: Drive constant backwards")
@@ -426,6 +427,7 @@ class MotorSubscriberNode:
             left_cmd, right_cmd = self.acceleration_func(left_cmd, right_cmd) # Apply acceleration limits
             self.motor.set_wheels_speed(left_cmd, right_cmd)
 
+        # === State 8: constant turn robot left ===
         if self.state == 8:
             if self.prev_state != self.state:
                 rospy.loginfo("State 8: Rotate constant left") # (counter clockwise)
@@ -439,6 +441,7 @@ class MotorSubscriberNode:
             self.motor.set_wheels_speed(left=(self.gain - self.trim)*self.goal_speed, 
                                         right=-(self.gain + self.trim)*self.goal_speed) 
               
+        # === State 9: constant turn robot right ===
         if self.state == 9:
             if self.prev_state != self.state:
                 rospy.loginfo("State 9: Rotate constant right") # (clockwise)
@@ -451,39 +454,59 @@ class MotorSubscriberNode:
             self.motor.set_wheels_speed(left=-(self.gain - self.trim)*self.goal_speed, 
                                         right=(self.gain + self.trim)*self.goal_speed)  
         
+        # === State 10: only command left wheel to move forwards  ===
         if self.state == 10:
             if self.prev_state != self.state:
                 rospy.loginfo("State 10: command left wheel forwards")
                 self.prev_state = self.state
                 # update left wheel direction
                 self.call_left_wheel_dir(1)  # Set left wheel direction to forwards
-            self.motor.set_wheels_speed(left=(self.gain - self.trim)*self.goal_left_speed, 
-                                        right=(self.gain + self.trim)*self.goal_right_speed) 
+            #self.motor.set_wheels_speed(left=(self.gain - self.trim)*self.goal_left_speed, right=(self.gain + self.trim)*self.goal_right_speed)
+            desired_left = (self.gain - self.trim)*self.goal_left_speed
+            desired_right = (self.gain + self.trim)*self.goal_right_speed
+            left_cmd, right_cmd = self.acceleration_func(desired_left, desired_right) # Apply acceleration limits
+            self.motor.set_wheels_speed(left=left_cmd, right=right_cmd) # Set the wheel speeds
+
+        # === State 11: only command left wheel to move backwars  ===
         if self.state == 11:
             if self.prev_state != self.state:
                 rospy.loginfo("State 11: command left wheel backwards")
                 self.prev_state = self.state
                 # update left wheel direction
                 self.call_left_wheel_dir(-1)  # Set left wheel direction to backwards
-            self.motor.set_wheels_speed(left=-(self.gain - self.trim)*self.goal_left_speed, 
-                                        right=(self.gain + self.trim)*self.goal_right_speed)
+            #self.motor.set_wheels_speed(left=-(self.gain - self.trim)*self.goal_left_speed, right=(self.gain + self.trim)*self.goal_right_speed)
+            desired_left = (self.gain - self.trim)*self.goal_left_speed
+            desired_right = (self.gain + self.trim)*self.goal_right_speed
+            left_cmd, right_cmd = self.acceleration_func(desired_left, desired_right) # Apply acceleration limits
+            self.motor.set_wheels_speed(left=left_cmd, right=right_cmd) # Set the wheel speeds
 
+        # === State 12: only command right wheel to move forwards  ===
         if self.state == 12:
             if self.prev_state != self.state:
                 rospy.loginfo("State 12: command right wheel forwards")
                 self.prev_state = self.state
                 # update right wheel direction
                 self.call_right_wheel_dir(1)  # Set right wheel direction to forwards
-            self.motor.set_wheels_speed(left=(self.gain - self.trim)*self.goal_left_speed, 
-                                        right=(self.gain + self.trim)*self.goal_right_speed) 
+            #self.motor.set_wheels_speed(left=(self.gain - self.trim)*self.goal_left_speed, right=(self.gain + self.trim)*self.goal_right_speed)
+            desired_left = (self.gain - self.trim)*self.goal_left_speed
+            desired_right = (self.gain + self.trim)*self.goal_right_speed
+            left_cmd, right_cmd = self.acceleration_func(desired_left, desired_right) # Apply acceleration limits
+            self.motor.set_wheels_speed(left=left_cmd, right=right_cmd) # Set the wheel speeds
+        
+        # === State 13: only command right wheel to move backwars  ===
         if self.state == 13:
             if self.prev_state != self.state:
                 rospy.loginfo("State 13: command right wheel backwards")
                 self.prev_state = self.state
                 # update right wheel direction
                 self.call_right_wheel_dir(-1)  # Set right wheel direction to backwards
-            self.motor.set_wheels_speed(left=(self.gain - self.trim)*self.goal_left_speed, 
-                                        right=-(self.gain + self.trim)*self.goal_right_speed)
+            #self.motor.set_wheels_speed(left=(self.gain - self.trim)*self.goal_left_speed, right=-(self.gain + self.trim)*self.goal_right_speed)
+            desired_left = (self.gain - self.trim)*self.goal_left_speed
+            desired_right = (self.gain + self.trim)*self.goal_right_speed
+            left_cmd, right_cmd = self.acceleration_func(desired_left, desired_right) # Apply acceleration limits
+            self.motor.set_wheels_speed(left=left_cmd, right=right_cmd) # Set the wheel speeds
+
+
 
     def pid_heading_control(self, v_nom, theta_ref, theta_hat):
         """
@@ -528,12 +551,18 @@ class MotorSubscriberNode:
         Limit how fast wheel commands change to fight wheel slip.
         Inputs & outputs are in the same normalized range [-1, 1].
         """
+        now  = rospy.Time.now()
+
+        # Initialize last_cmd_time on first call
+        if not hasattr(self, 'last_cmd_time') or self.last_cmd_time is None:
+            self.last_cmd_time = now
+            dt = 0.02  # assume first run is 20ms
+        else:
+            dt = (now - self.last_cmd_time).to_sec()
+            dt = max(dt, 1e-3)  # Avoid zero or tiny dt values
         
-        # now  = rospy.Time.now()
-        # dt   = (now - self.last_cmd_time).to_sec()
-        # dt   = max(dt, 1e-3)
-        dt = 0.02
-        # self.last_cmd_time = now
+        self.last_cmd_time = now  # Update timestamp for next call
+        # dt = 0.02 # statically set the time step to 20ms (50Hz)
 
         def limit(prev, desired):
             limit_up   = self.acceleration * dt
