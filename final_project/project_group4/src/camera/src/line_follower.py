@@ -63,61 +63,87 @@ class CameraSubscriberNode:
 
             # <================= START: Image Processing ======================>
             # Convert to HSV color space
-            hsv = cv2.cvtColor(undis_image, cv2.COLOR_BGR2HSV)
+            # hsv = cv2.cvtColor(undis_image, cv2.COLOR_BGR2HSV)
 
-            v_channel = hsv[:,:,2]  # brightness
+            # v_channel = hsv[:,:,2]  # brightness
 
-            # Compute adaptive thresholds for V channel
-            mean_v = np.mean(v_channel)
-            std_v = np.std(v_channel)
+            # # Compute adaptive thresholds for V channel
+            # mean_v = np.mean(v_channel)
+            # std_v = np.std(v_channel)
 
-            lower_v = max(0, mean_v - 1.5 * std_v)
-            upper_v = min(255, mean_v + 1.5 * std_v)
+            # lower_v = max(0, mean_v - 1.5 * std_v)
+            # upper_v = min(255, mean_v + 1.5 * std_v)
 
-            dtype = hsv.dtype
-            # lower_white = np.array([0, 0, lower_v], dtype=dtype)
-            # upper_white = np.array([180, 40, upper_v], dtype=dtype)
-            lower_white = np.array([0, 0, 180])
-            upper_white = np.array([180, 70, 255])
+            # dtype = hsv.dtype
+            # # lower_white = np.array([0, 0, lower_v], dtype=dtype)
+            # # upper_white = np.array([180, 40, upper_v], dtype=dtype)
+            # lower_white = np.array([0, 0, 180])
+            # upper_white = np.array([180, 70, 255])
 
-            # lower_white = np.array([0, 0, lower_v])
-            # upper_white = np.array([180, 40, upper_v])
+            # # lower_white = np.array([0, 0, lower_v])
+            # # upper_white = np.array([180, 40, upper_v])
 
-            mask = cv2.inRange(hsv, lower_white, upper_white)
+            # mask = cv2.inRange(hsv, lower_white, upper_white)
 
-            # Morphological operations to clean noise
-            kernel = np.ones((5, 5), np.uint8)
-            mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
-            mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
+            # # Morphological operations to clean noise
+            # kernel = np.ones((5, 5), np.uint8)
+            # mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
+            # mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
 
-            segmented_image = cv2.bitwise_and(undis_image, undis_image, mask=mask)
+            # segmented_image = cv2.bitwise_and(undis_image, undis_image, mask=mask)
+
+            gray = cv2.cvtColor(undis_image, cv2.COLOR_BGR2GRAY)
+
+            # Apply Gaussian Blur to smooth noise
+            blurred = cv2.GaussianBlur(gray, (5,5), 0)
+
+            # Canny Edge Detection
+            edges = cv2.Canny(blurred, 50, 150)
            
 
             MIN_AREA_TRACK = 20  # Minimum area for track marks
 
             # get a list of contours
-            contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+            contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
             lines = []
 
             for contour in contours:
-                M = cv2.moments(contour)
+                area = cv2.contourArea(contour)
+                if area < 50:  # Skip tiny noise
+                    continue
 
-                if (M['m00'] > MIN_AREA_TRACK):
-                    # Contour is part of the track
-                    cx = int(M["m10"]/M["m00"])
-                    xy = int(M["m01"]/M["m00"])
-                    lines.append({'x': cx, 'y': xy})
+                x, y, w, h = cv2.boundingRect(contour)
+                if h < 20:  # Skip very flat shapes
+                    continue
+
+                # Optional: Filter by angle
+                [vx, vy, x0, y0] = cv2.fitLine(contour, cv2.DIST_L2, 0, 0.01, 0.01)
+                angle = np.arctan2(vy, vx) * 180 / np.pi
+
+                # Accept lines with angles between -70 and +70 degrees
+                if -70 < angle < 70:
+                    M = cv2.moments(contour)
+                    if M['m00'] != 0:
+                        cx = int(M["m10"]/M["m00"])
+                        cy = int(M["m01"]/M["m00"])
+                        lines.append({'x': cx, 'y': cy})
+
+                        cv2.circle(undis_image, (cx, cy), 5, (0,255,0), -1)
+                        cv2.drawContours(undis_image, [contour], -1, (255,0,0), 2)
 
             if lines:
-                cv2.circle(segmented_image, (lines[0]['x'], lines[0]['y']), 5, (0, 255, 0), -1)
+                # Take the line that is the most centered
+                lines = sorted(lines, key=lambda l: abs(l['x'] - self.middle))
+                cv2.circle(edges, (lines[0]['x'], lines[0]['y']), 5, (0, 255, 0), -1)
                 self.latest_center = (lines[0]['x'], lines[0]['y'])
             else:
                 self.latest_center = None
 
-            cv2.imshow("Segmented Image", segmented_image)
-            cv2.imshow("V Channel", v_channel)
-            cv2.imshow("Mask", mask)
+            #cv2.imshow("Segmented Image", segmented_image)
+            cv2.imshow("edges", edges)
+            cv2.imshow("Undistorted Image", undis_image)
+            #cv2.imshow("Mask", mask)
 
             cv2.waitKey(1)  # Non-blocking update
 
@@ -148,12 +174,8 @@ class CameraSubscriberNode:
         # scale speed based on the absolute error
         velocity = max(self.move_vel * (1 - min(abs(error) / self.middle, 1)), 0.5)  # Scale velocity based on error, min speed is 0.5
         # determine the 2 velocities for the left and right wheel
-        if abs(error) < 20:  # If the error is small, we can move straight
-            velocity_right = self.move_vel
-            velocity_left = self.move_vel
-        else:
-            velocity_right = velocity * (1 - angle / np.pi)
-            velocity_left = velocity * (1 + angle / np.pi)
+        velocity_right = velocity * (1 - angle / np.pi)
+        velocity_left = velocity * (1 + angle / np.pi)
 
         self.call_left_wheel(1, velocity_left)
         self.call_right_wheel(1, velocity_right)

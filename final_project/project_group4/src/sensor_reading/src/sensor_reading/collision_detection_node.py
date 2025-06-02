@@ -18,6 +18,7 @@ class CollisionDetectionNode:
             buff_size=2**24,
             queue_size=10
         )
+        self.pub_tof
 
         self.initialized = True
         rospy.loginfo("Collision Detection node initialized!")
