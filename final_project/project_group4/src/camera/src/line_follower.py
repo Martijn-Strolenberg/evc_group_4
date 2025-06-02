@@ -107,6 +107,9 @@ class CameraSubscriberNode:
                 self.latest_center = None
 
             cv2.imshow("Segmented Image", segmented_image)
+            cv2.imshow("V Channel", v_channel)
+            cv2.imshow("Mask", mask)
+
             cv2.waitKey(1)  # Non-blocking update
 
         except CvBridgeError as err:
