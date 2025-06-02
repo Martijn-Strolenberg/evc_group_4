@@ -148,7 +148,7 @@ class CameraSubscriberNode:
 
         if abs(error) > 40:  # If the error is small, we can ignore angle correction
             self.motor_cmd(velocity, self.distance_cmd, angle, 0)
-            self.call_left_wheel(1, 0.3) # arguments: direction -1 or 1, speed [0,1]
+            #self.call_left_wheel(1, 0.3) # arguments: direction -1 or 1, speed [0,1]
         else:
             self.motor_cmd(velocity, self.distance_cmd, 0, 0)
 
