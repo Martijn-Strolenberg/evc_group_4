@@ -139,8 +139,10 @@ class CameraSubscriberNode:
         # scale speed based on the absolute error
         velocity = max(self.move_vel * (1 - min(abs(error) / self.middle, 1)), 0.5)  # Scale velocity based on error, min speed is 0.5
 
-        if abs(error) > 40:  # If the error is small, we can 
+        if abs(error) > 40:  # If the error is small, we can ignore angle correction
             self.motor_cmd(velocity, self.distance_cmd, angle, 0)
+        else:
+            self.motor_cmd(velocity, self.distance_cmd, 0, 0)
 
     # <================= Motor command function =================>
     def motor_cmd(self, velocity, distance, angle, blocking):
