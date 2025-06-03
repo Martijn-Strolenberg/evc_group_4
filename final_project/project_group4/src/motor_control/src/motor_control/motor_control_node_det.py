@@ -6,6 +6,7 @@ import numpy as np
 from nav_msgs.msg import Odometry
 import tf
 import tf.transformations as tft
+from time import sleep
 #from motor_control import MotorServices
 from motor_control.srv import MoveStraight, MoveStraightResponse
 from motor_control.srv import Rotate, RotateResponse
@@ -87,7 +88,7 @@ class MotorSubscriberNode:
         rospy.Service('right_wheel_vel', DriveRightwheel, self.handle_drive_rightwheel)
 
         # Sensor readings
-        rospy.Service('collision_detection',CollisionDetection,self.handle_collision_detection)
+        rospy.Service('collision_detection', CollisionDetection, self.handle_collision_detection)
 
         self.motor = DaguWheelsDriver() # Initialize motor driver
 
@@ -99,6 +100,16 @@ class MotorSubscriberNode:
     def angle_diff(a, b):
         difference = (a-b + np.pi) % (2*np.pi) - np.pi
         return difference
+    
+    # ------------ move commands calls -------------
+    def call_move_straight(self, distance, speed):
+        rospy.wait_for_service('move_straight')
+        try:
+            proxy = rospy.ServiceProxy('move_straight', MoveStraight)
+            resp = proxy(distance, speed)
+            print("MoveStraight success:", resp.success)
+        except rospy.ServiceException as e:
+            print("Service call failed:", e)
 
     # ------------- service calls -------------
     def call_left_wheel_dir(self, direction):
@@ -121,14 +132,18 @@ class MotorSubscriberNode:
 
 
     # ---------- service handlers ----------
-    def handle_collision_detection(self,req):
+    def handle_collision_detection(self, req):
         if req.collision == True:
-            rospy.loginfo("Detected Wall!")
+            rospy.loginfo("Detected Object!")
             self.collision_detection = 1
             self.state = 14
             return CollisionDetectionResponse(True)
+        # elif req.collison == False:
+        #     self.collision_detection = 0
+        #     return CollisionDetectionResponse(True)
         else:
-            self.collision_detection = 0
+            return CollisionDetectionResponse(False)
+        
     def handle_move_straight(self, req):
         if req.speed <= 0: # Check if speed is positive (error handling)
             rospy.logwarn("Speed must be > 0")
@@ -524,12 +539,16 @@ class MotorSubscriberNode:
         # === TOF wall detected and avoidance ===
         if self.state == 14:
             if self.prev_state != self.state:
-                rospy.loginfo("State 5: Stop robot")
+                rospy.loginfo("State 14: Collision avoidance routine")
                 self.prev_state = self.state
             # Stop the robot
             #self.motor.set_wheels_speed(left=0, right=0) # Stop the robot without any deceleration
             cmd_left, cmd_right = self.acceleration_func(0, 0) # Apply acceleration limits to stop
             self.motor.set_wheels_speed(left=cmd_left, right=cmd_right) # Stop the robot
+            sleep(1)
+            #self.call_move_straight(-0.2, 0.35) # back up 20 cm (cannot be used due blocking incoming motor commands)
+            # rotate?
+            self.collision_detection = 0
             self.state = 0 # Reset state to idle, ready for next command
 
     def pid_heading_control(self, v_nom, theta_ref, theta_hat):
