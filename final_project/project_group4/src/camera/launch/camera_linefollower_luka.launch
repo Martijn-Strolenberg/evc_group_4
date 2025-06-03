@@ -1,0 +1,5 @@
+<launch>
+  <node pkg="camera" type="line_follower_Luka.py" name="line_follower_node" output="screen">
+    <rosparam command="load" file="$(find camera)/config/parameters.yaml" />
+  </node>
+</launch>

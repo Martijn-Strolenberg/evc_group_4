@@ -42,5 +42,6 @@ catkin_install_python(PROGRAMS
   src/camera_viewer_node.py
   src/line_follower.py
   src/Motor_OCR_node.py
+  src/line_follower_Luka.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
