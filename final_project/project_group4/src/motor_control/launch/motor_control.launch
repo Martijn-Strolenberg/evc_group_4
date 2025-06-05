@@ -1,5 +1,5 @@
 <launch>
-  <node pkg="motor_control" type="motor_control_node_det.py" name="motor_control_node" output="screen">
+  <node pkg="motor_control" type="motor_control_node.py" name="motor_control_node" output="screen">
     <rosparam command="load" file="$(find motor_control)/config/motor_param.yaml" />
   </node>
 </launch>
