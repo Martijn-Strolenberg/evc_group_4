@@ -8,6 +8,7 @@ from motor_control.srv import (          # import all ros services
     ConstRotate, ConstRotateResponse,
     ConstStraight, ConstStraightResponse,
     LeftWheelDir, RightWheelDir
+    SetMaxSpeed, SetMaxSpeedResponse
 )
 
 class MotorServices(object):
@@ -25,6 +26,7 @@ class MotorServices(object):
         self._stop_srv   = rospy.Service('stop',           Stop,          self._stop_cb)
         self._crot_srv   = rospy.Service('const_rotate',   ConstRotate,   self._crot_cb)
         self._cstr_srv   = rospy.Service('const_straight', ConstStraight, self._cstr_cb)
+        self._velo_srv   = rospy.Service('set_max_speed', SetMaxSpeed, self._velo_cb)
         # direction services are “client-side helpers” – keep them if you still need them
         self._lwd_srv    = rospy.Service('left_wheel_dir',  LeftWheelDir,  self._lwd_cb)
         self._rwd_srv    = rospy.Service('right_wheel_dir', RightWheelDir, self._rwd_cb)
@@ -49,6 +51,10 @@ class MotorServices(object):
     def _cstr_cb(self, req):
         ok = self.ctrl.start_const_straight(req.direction, req.speed)
         return ConstStraightResponse(success=ok)
+
+    def _velo_cb(self, req):
+        ok = self.ctrl.start_set_max_speed(req.speed)
+        return SetMaxSpeedResponse(success=ok)
 
     # ----------- wheel-direction services ------------
     def _lwd_cb(self, req):

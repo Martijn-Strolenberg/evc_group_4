@@ -7,7 +7,7 @@ from cv_bridge import CvBridge, CvBridgeError
 from sensor_msgs.msg import CompressedImage
 from motor_control.msg import motor_cmd
 from motor_control.srv import MoveStraight, Rotate, Stop, ConstRotate, ConstStraight, DriveLeftwheel, DriveRightwheel
-from motor_control.srv import SetMaxSpeed, SetMaxSpeedResponse
+
 
 class CameraSubscriberNode:
     def __init__(self):
@@ -31,7 +31,11 @@ class CameraSubscriberNode:
             queue_size=10
         )
 
-        self.cmd_rate = 4.0 # generate move commands at 10 Hz
+        self.config = self.get_config()
+        self.camera_width = self.config["width"]
+        self.camera_height = self.config["height"]
+
+        self.cmd_rate = 2.0 # generate move commands at 2 Hz
         self.cmd_dt = 1.0 / self.cmd_rate
         self.last_cmd_ts = rospy.Time.now()
         self.latest_center = None  # updated every frame
@@ -45,10 +49,6 @@ class CameraSubscriberNode:
         self.middle = 640 / 2
         
         rospy.on_shutdown(self.shutdown) # Shutdown hook to clean up resources
-
-        # Initialize motor command services API
-        #services = MotorServices()
-        rospy.Service('set_max_speed', SetMaxSpeed, self.set_max_speed)
 
         self.initialized = True
         rospy.loginfo("Camera object detection node initialized!")
@@ -66,36 +66,16 @@ class CameraSubscriberNode:
             undis_image = cv2.imdecode(np.frombuffer(data.data, np.uint8), cv2.IMREAD_COLOR)
 
             # <================= START: Image Processing ======================>
-            # Convert to HSV color space
-            # hsv = cv2.cvtColor(undis_image, cv2.COLOR_BGR2HSV)
+            interval = self.camera_width / 5
+            # Segment video into 5 segments
+            lines = [
+                ((interval,0),(interval,self.camera_height)),
+                ((2*interval,0),(2*interval,self.camera_height)),
+                ((3*interval,0),(3*interval,self.camera_height)),
+                ((4*interval,0),(4*interval,self.camera_height)),
+            ]
 
-            # v_channel = hsv[:,:,2]  # brightness
-
-            # # Compute adaptive thresholds for V channel
-            # mean_v = np.mean(v_channel)
-            # std_v = np.std(v_channel)
-
-            # lower_v = max(0, mean_v - 1.5 * std_v)
-            # upper_v = min(255, mean_v + 1.5 * std_v)
-
-            # dtype = hsv.dtype
-            # # lower_white = np.array([0, 0, lower_v], dtype=dtype)
-            # # upper_white = np.array([180, 40, upper_v], dtype=dtype)
-            # lower_white = np.array([0, 0, 180])
-            # upper_white = np.array([180, 70, 255])
-
-            # # lower_white = np.array([0, 0, lower_v])
-            # # upper_white = np.array([180, 40, upper_v])
-
-            # mask = cv2.inRange(hsv, lower_white, upper_white)
-
-            # # Morphological operations to clean noise
-            # kernel = np.ones((5, 5), np.uint8)
-            # mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
-            # mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
-
-            # segmented_image = cv2.bitwise_and(undis_image, undis_image, mask=mask)
-
+            # Make mask to cover top part.
             gray = cv2.cvtColor(undis_image, cv2.COLOR_BGR2GRAY)
 
             # Apply Gaussian Blur to smooth noise
@@ -104,43 +84,46 @@ class CameraSubscriberNode:
             # Canny Edge Detection
             edges = cv2.Canny(blurred, 50, 150)
            
+            edges[0:self.camera_height/2, :] = 0 # cover top part. Only directly infront is important
 
             MIN_AREA_TRACK = 20  # Minimum area for track marks
 
             # get a list of contours
-            lines = cv2.HoughLinesP(edges, 1, np.pi/180, threshold=50, minLineLength=50, maxLineGap=20)
-
+            #lines = cv2.HoughLinesP(edges, 1, np.pi/180, threshold=50, minLineLength=50, maxLineGap=20)
+            # plot lines into the undistorted image
+            for w,h in lines:
+                cv2.line(edges,w,h,color = (255,0,0),thickness = 1)
             lines_detected = []
 
             # get the line that is closest to the middle bottom of the image
-            if lines is not None:
-                for line in lines:
-                    x1, y1, x2, y2 = line[0]
+            #if lines is not None:
+            #    for line in lines:
+            #        x1, y1, x2, y2 = line[0]
                     # Calculate the bottom middle point of the line
-                    mid_x = (x1 + x2) // 2
-                    bottom_y = y1 if y2 > y1 else y2
+            #        mid_x = (x1 + x2) // 2
+            #        bottom_y = y1 if y2 > y1 else y2
 
                     # Calculate the length of the line
-                    length = np.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
+            #        length = np.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
 
-                    if length > MIN_AREA_TRACK:
-                        lines_detected.append({'x': mid_x, 'y': bottom_y, 'length': length})
+              #      if length > MIN_AREA_TRACK:
+              #          lines_detected.append({'x': mid_x, 'y': bottom_y, 'length': length})
 
                 # draw the lines on the edges image
-                for line in lines_detected:
-                    cv2.circle(edges, (line['x'], line['y']), 5, (255, 0, 0), -1)
-                    cv2.circle(undis_image, (line['x'], line['y']), 5, (255, 0, 0), -1)
+             #   for line in lines_detected:
+             #       cv2.circle(edges, (line['x'], line['y']), 5, (255, 0, 0), -1)
+             #       cv2.circle(undis_image, (line['x'], line['y']), 5, (255, 0, 0), -1)
 
 
-            if lines_detected:
+            #if lines_detected:
                 # Take the line that is the least euclidean distance from the middle bottom of the image
-                lines = sorted(lines_detected, key=lambda line: np.sqrt((line['x'] - self.middle) ** 2 + (line['y'] - undis_image.shape[0]) ** 2))
+            #    lines = sorted(lines, key=lambda line: np.sqrt((line['x'] - self.middle) ** 2 + (line['y'] - undis_image.shape[0]) ** 2))
 
-                cv2.circle(edges, (lines[0]['x'], lines[0]['y']), 5, (0, 255, 0), -1)
-                cv2.circle(undis_image, (lines[0]['x'], lines[0]['y']), 5, (0, 255, 0), -1)
-                self.latest_center = (lines[0]['x'], lines[0]['y'])
-            else:
-                self.latest_center = None
+            #    cv2.circle(edges, (lines[0]['x'], lines[0]['y']), 5, (0, 255, 0), -1)
+            #    cv2.circle(undis_image, (lines[0]['x'], lines[0]['y']), 5, (0, 255, 0), -1)
+            #    self.latest_center = (lines[0]['x'], lines[0]['y'])
+            #else:
+            #    self.latest_center = None
 
             #cv2.imshow("Segmented Image", segmented_image)
             cv2.imshow("edges", edges)
@@ -174,11 +157,10 @@ class CameraSubscriberNode:
         angle = np.arctan2(error, 100)  # 100 is a scaling factor for the angle, 320 error is 1.26 radians == 72 degrees
         
         # scale speed based on the absolute error
-        #velocity = max(self.move_vel * (1 - min(abs(error) / self.middle, 1)), 0.3)  # Scale velocity based on error, min speed is 0.5
-        velocity = 0.25
+        velocity = max(self.move_vel * (1 - min(abs(error) / self.middle, 1)), 0.5)  # Scale velocity based on error, min speed is 0.5
         # determine the 2 velocities for the left and right wheel
-        velocity_right = velocity * (1 - (angle / np.pi)*3)
-        velocity_left = velocity * (1 + (angle / np.pi)*3)
+        velocity_right = velocity * (1 - (angle / np.pi)/2)
+        velocity_left = velocity * (1 + (angle / np.pi)/2)
 
         self.call_left_wheel(1, velocity_left)
         self.call_right_wheel(1, velocity_right)
@@ -224,26 +206,20 @@ class CameraSubscriberNode:
             print("Stop success:", resp.success)
         except rospy.ServiceException as e:
             print("Service call failed:", e)
-    # ----------------------------OCR-speed-set-----------------
-    def set_max_speed(self,req):
-        if req.speed <= 0:
-            rospy.logwarn("Speed must be >0")
-            return SetMaxSpeedResponse(False)
-        # Get the current status of the robot and set the goal parameters
 
-        if req.speed > 0: # Check if distance is positive (drive forwards)
-            # Move straight forward command
-
-            self.move_vel = req.speed
-            self.turn_vel = self.move_vel - 0.1
-            rospy.loginfo("Chaning max speed to %.2fm/s", req.speed)
-            return SetMaxSpeedResponse(True)
 
     def shutdown(self):
         rospy.loginfo("Shutting down line follower node.")
         self.call_stop()        # Stop the robot
         cv2.destroyAllWindows() # Close all OpenCV windows
+    
 
+    # config
+    def get_config(self):
+        config = {}
+        config["width"] = rospy.get_param("~width")
+        config["height"] = rospy.get_param("~height")
+        return config
 if __name__ == "__main__":
     # Initialize the node
     rospy.init_node('line_follower_node', anonymous=False, xmlrpc_port=45102, tcpros_port=45103)
@@ -252,6 +228,4 @@ if __name__ == "__main__":
         rospy.spin()
     except KeyboardInterrupt:
         rospy.loginfo("Shutting down image viewer node.")
-    finally:
-        camera_node.shutdown()
     
