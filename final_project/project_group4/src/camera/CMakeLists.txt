@@ -37,6 +37,7 @@ install(DIRECTORY launch/
 
 # Install Python scripts
 catkin_install_python(PROGRAMS
+  src/marti_linefollower.py
   src/processor_node.py
   src/camera_pub_node.py
   src/camera_viewer_node.py

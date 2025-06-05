@@ -21,6 +21,7 @@ add_service_files(
   # our custom services
   BatteryInfo.srv
   CollisionDetection.srv
+  ButtonPressed.srv
 )
 
 generate_messages(
