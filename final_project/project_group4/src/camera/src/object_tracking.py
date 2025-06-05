@@ -34,7 +34,7 @@ class CameraSubscriberNode:
 
         self.obj_find = "orange"
 
-        self.cmd_rate = 10.0 # generate move commands at 5Hz
+        self.cmd_rate = 4.0 # generate move commands at 5Hz
         self.cmd_dt = 1.0 / self.cmd_rate
         self.last_cmd_ts = rospy.Time.now()
         self.latest_center = None  # updated every frame
