@@ -15,6 +15,11 @@ add_message_files(
   test.msg
   motor_cmd.msg
 )
+add_service_files(
+  FILES
+  # our custom services
+  ObjectDetected.srv
+)
 # Declare a catkin package
 generate_messages(
   DEPENDENCIES
