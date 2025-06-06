@@ -220,20 +220,20 @@ class MotorSubscriberNode:
         return ConstStraightResponse(False)
     
     def handle_drive_leftwheel(self, req):
-        if req.speed <= 0:
-            rospy.logwarn("Speed must be >0")
+        if req.speed < 0:
+            rospy.logwarn("Speed must be >= 0")
             return DriveLeftwheelResponse(False)
         
         self.goal_left_speed = req.speed # Set the desired speed of the motors
 
-        if req.direction > 0: # Check if distance is positive (drive forwards)
+        if req.direction > 0: # Check if direction is positive (drive forwards)
             # Move straight forward command
             rospy.loginfo("Left wheel forwards %.2fm/s", req.speed)
             self.left_direction = 1
             self.state = 10 # Set the state to drive left wheel forwards
             return DriveLeftwheelResponse(True)
         
-        if req.direction < 0: # Check if distance is negative (drive backwards)
+        if req.direction < 0: # Check if direction is negative (drive backwards)
             # Move straight backward command
             rospy.loginfo("Left wheel backwards %.2fm/s", req.speed)
             self.left_direction = -1
@@ -242,20 +242,20 @@ class MotorSubscriberNode:
         return DriveLeftwheelResponse(False)
 
     def handle_drive_rightwheel(self, req):
-        if req.speed <= 0:
-            rospy.logwarn("Speed must be >0")
+        if req.speed < 0:
+            rospy.logwarn("Speed must be >= 0")
             return DriveRightwheelResponse(False)
         
         self.goal_right_speed = req.speed # Set the desired speed of the motors
         
-        if req.direction > 0: # Check if distance is positive (drive forwards)
+        if req.direction > 0: # Check if direction is positive (drive forwards)
             # Move straight forward command
             rospy.loginfo("Right wheel forwards %.2fm/s", req.speed)
             self.right_direction = 1
             self.state = 12 # Set the state to drive right wheel forwards
             return DriveRightwheelResponse(True)
         
-        if req.direction < 0: # Check if distance is negative (drive backwards)
+        if req.direction < 0: # Check if direction is negative (drive backwards)
             # Move straight backward command
             rospy.loginfo("Right wheel backwards %.2fm/s", req.speed)
             self.right_direction = -1

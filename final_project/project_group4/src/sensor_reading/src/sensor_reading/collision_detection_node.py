@@ -23,26 +23,26 @@ class CollisionDetectionNode:
         self.prev_mesg = -1
         self.curr_mesg = 0
         self.state = 0
-        self.dist = 100.0
+        self.collision_dist = 100.0
         rospy.loginfo("Collision Detection node initialized!")
 
 
     
     def set_tof_cb(self, data):
         self.tof = data.data
-        rospy.loginfo("TOF distance: %f", self.tof)
+        #rospy.loginfo("TOF distance: %f", self.tof)
         self.state_tof()
 
     def state_tof(self):
         rospy.loginfo("check")
-        if self.tof <= self.dist and self.curr_mesg != self.prev_mesg:
+        if self.tof <= self.collision_dist and self.curr_mesg != self.prev_mesg:
             rospy.loginfo("Collision detected!")
             self.service_tof(True)
             self.prev_mesg = self.curr_mesg
-        # elif self.tof > self.dist and self.prev_mesg == self.curr_mesg:
-        #     rospy.loginfo("no collision")
-        #     self.service_tof(False)
-        #     self.curr_mesg += 1
+        elif self.tof > self.collision_dist and self.prev_mesg == self.curr_mesg:
+            rospy.loginfo("no collision")
+            self.service_tof(False)
+            self.curr_mesg += 1
     
     def service_tof(self,collision):
         rospy.wait_for_service('collision_detection')
