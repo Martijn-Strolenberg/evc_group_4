@@ -1,6 +1,8 @@
 from enum import IntEnum
 from typing import Callable
 import Jetson.GPIO as GPIO
+import rospy
+# import threading
 
 from ledClass import ButtonLED
 
@@ -30,7 +32,8 @@ class ButtonDriver:
         # configure GPIO pin
         self._signal_gpio_pin = signal_gpio_pin
         GPIO.setmode(GPIO.BOARD)
-        GPIO.setup(self._signal_gpio_pin, GPIO.IN)
+        #GPIO.setup(self._signal_gpio_pin, GPIO.IN)
+        GPIO.setup(self._signal_gpio_pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
         # create LED object
         self._led = ButtonLED(led_gpio_pin)
         # prevent_default when performing tests
@@ -38,7 +41,9 @@ class ButtonDriver:
         # callback when test finishes, only supplied when starting a test
         self._test_callback = None
         # attach event listeners to the signal GPIO pin
-        GPIO.add_event_detect(self._signal_gpio_pin, GPIO.BOTH, callback=self._cb)
+        #GPIO.add_event_detect(self._signal_gpio_pin, GPIO.BOTH, callback=self._cb)
+        GPIO.add_event_detect(self._signal_gpio_pin, GPIO.BOTH, callback=self._cb, bouncetime=200)
+
 
     @property
     def led(self):
@@ -47,6 +52,7 @@ class ButtonDriver:
     def _cb(self, pin):
         signal = int(GPIO.input(pin))
         event = ButtonEvent(signal)
+        rospy.loginfo("GPIO callback triggered, pin: %d, signal: %d", pin, signal)
         # when running tests
         if self._prevent_default:
             if event == ButtonEvent.RELEASE:
@@ -56,6 +62,8 @@ class ButtonDriver:
             return
 
         self._callback(event)
+        # # Run the callback in a new thread
+        # threading.Thread(target=self._callback, args=(event,)).start()
 
     def start_test(self, test_cb):
         self._test_callback = test_cb
