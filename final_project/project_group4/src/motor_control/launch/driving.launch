@@ -1,0 +1,11 @@
+<launch>
+  <!-- Run the odometry node, responsible for reading the encoders and publishing position feedback -->
+  <node pkg="motor_control" type="odometry_node.py" name="odometry_node" output="screen">
+    <rosparam command="load" file="$(find motor_control)/config/motor_param.yaml" />
+  </node>
+
+  <!-- Run the motor_control node, responsible for sending the motor commands to the motor drivers -->
+  <node pkg="motor_control" type="motor_control_node.py" name="motor_control_node" output="screen">
+    <rosparam command="load" file="$(find motor_control)/config/motor_param.yaml" />
+  </node>
+</launch>
