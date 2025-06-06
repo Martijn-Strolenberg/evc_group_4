@@ -95,7 +95,7 @@ class CameraSubscriberNode:
             # mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
 
             # segmented_image = cv2.bitwise_and(undis_image, undis_image, mask=mask)
-
+            
             gray = cv2.cvtColor(undis_image, cv2.COLOR_BGR2GRAY)
 
             # Apply Gaussian Blur to smooth noise
@@ -108,6 +108,10 @@ class CameraSubscriberNode:
             MIN_AREA_TRACK = 20  # Minimum area for track marks
 
             # get a list of contours
+
+            #Do not use top 1/3 of the image
+
+            
             lines = cv2.HoughLinesP(edges, 1, np.pi/180, threshold=50, minLineLength=50, maxLineGap=20)
 
             lines_detected = []
