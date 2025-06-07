@@ -10,7 +10,7 @@ from motor_control.srv import MoveStraight, Rotate, Stop, ConstRotate, ConstStra
 from motor_control.srv import SetMaxSpeed, SetMaxSpeedResponse
 from sensor_reading.srv import ButtonPressed, ButtonPressedResponse
 from sensor_reading.srv import CollisionDetection, CollisionDetectionResponse
-
+from std_msgs.msg import Int8
 
 
 
@@ -29,6 +29,15 @@ class CameraSubscriberNode:
             queue_size=1
         )
 
+        # Construct subscriber
+        self.sub_button = rospy.Subscriber(
+            "/button_state",
+            Int8,
+            self.button_cb,
+            buff_size=2**24,
+            queue_size=10
+        )
+
         self.cmd_rate = 10.0 # generate move commands at 10 Hz
         self.cmd_dt = 1.0 / self.cmd_rate
         self.last_cmd_ts = rospy.Time.now()
@@ -43,6 +52,8 @@ class CameraSubscriberNode:
         self.vel_r = 0.0
         self.vel_l = 0.0
         self.er = 0.0  # error for debugging purposes
+
+        self.robot_enabled = False # Flag to enable/disable robot movement
 
         self.middle = 640 / 2
 
@@ -78,6 +89,21 @@ class CameraSubscriberNode:
         if new_move_vel != self.move_vel:
             rospy.loginfo("move_vel changed from %.2f to %.2f", self.move_vel, new_move_vel)
             self.move_vel = new_move_vel
+
+    def button_cb(self, data):
+        if not self.initialized:
+            return
+
+        if data.data == 1:
+            rospy.loginfo("Button pressed once!")
+            if not self.robot_enabled:
+                rospy.loginfo("Enabling robot movement.")
+                self.robot_enabled = True  # Enable robot movement
+            else:
+                rospy.loginfo("Disabling robot movement.")
+                self.robot_enabled = False
+                self.call_stop()  # Stop the robot if button is pressed again
+            
 
 
 # <============== Image Processing =================>
@@ -204,54 +230,56 @@ class CameraSubscriberNode:
     def timer_cb(self, event):
         if not self.initialized:
             return
-        
-        if self.latest_center is None:
-            rospy.loginfo_throttle(2.0, "No line detected recently. No movement.")
-            return
 
-        center_x, center_y = self.latest_center
+        if self.robot_enabled: # Only execute if the robot is enabled
 
-        error = (center_x - self.middle) * self.kp/self.middle
-        if error < 0:
-            sign = -1
-        else:
-            sign = 1
-        error = (abs(error) ** self.kp_exp) + 1.0  # Always ≥ 1
-        
-        # Lets determine the angle, negative means turn left, positive means turn right
-        # angle is in radians
-        # angle = np.arctan2(error, 100)  # 100 is a scaling factor for the angle, 320 error is 1.26 radians == 72 degrees
-        
-        # scale speed based on the absolute error
-        #velocity = max(self.move_vel * (1 - min(abs(error) / self.middle, 1)), 0.3)  # Scale velocity based on error, min speed is 0.5
-        # determine the 2 velocities for the left and right wheel
+            if self.latest_center is None:
+                rospy.loginfo_throttle(2.0, "No line detected recently. No movement.")
+                return
 
-        # Default directions
-        dir_left = 1
-        dir_right = 1
+            center_x, center_y = self.latest_center
 
-        velocity_right = self.move_vel
-        velocity_left = self.move_vel
+            error = (center_x - self.middle) * self.kp/self.middle
+            if error < 0:
+                sign = -1
+            else:
+                sign = 1
+            error = (abs(error) ** self.kp_exp) + 1.0  # Always ≥ 1
+            
+            # Lets determine the angle, negative means turn left, positive means turn right
+            # angle is in radians
+            # angle = np.arctan2(error, 100)  # 100 is a scaling factor for the angle, 320 error is 1.26 radians == 72 degrees
+            
+            # scale speed based on the absolute error
+            #velocity = max(self.move_vel * (1 - min(abs(error) / self.middle, 1)), 0.3)  # Scale velocity based on error, min speed is 0.5
+            # determine the 2 velocities for the left and right wheel
 
-        # If error is to the left
-        if sign == -1:
-            velocity_right = self.move_vel * error
-            velocity_left = self.move_vel / error
-        else:
-            velocity_left = self.move_vel * error
-            velocity_right = self.move_vel / error
+            # Default directions
+            dir_left = 1
+            dir_right = 1
 
-        # Limit to max speed
-        velocity_left = min(velocity_left, self.max_speed)
-        velocity_right = min(velocity_right, self.max_speed)
+            velocity_right = self.move_vel
+            velocity_left = self.move_vel
 
-        self.vel_r = velocity_right
-        self.vel_l = velocity_left
-        self.er = error
+            # If error is to the left
+            if sign == -1:
+                velocity_right = self.move_vel * error
+                velocity_left = self.move_vel / error
+            else:
+                velocity_left = self.move_vel * error
+                velocity_right = self.move_vel / error
 
-        # Send motor commands
-        self.call_left_wheel(dir_left, velocity_left)
-        self.call_right_wheel(dir_right, velocity_right)
+            # Limit to max speed
+            velocity_left = min(velocity_left, self.max_speed)
+            velocity_right = min(velocity_right, self.max_speed)
+
+            self.vel_r = velocity_right
+            self.vel_l = velocity_left
+            self.er = error
+
+            # Send motor commands
+            self.call_left_wheel(dir_left, velocity_left)
+            self.call_right_wheel(dir_right, velocity_right)
 
 
     # ================ Motor command services ======================== #
