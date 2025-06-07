@@ -11,9 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
 )
 add_message_files(
   FILES
-  #twovids.msg
-  test.msg
-  motor_cmd.msg
+  ObjectDetection.msg
 )
 add_service_files(
   FILES
@@ -44,6 +42,7 @@ install(DIRECTORY launch/
 
 # Install Python scripts
 catkin_install_python(PROGRAMS
+  src/object_tracking.py
   src/marti_linefollower.py
   src/processor_node.py
   src/camera_pub_node.py
