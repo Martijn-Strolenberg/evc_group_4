@@ -287,10 +287,12 @@ class CameraSubscriberNode:
         if req == 1:
             rospy.loginfo("Button pressed status=%d, on", req.pressed)
             return ButtonPressedResponse(True)
-
         if req == 0:
             rospy.loginfo("Button pressed status=%d, off", req.pressed)
             return ButtonPressedResponse(True)
+        else:
+            rospy.logwarn("Button pressed status=%d, unknown", req.pressed)
+            # If the button pressed status is not 1 or 0, return False
         return ButtonPressedResponse(False)
 
     # ============== Collison detection service ============== #

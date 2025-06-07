@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import rospy
 from test_pkgs.srv import Stop, StopResponse
@@ -14,7 +14,7 @@ def handle_stop_robot(req):
 
 def stop_robot_server():
     global pub
-    rospy.init_node('stop_robot_server')
+    rospy.init_node('stop_robot_server', anonymous=False, xmlrpc_port=45104, tcpros_port=45105)
     pub = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
     rospy.Service('stop_robot', Stop, handle_stop_robot)
     rospy.loginfo("StopRobot service ready.")
