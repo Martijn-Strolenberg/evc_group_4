@@ -47,6 +47,7 @@ install(DIRECTORY launch/
 catkin_install_python(PROGRAMS
   #src/sensor_reading/battery_test.py # not used?
   src/sensor_reading/button_monitor_service.py
+  src/sensor_reading/button_monitor_node.py
   src/sensor_reading/battery_monitor_service.py
   src/sensor_reading/display_node.py
   #src/sensor_reading/battery_pub_node.py # not used?
