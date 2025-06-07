@@ -16,5 +16,5 @@ def stop_robot_client():
         rospy.logerr("Service call failed: %s" % e)
 
 if __name__ == "__main__":
-    rospy.init_node('stop_robot_client')
+    rospy.init_node('stop_robot_client', anonymous=False, xmlrpc_port=45104, tcpros_port=45105)
     stop_robot_client()

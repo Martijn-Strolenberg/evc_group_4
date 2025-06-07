@@ -12,11 +12,6 @@ class ButtonMonitorNode:
     def __init__(self):
         self.ledState = 1
         self.driver = None
-        self.service_proxy = None
-    
-        # Set up ROS service proxy
-        #rospy.wait_for_service('button_pressed') # Wait for the service to become available
-        self.service_proxy = rospy.ServiceProxy('button_pressed', ButtonPressed)        
         rospy.loginfo("Service button_pressed is ready.")
 
         # Initialize button driver
@@ -28,7 +23,9 @@ class ButtonMonitorNode:
         threading.Thread(target=self.event_cb, args=(event,)).start()
 
     def call_button_update(self, pressed):
+        rospy.loginfo("h1")
         rospy.wait_for_service('button_pressed')
+        rospy.loginfo("h2")
         try:
             proxy = rospy.ServiceProxy('button_pressed', ButtonPressed)
             resp = proxy(pressed)
@@ -48,20 +45,10 @@ class ButtonMonitorNode:
         else:
             rospy.logwarn("Unknown button event: %s", str(event))
             return
-
-        # # Call the service to notify other nodes
-        # try:
-        #     resp = self.service_proxy(pressed_value)
-        #     if resp.success:
-        #         rospy.loginfo("Service call succeeded.")
-        #     else:
-        #         rospy.logwarn("Service call returned failure.")
-        # except rospy.ServiceException as e:
-        #     rospy.logerr("Service call failed: %s" % e)
-
+ 
 def main():
     rospy.init_node('button_pressed_monitor')
-    node = ButtonMonitorNode()
+    ButtonMonitorNode()
     rospy.loginfo("Button pressed monitor node started.")
 
     rate = rospy.Rate(10)
