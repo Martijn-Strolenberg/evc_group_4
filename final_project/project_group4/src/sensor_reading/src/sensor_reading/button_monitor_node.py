@@ -5,10 +5,11 @@ from sensor_reading.srv import ButtonPressed
 from sensor_reading.drivers.buttonClass import ButtonEvent, ButtonDriver
 from std_msgs.msg import Int8
 import threading
+import time
 
 LED_GPIO = 37
 SIGNAL_GPIO = 40
-DOUBLE_TAP_THRESHOLD = 0.5  # seconds
+DOUBLE_TAP_THRESHOLD = 1  # seconds
 
 class ButtonMonitorNode:
     def __init__(self):
