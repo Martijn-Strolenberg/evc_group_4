@@ -3,28 +3,27 @@
 import rospy
 from sensor_reading.srv import ButtonPressed
 from sensor_reading.drivers.buttonClass import ButtonEvent, ButtonDriver
-from std_msgs.msg import Bool
+from std_msgs.msg import Int8
 import threading
 
 LED_GPIO = 37
 SIGNAL_GPIO = 40
+DOUBLE_TAP_THRESHOLD = 0.5  # seconds
 
 class ButtonMonitorNode:
     def __init__(self):
         self.ledState = 1
-        self.driver = None
-        self.service_proxy = None
-    
-        # Set up ROS service proxy
-        #rospy.wait_for_service('button_pressed') # Wait for the service to become available
-        # self.service_proxy = rospy.ServiceProxy('button_pressed', ButtonPressed)        
-        # rospy.loginfo("Service button_pressed is ready.")
-        # Initialize publisher
-        self.button_pub = rospy.Publisher('/button_state', Bool, queue_size=10)
-
         # Initialize button driver
         self.driver = ButtonDriver(LED_GPIO, SIGNAL_GPIO, self.threaded_cb)
         self.driver.led.set(self.ledState)
+    
+        self.button_pub = rospy.Publisher('/button_state', Int8, queue_size=10)
+
+        self.last_press_time = None
+        self.tap_count = 0
+        self.tap_timer = None
+        self.lock = threading.Lock()
+
 
     def threaded_cb(self, event):
         # Run actual event handler in new thread
@@ -42,23 +41,51 @@ class ButtonMonitorNode:
     def event_cb(self, event):
         if event == ButtonEvent.PRESS:
             rospy.loginfo("Button pressed.")
-            #self.call_button_update(1)
-            self.publish_button_state(True)
         elif event == ButtonEvent.RELEASE:
             rospy.loginfo("Button released. Toggling LED.")
             self.ledState ^= 1
             self.driver.led.set(self.ledState)
-            #self.call_button_update(0)
-            self.publish_button_state(False)
+            self.register_tap()
         else:
             rospy.logwarn("Unknown button event: %s", str(event))
             return
+        
+    def register_tap(self):
+        with self.lock:
+            now = time.time()
+            if self.last_press_time and (now - self.last_press_time) <= DOUBLE_TAP_THRESHOLD:
+                self.tap_count += 1
+            else:
+                self.tap_count = 1
 
-    def publish_button_state(self, pressed):
-        msg = Bool()
-        msg.data = pressed
+            self.last_press_time = now
+
+            if self.tap_timer:
+                self.tap_timer.cancel()
+
+            self.tap_timer = threading.Timer(DOUBLE_TAP_THRESHOLD, self.evaluate_taps)
+            self.tap_timer.start()
+        
+    def evaluate_taps(self):
+        with self.lock:
+            if self.tap_count == 1:
+                rospy.loginfo("Single tap detected.")
+                self.publish_button_state(1)
+            elif self.tap_count == 2:
+                rospy.loginfo("Double tap detected.")
+                self.publish_button_state(2)
+            else:
+                rospy.loginfo("Multi-tap (%d) detected.", self.tap_count)
+                self.publish_button_state(self.tap_count)
+
+            self.tap_count = 0
+            self.last_press_time = None
+
+    def publish_button_state(self, tap_type):
+        msg = Int8()
+        msg.data = tap_type
         self.button_pub.publish(msg)
-        rospy.loginfo("Published button state: %s", pressed)
+        rospy.loginfo("Published button state: %s", tap_type)
 
         # # Call the service to notify other nodes
         # try:
