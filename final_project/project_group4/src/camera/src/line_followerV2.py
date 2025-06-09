@@ -10,7 +10,7 @@ from motor_control.srv import MoveStraight, Rotate, Stop, ConstRotate, ConstStra
 from motor_control.srv import SetMaxSpeed, SetMaxSpeedResponse
 from sensor_reading.srv import ButtonPressed, ButtonPressedResponse
 from sensor_reading.srv import CollisionDetection, CollisionDetectionResponse
-from std_msgs.msg import Int8
+from std_msgs.msg import Int8, Bool
 from camera.msg import ObjectDetection
 
 
@@ -44,6 +44,15 @@ class CameraSubscriberNode:
             "/object_detection",
             ObjectDetection,
             self.object_detected_cb,
+            buff_size=2**24,
+            queue_size=10
+        )
+
+        # Construct subscriber to receive collision detection status
+        self.sub_collision_detection = rospy.Subscriber(
+            "/collision_detection",
+            Bool,
+            self.collision_detected_cb,
             buff_size=2**24,
             queue_size=10
         )
@@ -114,6 +123,22 @@ class CameraSubscriberNode:
                 rospy.loginfo("Disabling robot movement.")
                 self.robot_enabled = False
                 self.call_stop()  # Stop the robot if button is pressed again
+
+    def collision_detected_cb(self, data):
+        if not self.initialized: # Check if the node is initialized
+            return 
+
+        if data.data == True:
+            rospy.loginfo("Collsion Detected!")
+            if self.robot_enabled:  # Only stop if the robot is enabled
+                self.robot_enabled = False  # Disable robot movement
+                rospy.loginfo("Stopping robot due to collision.")
+                
+        elif data.data == False:
+            rospy.loginfo("No collsion anymore...")
+            if not self.robot_enabled:     # Only re-enable if the robot was stopped
+                self.robot_enabled = True  # Re-enable robot movement
+                rospy.loginfo("Re-enabling robot movement after collision cleared.")
     
     def object_detected_cb(self, data):
         if not self.initialized:
