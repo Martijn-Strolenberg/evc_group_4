@@ -11,6 +11,7 @@ from motor_control.srv import SetMaxSpeed, SetMaxSpeedResponse
 from sensor_reading.srv import ButtonPressed, ButtonPressedResponse
 from sensor_reading.srv import CollisionDetection, CollisionDetectionResponse
 from std_msgs.msg import Int8
+from camera.msg import ObjectDetection
 
 
 
@@ -20,7 +21,7 @@ class CameraSubscriberNode:
         rospy.loginfo("Initializing camera object detection node...")
         self.bridge = CvBridge()
         
-        # Construct subscriber
+        # Construct subscriber to receive compressed images from the camera
         self.sub_image = rospy.Subscriber(
             "/camera/image_proc",
             CompressedImage,
@@ -29,7 +30,7 @@ class CameraSubscriberNode:
             queue_size=1
         )
 
-        # Construct subscriber
+        # Construct subscriber to receive button state updates
         self.sub_button = rospy.Subscriber(
             "/button_state",
             Int8,
@@ -37,6 +38,16 @@ class CameraSubscriberNode:
             buff_size=2**24,
             queue_size=10
         )
+
+        # Construct subscriber to receive object detection results
+        self.sub_object_detected = rospy.Subscriber(
+            "/object_detection",
+            ObjectDetection,
+            self.object_detected_cb,
+            buff_size=2**24,
+            queue_size=10
+        )
+
 
         self.cmd_rate = 10.0 # generate move commands at 10 Hz
         self.cmd_dt = 1.0 / self.cmd_rate
@@ -103,6 +114,23 @@ class CameraSubscriberNode:
                 rospy.loginfo("Disabling robot movement.")
                 self.robot_enabled = False
                 self.call_stop()  # Stop the robot if button is pressed again
+    
+    def object_detected_cb(self, data):
+        if not self.initialized:
+            return
+
+        if data.object_type == 1:
+            rospy.loginfo("Blue object detected: at (%d,%d)", data.x_coordinate, data.y_coordinate)
+        elif data.object_type == 2:
+            rospy.loginfo("Orange object detected: at (%d,%d)", data.x_coordinate, data.y_coordinate)
+        elif data.object_type == 3:
+            rospy.loginfo("Green object detected: at (%d,%d)", data.x_coordinate, data.y_coordinate)
+        elif data.object_type == 4:
+            rospy.loginfo("Red object detected: at (%d,%d)", data.x_coordinate, data.y_coordinate)
+            # Here you can add logic to handle the detected object, e.g., stop the robot or change behavior
+            # For now, we just log it
+        else:
+            rospy.loginfo("No object detected.")
             
 
 
