@@ -20,7 +20,7 @@ class CollisionDetectionNode:
             queue_size=10
         )
 
-        # Make a publisher for collision detection
+        # Make a publisher to detect and set the collision detection to true
         self.pub_collision_detection = rospy.Publisher(
             '/collision_detection',
             Bool,
@@ -50,7 +50,7 @@ class CollisionDetectionNode:
 
         elif self.tof > self.collision_dist and self.collision_state:
             rospy.loginfo("No collision.")
-            self.set_collision_detection(False)
+            # self.set_collision_detection(False)
             self.collision_state = False
 
     def set_collision_detection(self, collision):

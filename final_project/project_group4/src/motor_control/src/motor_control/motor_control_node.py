@@ -16,14 +16,21 @@ from motor_control.srv import ConstRotate, ConstRotateResponse
 from motor_control.srv import ConstStraight, ConstStraightResponse
 from motor_control.srv import DriveLeftwheel, DriveLeftwheelResponse
 from motor_control.srv import DriveRightwheel, DriveRightwheelResponse
+from std_msgs.msg import Bool
 
 class MotorSubscriberNode:
     def __init__(self):
         self.initialized = False
         rospy.loginfo("Initializing motor control node...")
 
-        # Construct subscriber
+        # Construct subscriber to odometry to get positional feedback 
         self.sub_cmd = rospy.Subscriber("/odom", Odometry, self.curr_position_cb, buff_size=2**24, queue_size=10)
+
+        # Add a subscriber to collision detection
+        self.sub_collision = rospy.Subscriber("/collision_detection", Bool, self.collision_cb, buff_size=2**24, queue_size=10)
+
+        # Make a publisher to set the collision detection to false
+        self.pub_collision_detection = rospy.Publisher('/collision_detection', Bool, queue_size=10)
 
         self.rotate_dir = 0
         self.prev_mesg = 0
@@ -55,6 +62,8 @@ class MotorSubscriberNode:
         # Initialize state variables
         self.state = 0          # State machine variable
         self.prev_state = 0     # Previous state variable
+
+        self.collision_detection = False # State of the collison detection
 
         self.last_odom_x = 0.0
         self.last_odom_y = 0.0
@@ -113,6 +122,25 @@ class MotorSubscriberNode:
             proxy = rospy.ServiceProxy('right_wheel_dir', RightWheelDir)
             resp = proxy(direction)
             print("right wheel update success:", resp.success)
+        except rospy.ServiceException as e:
+            print("Service call failed:", e)
+
+    # ================ Motor command services ======================== #
+    def call_move_straight(distance, speed):
+        rospy.wait_for_service('move_straight')
+        try:
+            proxy = rospy.ServiceProxy('move_straight', MoveStraight)
+            resp = proxy(distance, speed)
+            print("MoveStraight success:", resp.success)
+        except rospy.ServiceException as e:
+            print("Service call failed:", e)
+
+    def call_stop(self):
+        rospy.wait_for_service('stop')
+        try:
+            proxy = rospy.ServiceProxy('stop', Stop)
+            resp = proxy()
+            print("Stop success:", resp.success)
         except rospy.ServiceException as e:
             print("Service call failed:", e)
 
@@ -263,6 +291,22 @@ class MotorSubscriberNode:
             return DriveRightwheelResponse(True)
         return DriveRightwheelResponse(False)
     
+    def collision_cb(self, data):
+        if not self.initialized: # Check if the node is initialized
+            return 
+
+        if data.data == True:
+            rospy.loginfo("Collsion Detected!")
+            self.collision_detection = True
+            self.state = 14 # set the drving state machine in collsion avoidance mode
+        elif data.data == False:
+            rospy.loginfo("No collsion anymore...")
+
+    def set_collision_detection(self, collision):
+        # Publish the collision detection status
+        self.pub_collision_detection.publish(Bool(data=collision))
+        rospy.loginfo("Published collision state: %s", collision)
+
 
 ##### STATE MACHINE
     # Callback function executes when a new message is received on the /odom topic 
@@ -518,6 +562,16 @@ class MotorSubscriberNode:
             left_cmd, right_cmd = self.acceleration_func(desired_left, desired_right) # Apply acceleration limits
             self.motor.set_wheels_speed(left=left_cmd, right=right_cmd) # Set the wheel speeds
 
+        # === State 14: Collsion avoidance state, move backwards and set collsion detection to False ===
+        if self.state == 14:
+            if self.prev_state != self.state:
+                rospy.loginfo("State 14: Collision state ACTIVE! backing up...")
+                self.prev_state = self.state
+                self.call_stop()                    # stop the robot
+                self.call_move_straight(0.3, 0.2)   # move backwards 20 cm
+                self.set_collision_detection(False) # set the collision detection back to False 
+                rospy.loginfo("State 14: Collision avoided! resuming task")
+                
 
 
     def pid_heading_control(self, v_nom, theta_ref, theta_hat):

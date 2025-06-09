@@ -13,7 +13,6 @@ def call_left_wheel(direction, speed):
   except rospy.ServiceException as e:
     print("Service call failed:", e)
 
-
 def call_right_wheel(direction, speed):
   rospy.wait_for_service('right_wheel_vel')
   try:

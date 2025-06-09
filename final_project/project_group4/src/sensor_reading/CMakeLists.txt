@@ -54,5 +54,6 @@ catkin_install_python(PROGRAMS
   src/sensor_reading/tof_pub_node.py
   src/sensor_reading/imu_pub_node.py
   src/sensor_reading/collision_detection_node.py
+  src/sensor_reading/collision_detection.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
