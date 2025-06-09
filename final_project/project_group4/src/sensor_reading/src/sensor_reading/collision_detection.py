@@ -3,6 +3,7 @@
 import rospy
 from std_msgs.msg import Float64
 from sensor_reading.srv import CollisionDetection
+from std_msgs.msg import Bool
 
 class CollisionDetectionNode:
  
@@ -19,13 +20,19 @@ class CollisionDetectionNode:
             queue_size=10
         )
 
-        # Make a publisher to
+        # Make a publisher for collision detection
+        self.pub_collision_detection = rospy.Publisher(
+            '/collision_detection',
+            Bool,
+            queue_size=10
+        )
 
         self.initialized = True
         self.prev_mesg = -1
         self.curr_mesg = 0
         self.state = 0
         self.collision_dist = 100.0
+        self.collision_state = False
         rospy.loginfo("Collision Detection node initialized!")
 
 
@@ -36,15 +43,20 @@ class CollisionDetectionNode:
         self.state_tof()
 
     def state_tof(self):
-        rospy.loginfo("check")
-        if self.tof <= self.collision_dist and self.curr_mesg != self.prev_mesg:
+        if self.tof <= self.collision_dist and not self.collision_state:
             rospy.loginfo("Collision detected!")
-            self.service_tof(True)
-            self.prev_mesg = self.curr_mesg
-        elif self.tof > self.collision_dist and self.prev_mesg == self.curr_mesg:
-            rospy.loginfo("no collision")
-            self.service_tof(False)
-            self.curr_mesg += 1
+            self.set_collision_detection(True)
+            self.collision_state = True
+
+        elif self.tof > self.collision_dist and self.collision_state:
+            rospy.loginfo("No collision.")
+            self.set_collision_detection(False)
+            self.collision_state = False
+
+    def set_collision_detection(self, collision):
+        # Publish the collision detection status
+        self.pub_collision_detection.publish(Bool(data=collision))
+        rospy.loginfo("Published collision state: %s", collision)
     
     def service_tof(self,collision):
         rospy.wait_for_service('collision_detection')
