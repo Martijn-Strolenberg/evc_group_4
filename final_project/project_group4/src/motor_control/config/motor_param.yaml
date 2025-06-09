@@ -15,7 +15,7 @@ velocity: 0.1
 ## Movement params
 max_velocity: 1
 acceleration: 0.5
-deceleration: 0.8
+deceleration: 1
 
 ## PID Params (tune!)
 Kp: 15.0

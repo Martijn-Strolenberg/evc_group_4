@@ -126,7 +126,7 @@ class MotorSubscriberNode:
             print("Service call failed:", e)
 
     # ================ Motor command services ======================== #
-    def call_move_straight(distance, speed):
+    def call_move_straight(self, distance, speed):
         rospy.wait_for_service('move_straight')
         try:
             proxy = rospy.ServiceProxy('move_straight', MoveStraight)
@@ -568,7 +568,7 @@ class MotorSubscriberNode:
                 rospy.loginfo("State 14: Collision state ACTIVE! backing up...")
                 self.prev_state = self.state
                 self.call_stop()                    # stop the robot
-                self.call_move_straight(0.3, 0.2)   # move backwards 20 cm
+                self.call_move_straight(-0.1, 0.3)  # move backwards 10 cm
                 self.set_collision_detection(False) # set the collision detection back to False 
                 rospy.loginfo("State 14: Collision avoided! resuming task")
                 

@@ -6,5 +6,7 @@
 
   <node pkg="sensor_reading" type="tof_pub_node.py" name="tof_pub_node" output="screen"></node>
 
-  <node pkg="sensor_reading" type="button_monitor_node.py" name="button_monitor_node" output="screen"></node>  
+  <node pkg="sensor_reading" type="button_monitor_node.py" name="button_monitor_node" output="screen"></node>
+
+  <node pkg="sensor_reading" type="collision_detection.py" name="collision_detection_node" output="screen"></node>  
 </launch>

@@ -48,12 +48,13 @@ class OdometryPublisherNode:
     self.sample_period = 0.02 # seconds
 
     # start reading the encoders periodically
-    self.timer = rospy.Timer(rospy.Duration(self.sample_period), self.read_encoder) # publishing at sample rate 50 Hz execute function read_encoder()
+    # self.timer = rospy.Timer(rospy.Duration(self.sample_period), self.read_encoder) # publishing at sample rate 50 Hz execute function read_encoder()
     self.odom_pub = rospy.Publisher("/odom", Odometry, queue_size=10) # create publisher to publish odometry data to topic /odom
     self.tf_broadcaster = tf.TransformBroadcaster() # create a tf broadcaster
     rospy.Service('left_wheel_dir', LeftWheelDir, self.handle_left_wheel_dir)    # service to set the direction of the left wheel
     rospy.Service('right_wheel_dir', RightWheelDir, self.handle_right_wheel_dir) # service to set the direction of the right wheel
     rospy.on_shutdown(self.shutdown) # register shutdown function to clean up GPIO
+    self.timer = rospy.Timer(rospy.Duration(self.sample_period), self.read_encoder) # publishing at sample rate 50 Hz execute function read_encoder()
     rospy.loginfo("Odometry node initialized!")
     self.initialized = True
 
