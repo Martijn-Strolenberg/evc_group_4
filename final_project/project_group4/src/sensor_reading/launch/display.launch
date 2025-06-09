@@ -1,7 +1,10 @@
+<!-- This launch file launches all sensor_read nodes that the robot uses -->
 <launch>
   <node pkg="sensor_reading" type="display_node.py" name="display_node" output="screen"></node>
 
   <node pkg="sensor_reading" type="battery_monitor_service.py" name="battery_monitor_service" output="screen"></node>
 
   <node pkg="sensor_reading" type="tof_pub_node.py" name="tof_pub_node" output="screen"></node>
+
+  <node pkg="sensor_reading" type="button_monitor_node.py" name="button_monitor_node" output="screen"></node>  
 </launch>
