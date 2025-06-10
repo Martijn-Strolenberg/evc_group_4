@@ -58,7 +58,7 @@ class CameraSubscriberNode:
         )
 
 
-        self.cmd_rate = 10.0 # generate move commands at 10 Hz
+        self.cmd_rate = 6.0 # generate move commands at 10 Hz
         self.cmd_dt = 1.0 / self.cmd_rate
         self.last_cmd_ts = rospy.Time.now()
         self.latest_center = None  # updated every frame
@@ -67,18 +67,32 @@ class CameraSubscriberNode:
         self.distance_cmd = 0.08
         self.angle_cmd = 0.3
         self.turn_vel = 0.5
-        self.move_vel = 0.1
-        self.max_speed = 0.7  # Maximum speed for the wheels, can be set via service call
+
+        self.move_vel = 0.13 # BASE SPEED OF THE ROBOT
+        
+        self.max_speed = 0.55  # Maximum speed for the wheels, can be set via service call
         self.vel_r = 0.0
         self.vel_l = 0.0
         self.er = 0.0  # error for debugging purposes
+
+        self.record_video = True  # Set to False if you want to disable recording
+        self.video_writer = None
+        self.video_filename = f"video.avi"
+        self.video_fps = 10
+        self.video_size = (640, 480)  # Match the size of your input image
+        if self.record_video:
+            fourcc = cv2.VideoWriter_fourcc(*'XVID')
+            self.video_writer = cv2.VideoWriter(self.video_filename, fourcc, self.video_fps, self.video_size)
+            rospy.loginfo(f"Recording undistorted video to: {self.video_filename}")
 
         self.robot_enabled = False # Flag to enable/disable robot movement
 
         self.middle = 640 / 2
 
+
+        # Parameters for the controller
         self.kp = rospy.get_param("~kp", 3.2)          # controller gain default=3.2
-        self.kp_exp = rospy.get_param("~kp_exp", 4.0)  # Exponent for error scaling, default is 4.0
+        self.kp_exp = rospy.get_param("~kp_exp", 3.0)  # Exponent for error scaling, default is 4.0
         rospy.Timer(rospy.Duration(0.5), self.param_watchdog_cb)  # Check every 0.5s
         
         rospy.on_shutdown(self.shutdown) # Shutdown hook to clean up resources
@@ -185,8 +199,8 @@ class CameraSubscriberNode:
             dtype = hsv.dtype
             # lower_white = np.array([0, 0, lower_v], dtype=dtype)
             # upper_white = np.array([180, 40, upper_v], dtype=dtype)
-            lower_white = np.array([0, 0, 180])
-            upper_white = np.array([180, 70, 255])
+            lower_white = np.array([0, 0, 200])
+            upper_white = np.array([180, 40, 255])
 
             # lower_white = np.array([0, 0, lower_v])
             # upper_white = np.array([180, 40, upper_v])
@@ -203,9 +217,9 @@ class CameraSubscriberNode:
             # Find contours in the mask but only the bottom 2/3 of the screen
             height, width = mask.shape[:2]
             y23 = int(height * 2 / 3)  # Only consider the bottom 2/3 of the image
-            mask[0:y23, :] = 0  # Set the top part of the mask to zero
-            
             y13 = int(height * 1 / 3)  # Only consider the bottom 1/3 of the image
+            y12 = int(height * 1 / 2)  # Only consider the bottom 1/2 of the image
+            mask[0:y12, :] = 0  # Set the top part of the mask to zero
 
 
             # #also set the bottom part of the mask to zero
@@ -232,7 +246,7 @@ class CameraSubscriberNode:
                 # top x of this contour
 
 
-                if area > best_area and area < 10000:  # Only consider contours with area < 10000
+                if area > best_area and area < 20000:  # Only consider contours with area < 10000
                     best_area = area
                     best_centroid = (cx, cy)
 
@@ -269,8 +283,11 @@ class CameraSubscriberNode:
             #                 cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
 
             cv2.imshow("Undistorted Image", undis_image)
-            #cv2.imshow("Mask", mask)
+            cv2.imshow("Mask", mask)
             # cv2.imshow("Counters Image", contours_image)
+            if self.record_video and self.video_writer is not None:
+                frame_resized = cv2.resize(undis_image, self.video_size)  # Resize if needed
+                self.video_writer.write(frame_resized)
 
             cv2.waitKey(1)  # Non-blocking update
 
@@ -330,9 +347,18 @@ class CameraSubscriberNode:
             self.vel_l = velocity_left
             self.er = error
 
+            # rospy.loginfo("Error: %.2f\tVLeft: %.2f\tVRight: %.2f", error, velocity_left, velocity_right)
+            if velocity_left == self.max_speed:
+                velocity_right = -velocity_right
+
+            if velocity_right == self.max_speed:
+                velocity_left = -velocity_left
+
             # Send motor commands
             self.call_left_wheel(dir_left, velocity_left)
             self.call_right_wheel(dir_right, velocity_right)
+
+            rospy.loginfo("Error: %.2f\tVLeft: %.2f\tVRight: %.2f", error, velocity_left, velocity_right)
 
 
     # ================ Motor command services ======================== #
@@ -403,6 +429,9 @@ class CameraSubscriberNode:
 
     def shutdown(self):
         rospy.loginfo("Shutting down line follower node.")
+        if self.video_writer is not None:
+            self.video_writer.release()
+            rospy.loginfo(f"Video saved to {self.video_filename}")
         self.call_stop()        # Stop the robot
         cv2.destroyAllWindows() # Close all OpenCV windows
 

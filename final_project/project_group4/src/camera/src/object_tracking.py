@@ -74,19 +74,22 @@ class CameraSubscriberNode:
                 "blue": (np.array([100, 100, 40]), np.array([130, 255, 255])),
                 "green": (np.array([35, 40, 25]), np.array([85, 255, 255])),
                 # Red has two ranges due to HSV wrapping
-                "red_lower": (np.array([0, 120, 70]), np.array([10, 255, 255])),
-                "red_upper": (np.array([170, 120, 70]), np.array([180, 255, 255])),
+                "red": (np.array([0, 150, 72]), np.array([70, 255, 255])),
+                # "red_lower": (np.array([0, 120, 70]), np.array([10, 255, 255])),
+                # "red_upper": (np.array([170, 120, 70]), np.array([180, 255, 255])),
             }
 
             # Create masks for each color
             #mask_orange = cv2.inRange(hsv, *color_ranges["orange"])
             mask_blue = cv2.inRange(hsv, *color_ranges["blue"])
             mask_green = cv2.inRange(hsv, *color_ranges["green"])
+            mask_red = cv2.inRange(hsv, *color_ranges["red"])
+
 
             # For red, combine two masks
-            mask_red_lower = cv2.inRange(hsv, *color_ranges["red_lower"])
-            mask_red_upper = cv2.inRange(hsv, *color_ranges["red_upper"])
-            mask_red = cv2.bitwise_or(mask_red_lower, mask_red_upper)
+            # mask_red_lower = cv2.inRange(hsv, *color_ranges["red_lower"])
+            # mask_red_upper = cv2.inRange(hsv, *color_ranges["red_upper"])
+            # mask_red = cv2.bitwise_or(mask_red_lower, mask_red_upper)
 
             # Morphological operations to clean noise for all masks
             kernel = np.ones((5, 5), np.uint8)
