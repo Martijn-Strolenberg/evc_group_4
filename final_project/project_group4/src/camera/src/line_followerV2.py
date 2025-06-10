@@ -10,7 +10,7 @@ from motor_control.srv import MoveStraight, Rotate, Stop, ConstRotate, ConstStra
 from motor_control.srv import SetMaxSpeed, SetMaxSpeedResponse
 from sensor_reading.srv import ButtonPressed, ButtonPressedResponse
 from sensor_reading.srv import CollisionDetection, CollisionDetectionResponse
-from std_msgs.msg import Int8, Bool
+from std_msgs.msg import Int8, Bool, UInt8
 from camera.msg import ObjectDetection
 
 
@@ -57,6 +57,15 @@ class CameraSubscriberNode:
             queue_size=10
         )
 
+        # Construct subscriber to receive which object to find
+        self.sub_find_object = rospy.Subscriber(
+            "/find_object",
+            UInt8,
+            self.find_object_cb,
+            buff_size=2**24,
+            queue_size=10
+        )
+
 
         self.cmd_rate = 6.0 # generate move commands at 10 Hz
         self.cmd_dt = 1.0 / self.cmd_rate
@@ -75,7 +84,7 @@ class CameraSubscriberNode:
         self.vel_l = 0.0
         self.er = 0.0  # error for debugging purposes
 
-        self.record_video = True  # Set to False if you want to disable recording
+        self.record_video = False  # Set to False if you want to disable recording
         self.video_writer = None
         self.video_filename = f"video.avi"
         self.video_fps = 10
@@ -123,6 +132,15 @@ class CameraSubscriberNode:
         if new_move_vel != self.move_vel:
             rospy.loginfo("move_vel changed from %.2f to %.2f", self.move_vel, new_move_vel)
             self.move_vel = new_move_vel
+
+    def find_object_cb(self, data):
+        if not self.initialized:
+            return
+
+        if data.data == 1:
+            rospy.loginfo("Finding blue object...")
+            # Here you can add logic to start searching for the blue object
+            # For now, we just log it
 
     def button_cb(self, data):
         if not self.initialized:
