@@ -431,7 +431,7 @@ class CameraSubscriberNode:
 
 if __name__ == "__main__":
     # Initialize the node
-    rospy.init_node('Motor_OCR_node', anonymous=False, xmlrpc_port=45102, tcpros_port=45103)
+    rospy.init_node('Motor_OCR_node', anonymous=False, xmlrpc_port=45104, tcpros_port=45105)
     camera_node = CameraSubscriberNode()
     try:
         rospy.spin()
