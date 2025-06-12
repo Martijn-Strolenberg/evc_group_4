@@ -168,11 +168,11 @@ class CameraSubscriberNode:
             # otherwise it is the centroid closest to the last detected centroid
             if self.best_centroid is not None:
                 if centroids:
-                    self.best_centroid = min(centroids, key=lambda c: abs((c[0] - self.best_centroid[0])^2 + (c[1] - self.best_centroid[1])^2))
+                    self.best_centroid = min(centroids, key=lambda c: abs((c[0] - self.best_centroid[0])**2 + (c[1] - self.best_centroid[1])**2))
                     best_area = cv2.contourArea(cv2.convexHull(np.array([self.best_centroid])))
             else:
                 if centroids:
-                    self.best_centroid = min(centroids, key=lambda c: abs((c[0] - self.middle)^2 + (c[1] - y23)^2))
+                    self.best_centroid = min(centroids, key=lambda c: abs((c[0] - self.middle)**2 + (c[1] - y23)**2))
                     best_area = cv2.contourArea(cv2.convexHull(np.array([self.best_centroid])))
                 else:
                     self.best_centroid = None

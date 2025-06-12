@@ -99,7 +99,7 @@ class CameraSubscriberNode:
         self.angle_cmd = 0.3
         self.turn_vel = 0.5
 
-        self.move_vel = 0.18 # BASE SPEED OF THE ROBOT
+        self.move_vel = 0.13 # BASE SPEED OF THE ROBOT
         
         self.max_speed = 0.55  # Maximum speed for the wheels, can be set via service call
         self.vel_r = 0.0
@@ -116,17 +116,15 @@ class CameraSubscriberNode:
             self.video_writer = cv2.VideoWriter(self.video_filename, fourcc, self.video_fps, self.video_size)
             rospy.loginfo(f"Recording undistorted video to: {self.video_filename}")
 
-        self.robot_enabled = True #False: if we want it to start with button press first # Flag to enable/disable robot movement
+        self.robot_enabled = False # Flag to enable/disable robot movement
         self.best_centroid = None
         self.min_area = 1000  # Minimum area of the contour to consider it valid
         self.max_area = 20000  # Maximum area of the contour to consider it valid
         self.middle = 640 / 2
 
-        self.centroids = []
 
-
-        # Parameters for the controller ---------------------------------------------------------------------------------------
-        self.kp = rospy.get_param("/kp", 6.5)          # controller gain default=3.2
+        # Parameters for the controller
+        self.kp = rospy.get_param("/kp", 3.5)          # controller gain default=3.2
         self.kp_exp = rospy.get_param("/kp_exp", 2.5)  # Exponent for error scaling, default is 4.0
         rospy.Timer(rospy.Duration(0.5), self.param_watchdog_cb)  # Check every 0.5s
         
@@ -171,14 +169,9 @@ class CameraSubscriberNode:
     def speed_limit_cb(self, data):
         if not self.initialized:
             return
-
-        if data.data == 0.3:
-            rospy.logwarn("speed limit set to 0.3 m/s")
-            return
-        if data.data == 0.4:
-            rospy.logwarn("speed limit set to 0.4 m/s")
-            return
         
+
+
     def button_cb(self, data):
         if not self.initialized:
             return
@@ -295,7 +288,6 @@ class CameraSubscriberNode:
 
             contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
             centroids = []
-            
             best_area = 0
 
             for cnt in contours:
@@ -368,7 +360,6 @@ class CameraSubscriberNode:
                 frame_resized = cv2.resize(undis_image, self.video_size)  # Resize if needed
                 self.video_writer.write(frame_resized)
 
-            self.centroids = centroids
             cv2.waitKey(1)  # Non-blocking update
 
         except CvBridgeError as err:
@@ -388,10 +379,7 @@ class CameraSubscriberNode:
                 return
             if self.best_centroid is None:
                 rospy.loginfo_throttle(2.0, "No line detected recently. No movement.")
-                if self.centroids[0] == None:
-                    self.best_centroid = self.centroids[0]
-                else:
-                    return
+                return
 
             center_x, center_y = self.best_centroid
 
@@ -446,8 +434,6 @@ class CameraSubscriberNode:
             #self.call_move_straight(0.03, self.base_velocity) 
 
             rospy.loginfo("Error: %.2f\tVLeft: %.2f\tVRight: %.2f", error, velocity_left, velocity_right)
-        else:
-            rospy.loginfo("Robot not initialized!")
 
 
     # ================ Motor command services ======================== #
