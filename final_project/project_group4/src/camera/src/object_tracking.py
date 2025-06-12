@@ -220,12 +220,6 @@ class CameraSubscriberNode:
                 
 
 
-        # Define thresholds for 3x3 grid regions in the image
-        left_thresh = 214
-        right_thresh = 426
-        top_thresh = 160
-        bottom_thresh = 320
-
         # <================= object is in the middle ==================>
         #if ((left_thresh <=  center_x <= right_thresh) and (bottom_thresh <= center_y <= top_thresh)):
         #    rospy.loginfo("Object is in the middle")
@@ -274,14 +268,6 @@ class CameraSubscriberNode:
         # else:
         #     rospy.loginfo_throttle(2.0, "Object not found")
         #     return
-
-    def publish_object_detected(self, object_type, x, y):
-        msg = ObjectDetection()
-        msg.object_type = object_type 
-        msg.x_coordinate = x
-        msg.y_coordinate = y
-        self.pub_object_detected.publish(msg)
-        rospy.loginfo("Published object detected of type: {} at location ({}, {})".format(object_type, x, y))
 
 
     # <================= Services =================>
