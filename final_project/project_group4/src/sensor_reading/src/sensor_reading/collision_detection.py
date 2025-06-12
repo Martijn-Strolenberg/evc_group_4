@@ -27,15 +27,37 @@ class CollisionDetectionNode:
             queue_size=10
         )
 
+        # Construct subscriber to receive button state updates
+        self.sub_button = rospy.Subscriber(
+            "/button_state",
+            Int8,
+            self.button_cb,
+            buff_size=2**24,
+            queue_size=10
+        )
+
         self.initialized = True
         self.prev_mesg = -1
         self.curr_mesg = 0
         self.state = 0
         self.collision_dist = 100.0
         self.collision_state = False
+        self.collision_enabled = False
         rospy.loginfo("Collision Detection node initialized!")
 
 
+    def button_cb(self, data):
+        if not self.initialized:
+            return
+
+        if data.data == 2:
+            rospy.loginfo("Button pressed twice!")
+            if not self.collision_enabled:
+                rospy.loginfo("Enabling collision detection.")
+                self.collision_enabled = True  # Enable robot movement
+            else:
+                rospy.loginfo("Disabling collision detection.")
+                self.collision_enabled = False
     
     def set_tof_cb(self, data):
         self.tof = data.data
@@ -43,15 +65,16 @@ class CollisionDetectionNode:
         self.state_tof()
 
     def state_tof(self):
-        if self.tof <= self.collision_dist and not self.collision_state:
-            rospy.loginfo("Collision detected!")
-            self.set_collision_detection(True)
-            self.collision_state = True
+        if self.collision_enabled:
+            if self.tof <= self.collision_dist and not self.collision_state:
+                rospy.loginfo("Collision detected!")
+                self.set_collision_detection(True)
+                self.collision_state = True
 
-        elif self.tof > self.collision_dist and self.collision_state:
-            rospy.loginfo("No collision.")
-            # self.set_collision_detection(False)
-            self.collision_state = False
+            elif self.tof > self.collision_dist and self.collision_state:
+                rospy.loginfo("No collision.")
+                # self.set_collision_detection(False)
+                self.collision_state = False
 
     def set_collision_detection(self, collision):
         # Publish the collision detection status
