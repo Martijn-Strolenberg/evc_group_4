@@ -174,9 +174,14 @@ class CameraSubscriberNode:
 
         if data.data == 0.3:
             rospy.logwarn("speed limit set to 0.3 m/s")
-            return
-        if data.data == 0.4:
+            self.move_vel = 0.10
+        elif data.data == 0.4:
             rospy.logwarn("speed limit set to 0.4 m/s")
+            self.move_vel = 0.13
+        elif data.data == 0.5:
+            rospy.logwarn("speed limit set to 0.5 m/s")
+            self.move_vel = 0.20
+        else:
             return
         
     def button_cb(self, data):
@@ -443,7 +448,9 @@ class CameraSubscriberNode:
             # Send motor commands
             self.call_left_wheel(dir_left, velocity_left)
             self.call_right_wheel(dir_right, velocity_right)
-            #self.call_move_straight(0.03, self.base_velocity) 
+            time.sleep(0.01) 
+            self.call_left_wheel(dir_left, 0)
+            self.call_right_wheel(dir_right, 0)
 
             rospy.loginfo("Error: %.2f\tVLeft: %.2f\tVRight: %.2f", error, velocity_left, velocity_right)
         else:
