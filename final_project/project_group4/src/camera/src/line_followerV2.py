@@ -47,6 +47,14 @@ class CameraSubscriberNode:
             buff_size=2**24,
             queue_size=10
         )
+        # Construct subscriber to receive qr readings
+        self.sub_qr_detected = rospy.Subscriber(
+            "/find_object",
+            UInt8,
+            self.qr_detected_cb,
+            buff_size=2**24,
+            queue_size=10            
+        )
 
         # Construct subscriber to receive collision detection status
         self.sub_collision_detection = rospy.Subscriber(
@@ -65,6 +73,11 @@ class CameraSubscriberNode:
             buff_size=2**24,
             queue_size=10
         )
+
+
+        # Object Detection
+        self.find_object = -1
+        self.detected_object = 0
 
 
         self.cmd_rate = 6.0 # generate move commands at 10 Hz
@@ -175,7 +188,7 @@ class CameraSubscriberNode:
     def object_detected_cb(self, data):
         if not self.initialized:
             return
-
+        self.detected_object = data.object_type
         if data.object_type == 1:
             rospy.loginfo("Blue object detected: at (%d,%d)", data.x_coordinate, data.y_coordinate)
         elif data.object_type == 2:
@@ -189,7 +202,18 @@ class CameraSubscriberNode:
         else:
             rospy.loginfo("No object detected.")
             
-
+    def qr_detected_cb(self,data):
+        if not self.initialized:
+            return
+        self.find_object = data.data
+        if data.data == 1:
+            rospy.loginfo("Finding blue object ")
+        elif data.data == 2:
+            rospy.loginfo("Finding orange object ")
+        elif data.data == 3:
+            rospy.loginfo("Finding green object")
+        elif data.data == 4:
+            rospy.loginfo("Finding red object")        
 
 # <============== Image Processing =================>
     def image_cb(self, data):
@@ -320,7 +344,10 @@ class CameraSubscriberNode:
             return
 
         if self.robot_enabled: # Only execute if the robot is enabled
-
+            if self.find_object == self.detected_object:
+                rospy.loginfo_throttle(1.0, "Expected object has been detected. Stopping movement")
+                self.call_stop()
+                return
             if self.latest_center is None:
                 rospy.loginfo_throttle(2.0, "No line detected recently. No movement.")
                 return

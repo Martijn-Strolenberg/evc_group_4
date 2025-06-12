@@ -37,9 +37,11 @@ class QRDetectionNode:
         self.first_image_received = False
         self.initialized = True
 
-        self.find_obj = 0
-        self.prev_obj = 0
+        # Check if qr code has already seen and gotten the info
+        self.find_obj = -1
+        self.prev_obj = -1
 
+        # message variables to not send message many times
         self.curr_msg = 0
         self.prev_msg = 0
         rospy.loginfo("QR detection node initialized.")
@@ -112,7 +114,6 @@ class QRDetectionNode:
 
             # Type of object detected (0: unknown, 1: blue, 2: orange, 3: green, 4: red)
             # Save object to be found:
-            #rospy.loginfo("|{obj}|".format(obj = qr_obj))
             if qr_obj == "blue":
                 self.find_obj = 1
             elif qr_obj == "orange":
@@ -121,13 +122,14 @@ class QRDetectionNode:
                 self.find_obj = 3
             elif qr_obj == "red":
                 self.find_obj = 4
-                rospy.loginfo("works")
-            #rospy.loginfo("{colour},{old_colour}".format(colour = self.find_obj,old_colour = self.prev_obj))
+            else:
+                self.find_obj = -1
+            
             # If a different colour is recieved, a new message has occured
             if self.find_obj != self.prev_obj:
                 self.curr_msg += 1 
                 self.prev_obj = self.find_obj
-                rospy.loginfo("works2")
+                rospy.loginfo("Finding {colour_obj} object".format(colour_obj = qr_obj))
                 
             # # Resize if necessary for display
             # if raw_image.shape != qr_frame.shape:
@@ -145,7 +147,7 @@ class QRDetectionNode:
 
             # Show
             cv2.imshow("QR code detection", qr_frame)
-            rospy.loginfo("{colour},{old_colour}".format(colour = self.curr_msg,old_colour = self.prev_msg))
+            #rospy.loginfo("{colour},{old_colour}".format(colour = self.curr_msg,old_colour = self.prev_msg))
             # Publishing the MSG
             if self.curr_msg != self.prev_msg: # New QR recieved
                 
@@ -157,14 +159,6 @@ class QRDetectionNode:
 
                 #Updated message
                 self.prev_msg = self.curr_msg
-                
-            #msg.velocity = 0.4
-            #msg.distance = 0
-            #msg.angle = np.deg2rad(qr_speed)
-            #msg.new_mesg = self.new_cmd
-            
-            # rospy.loginfo("Publishing motor command: v=%.2f\tp=%.2f\ta=%.2f rad", msg.velocity, msg.position, msg.angle)
-            
 
             cv2.waitKey(1)
 
