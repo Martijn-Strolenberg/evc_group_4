@@ -42,5 +42,6 @@ catkin_install_python(PROGRAMS
   src/movie_processor.py
   src/OCR_node.py
   src/Motor_OCR_node.py
+  src/R_Motor_OCR.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )

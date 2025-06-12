@@ -7,7 +7,7 @@ import pytesseract
 import re
 from cv_bridge import CvBridge, CvBridgeError
 from sensor_msgs.msg import CompressedImage
-from assignment_2_ocr.msg import twovids
+from assignment_3_ocr.msg import twovids
 
 
 class CameraSubscriberNode:

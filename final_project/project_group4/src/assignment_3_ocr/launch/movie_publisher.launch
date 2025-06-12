@@ -1,6 +1,6 @@
 <launch>
   <node pkg="assignment_3_ocr" type="movie_publisher.py" name="movie_publisher" output="screen">
-    <param name="video_path" value="/home/ubuntu/EVC/Videos/asg_3.mov"/>
+    <param name="video_path" value="/home/robot/EVC/Videos/video_3.avi"/>
     <param name="fps" value="15" />
     <param name="loop" value="True" />
   </node>
