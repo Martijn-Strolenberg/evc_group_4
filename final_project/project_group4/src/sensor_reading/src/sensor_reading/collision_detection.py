@@ -3,7 +3,7 @@
 import rospy
 from std_msgs.msg import Float64
 from sensor_reading.srv import CollisionDetection
-from std_msgs.msg import Bool
+from std_msgs.msg import Bool, Int8
 
 class CollisionDetectionNode:
  
