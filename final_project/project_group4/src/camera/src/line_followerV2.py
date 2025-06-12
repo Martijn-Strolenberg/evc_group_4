@@ -108,7 +108,7 @@ class CameraSubscriberNode:
             rospy.loginfo(f"Recording undistorted video to: {self.video_filename}")
 
         self.robot_enabled = False # Flag to enable/disable robot movement
-
+        self.best_centroid = None
         self.middle = 640 / 2
 
 
@@ -270,7 +270,7 @@ class CameraSubscriberNode:
 
 
             contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-            best_centroid = None
+            centroids = []
             best_area = 0
 
             for cnt in contours:
@@ -288,19 +288,31 @@ class CameraSubscriberNode:
                 # top x of this contour
 
 
-                if area > best_area and area < 20000:  # Only consider contours with area < 10000
-                    best_area = area
-                    best_centroid = (cx, cy)
+                if area > self.min_area and area < self.max_area:  # Only consider contours with area < 10000
+                    centroids.append((cx, cy))
 
-            self.latest_center = best_centroid  # Save the result for control logic
+            #best_centroid is the centroid closest to the middle of the image if uninitialized
+            # otherwise it is the centroid closest to the last detected centroid
+            if self.best_centroid is not None:
+                if centroids:
+                    self.best_centroid = min(centroids, key=lambda c: abs((c[0] - self.best_centroid[0])^2 + (c[1] - self.best_centroid[1])^2))
+                    best_area = cv2.contourArea(cv2.convexHull(np.array([self.best_centroid])))
+            else:
+                if centroids:
+                    self.best_centroid = min(centroids, key=lambda c: abs((c[0] - self.middle)^2 + (c[1] - y23)^2))
+                    best_area = cv2.contourArea(cv2.convexHull(np.array([self.best_centroid])))
+                else:
+                    self.best_centroid = None
+                    best_area = 0
+            
 
-            if best_centroid:
+            if self.best_centroid:
                 # Draw the selected centroid on the original image
-                cv2.circle(undis_image, best_centroid, 5, (0, 255, 0), -1)
-                cv2.putText(undis_image, f"Centroid: {best_centroid}", (best_centroid[0] + 10, best_centroid[1] - 10),
+                cv2.circle(undis_image, self.best_centroid, 5, (0, 255, 0), -1)
+                cv2.putText(undis_image, f"Centroid: {self.best_centroid}", (self.best_centroid[0] + 10, self.best_centroid[1] - 10),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
                 #add the area of the contour
-                cv2.putText(undis_image, f"Area: {best_area}", (best_centroid[0] + 10, best_centroid[1] + 10),
+                cv2.putText(undis_image, f"Area: {best_area}", (self.best_centroid[0] + 10, self.best_centroid[1] + 10),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
 
             #print the error and velocities at the top left
@@ -348,11 +360,11 @@ class CameraSubscriberNode:
                 rospy.loginfo_throttle(1.0, "Expected object has been detected. Stopping movement")
                 self.call_stop()
                 return
-            if self.latest_center is None:
+            if self.best_centroid is None:
                 rospy.loginfo_throttle(2.0, "No line detected recently. No movement.")
                 return
 
-            center_x, center_y = self.latest_center
+            center_x, center_y = self.best_centroid
 
             error = (center_x - self.middle) * self.kp/self.middle
             if error < 0:
