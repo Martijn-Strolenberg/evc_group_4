@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 import cv2
 import rospy
@@ -8,7 +8,7 @@ from sensor_msgs.msg import CompressedImage
 from camera.srv import ObjectDetected
 from motor_control.srv import Stop, ConstRotate, ConstStraight
 from camera.msg import ObjectDetection
-
+from std_msgs.msg import UInt8
 
 class CameraSubscriberNode:
     def __init__(self):
@@ -50,7 +50,7 @@ class CameraSubscriberNode:
             "red": None
         }
 
-        self.timer = rospy.Timer(rospy.Duration(self.cmd_dt), self.timer_cb)
+        self.timer = rospy.Timer(rospy.Duration(self.cmd_dt), self.obj_detected)
 
         self.initialized = True
         rospy.loginfo("Camera object detection node initialized!")
@@ -68,33 +68,26 @@ class CameraSubscriberNode:
             # Convert to HSV color space
             hsv = cv2.cvtColor(undis_image, cv2.COLOR_BGR2HSV)
 
-            # Define HSV ranges for orange, blue, red
+            # Define HSV ranges for green, blue, red
             color_ranges = {
-                #"orange": (np.array([5, 150, 150]), np.array([20, 255, 255])),
-                "blue": (np.array([100, 100, 40]), np.array([130, 255, 255])),
-                "green": (np.array([35, 40, 25]), np.array([85, 255, 255])),
-                # Red has two ranges due to HSV wrapping
-                "red": (np.array([0, 150, 72]), np.array([70, 255, 255])),
-                # "red_lower": (np.array([0, 120, 70]), np.array([10, 255, 255])),
-                # "red_upper": (np.array([170, 120, 70]), np.array([180, 255, 255])),
+
+                #"blue": (np.array([105, 130, 60]), np.array([130, 255, 255])), # Less sensitive
+                "blue": (np.array([100, 100, 40]), np.array([130, 255, 255])), # More sensitive
+
+                "green": (np.array([50, 80, 50]), np.array([85, 255, 255])), # Less sensitive
+                #"green": (np.array([35, 40, 25]), np.array([85, 255, 255])),# More sensitive
+
+                #"red": (np.array([0, 150, 85]), np.array([70, 255, 255])), # less sensitive
+                "red": (np.array([0, 150, 72]), np.array([70, 255, 255])), # More sensitive
             }
 
             # Create masks for each color
-            #mask_orange = cv2.inRange(hsv, *color_ranges["orange"])
             mask_blue = cv2.inRange(hsv, *color_ranges["blue"])
             mask_green = cv2.inRange(hsv, *color_ranges["green"])
             mask_red = cv2.inRange(hsv, *color_ranges["red"])
 
-
-            # For red, combine two masks
-            # mask_red_lower = cv2.inRange(hsv, *color_ranges["red_lower"])
-            # mask_red_upper = cv2.inRange(hsv, *color_ranges["red_upper"])
-            # mask_red = cv2.bitwise_or(mask_red_lower, mask_red_upper)
-
             # Morphological operations to clean noise for all masks
             kernel = np.ones((5, 5), np.uint8)
-            # mask_orange = cv2.morphologyEx(mask_orange, cv2.MORPH_OPEN, kernel)
-            # mask_orange = cv2.morphologyEx(mask_orange, cv2.MORPH_CLOSE, kernel)
 
             mask_blue = cv2.morphologyEx(mask_blue, cv2.MORPH_OPEN, kernel)
             mask_blue = cv2.morphologyEx(mask_blue, cv2.MORPH_CLOSE, kernel)
@@ -105,9 +98,9 @@ class CameraSubscriberNode:
             mask_red = cv2.morphologyEx(mask_red, cv2.MORPH_OPEN, kernel)
             mask_red = cv2.morphologyEx(mask_red, cv2.MORPH_CLOSE, kernel)
 
-            # Helper function to detect largest contour center for a mask
+            #detect largest contour center for a mask
             def detect_color_center(mask):
-                contours, _ = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+                _, contours, _ = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
                 if not contours:
                     return None
                 # Find the largest contour by area
@@ -124,18 +117,6 @@ class CameraSubscriberNode:
             blue_res = detect_color_center(mask_blue)
             green_res = detect_color_center(mask_green)
             red_res = detect_color_center(mask_red)
-
-
-            # Update latest centers
-            # if orange_res:
-            #     self.latest_centers["orange"] = orange_res[0]
-            #     x, y, w, h = orange_res[1]
-            #     cv2.rectangle(undis_image, (x, y), (x + w, y + h), (0, 140, 255), 2)  # Orange box
-            #     cx, cy = orange_res[0]
-            #     cv2.line(undis_image, (cx - 5, cy), (cx + 5, cy), (0, 140, 255), 2)
-            #     cv2.line(undis_image, (cx, cy - 5), (cx, cy + 5), (0, 140, 255), 2)
-            # else:
-            #     self.latest_centers["orange"] = None
 
             if blue_res:
                 self.latest_centers["blue"] = blue_res[0]
@@ -168,17 +149,18 @@ class CameraSubscriberNode:
                 self.latest_centers["red"] = None
             # <===================== END: Image Processing =====================>
 
-            # Add a label to each half (optional)
+            # label 
             cv2.putText(undis_image, "Object Tracking", (5, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
-            # cv2.putText(side_by_side, "Undistorted", (undis_image.shape[1] + 10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
+            
 
             # Display the results
             cv2.putText(undis_image, "Object Tracking: Blue, Green, Red", (5, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
             cv2.imshow("Object tracking", undis_image)
-            # cv2.imshow("Orange Mask", mask_orange)
-            cv2.imshow("Blue Mask", mask_blue)
-            cv2.imshow("Red Mask", mask_red)
-            cv2.imshow("Green Mask", mask_green)
+            
+            #Display Masks
+            #cv2.imshow("Blue Mask", mask_blue)
+            #cv2.imshow("Red Mask", mask_red)
+            #cv2.imshow("Green Mask", mask_green)
 
             
             cv2.waitKey(1)  # Non-blocking update
@@ -187,132 +169,34 @@ class CameraSubscriberNode:
             rospy.logerr("Error converting image: {}".format(err))
             return
 
-
-# <=================== Motor control =========================>
-    def timer_cb(self, event):
-        if not self.initialized:
-            return
-        
-        # if self.latest_center is None:
-        #     rospy.loginfo_throttle(2.0, "No object detected")
-        #     #self.call_objdet(0)
-        #     return
-        # else: 
-        #     rospy.loginfo_throttle(2.0, "Objected Detected")  
-        #     #self.call_objdet(1)
-
-        # Example logic: print detected centers for each color
+# <=================== Detected ==============================>
+    def obj_detected(self,event):
+        msg = ObjectDetection()
         for color, center in self.latest_centers.items():
             if center is None:
-                rospy.loginfo_throttle(2.0, "No {} object detected".format(color))
+                #rospy.loginfo_throttle(2.0, "No {} object detected".format(color))
+                continue
             else:
-                #rospy.loginfo_throttle(1.0, "{} object detected at {}".format(color, center))
+                rospy.loginfo_throttle(1.0, "{} object detected at {}".format(color, center))
+
+                msg.x_coordinate = center[0]
+                msg.y_coordinate = center[1]
                 if color == "blue":
-                    self.publish_object_detected(1, center[0], center[1])
-                # elif color == "orange":
-                #     self.publish_object_detected(2, center[0], center[1])
+                    msg.object_type = 1
+                    self.pub_object_detected.publish(msg)
                 elif color == "green":
-                    self.publish_object_detected(3, center[0], center[1])
+                    msg.object_type = 3
+                    self.pub_object_detected.publish(msg)
                 elif color == "red":
-                    self.publish_object_detected(4, center[0], center[1])
-                else:
-                    self.publish_object_detected(0, center[0], center[1])
-                
-
-
-        # <================= object is in the middle ==================>
-        #if ((left_thresh <=  center_x <= right_thresh) and (bottom_thresh <= center_y <= top_thresh)):
-        #    rospy.loginfo("Object is in the middle")
-        #    self.call_stop()
-
-        # # <================= Movement logic upper row =================>
-        # if ((center_x < left_thresh) and (center_y < top_thresh)):
-        #     rospy.loginfo("Object is in the left upper corner.")
-        #     self.call_const_rotate(-1, 0.5)
-
-        # elif ((left_thresh <= center_x < right_thresh) and (center_y < top_thresh)):
-        #     rospy.loginfo("Object is in the middle up.")
-        #     self.call_const_straight(1, 0.5)
-
-        # elif ((center_x >= right_thresh) and (center_y < top_thresh)):
-        #     rospy.loginfo("Object is in the right upper corner.")
-        #     self.call_const_rotate(1, 0.5)
-
-        # # <================= Movement logic middle row =================>
-        # elif ((center_x < left_thresh) and (top_thresh <= center_y < bottom_thresh)):
-        #     rospy.loginfo("Object is in the middle left.")
-        #     self.call_const_rotate(-1, 0.5)
-
-        # elif ((left_thresh <= center_x < right_thresh) and (top_thresh <= center_y < bottom_thresh)):
-        #     rospy.loginfo("Object is in the middle.")
-        #     self.call_stop()
-
-        # elif ((center_x >= right_thresh) and (top_thresh <= center_y < bottom_thresh)):
-        #     rospy.loginfo("Object is in the middle right.")
-        #     self.call_const_rotate(1, 0.5)
-
-        # # <================= Movement logic lower row =================>
-        # elif ((center_x < left_thresh) and (center_y >= bottom_thresh)):
-        #     rospy.loginfo("Object is in the left lower corner.")
-        #     self.call_const_rotate(-1, 0.5)
-
-        # elif ((left_thresh <= center_x < right_thresh) and (center_y >= bottom_thresh)):
-        #     rospy.loginfo("Object is in the middle down.")
-        #     self.call_const_straight(-1, 0.5)
-
-        # elif ((center_x >= right_thresh) and (center_y >= bottom_thresh)):
-        #     rospy.loginfo("Object is in right lower corner.")
-        #     self.call_const_rotate(1, 0.5)
-
-        # # this should never be possible
-        # else:
-        #     rospy.loginfo_throttle(2.0, "Object not found")
-        #     return
-
-
-    # <================= Services =================>
-    def call_objdet(self, obj: int) -> None:
-        rospy.wait_for_service('object_detected')
-        try:
-            proxy = rospy.ServiceProxy('object_detected', ObjectDetected)
-            resp = proxy(obj)
-            print("Object command successfully detected:", resp.success)
-        except rospy.ServiceException as e:
-            print("Service call failed:", e)
-
-    def call_const_rotate(direction, angular_speed):
-        rospy.wait_for_service('const_rotate')
-        try:
-            proxy = rospy.ServiceProxy('const_rotate', ConstRotate)
-            resp = proxy(direction, angular_speed)
-            print("Constant Rotate success:", resp.success)
-        except rospy.ServiceException as e:
-            print("Service call failed:", e)
-
-    def call_const_straight(direction, speed):
-        rospy.wait_for_service('const_straight')
-        try:
-            proxy = rospy.ServiceProxy('const_straight', ConstStraight)
-            resp = proxy(direction, speed)
-            print("Moving Constant Straight success:", resp.success)
-        except rospy.ServiceException as e:
-            print("Service call failed:", e)   
-
-    def call_stop(self):
-        rospy.wait_for_service('stop')
-        try:
-            proxy = rospy.ServiceProxy('stop', Stop)
-            resp = proxy()
-            print("Stop success:", resp.success)
-        except rospy.ServiceException as e:
-            print("Service call failed:", e)
+                    msg.object_type = 4
+                    self.pub_object_detected.publish(msg)
 
     def cleanup(self):
         cv2.destroyAllWindows()
 
 if __name__ == "__main__":
     # Initialize the node
-    rospy.init_node('object_detection_node', anonymous=False, xmlrpc_port=45104, tcpros_port=45105)
+    rospy.init_node('object_detection_node', anonymous=False, xmlrpc_port=45102, tcpros_port=45103)
     camera_node = CameraSubscriberNode()
     try:
         rospy.spin()
