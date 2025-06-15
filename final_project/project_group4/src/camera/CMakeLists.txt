@@ -52,5 +52,6 @@ catkin_install_python(PROGRAMS
   src/Motor_OCR_node.py
   src/line_follower_Luka.py
   src/speed_change_OCR.py
+  src/line_followerV4.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
