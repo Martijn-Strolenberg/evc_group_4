@@ -67,15 +67,6 @@ class CameraSubscriberNode:
         # Set to true to display result
         self.display_result = True
 
-        # Pytesseract mess
-        # self.prev_msg = motor_cmd()
-        # self.zero_msg = motor_cmd()
-        # self.zero_msg.velocity = 0
-        # self.zero_msg.angle = 0
-        # self.zero_msg.distance = 0
-        # # create message counter
-        self.message_counter = 0
-
         # Initialize EasyOCR
         self.reader = easyocr.Reader(['en'])
         # self.reader = easyocr.Reader(['en'], gpu=False)
