@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 import cv2
 import rospy
@@ -7,8 +7,6 @@ from cv_bridge import CvBridge, CvBridgeError
 from sensor_msgs.msg import CompressedImage
 from pyzbar import pyzbar
 from std_msgs.msg import Float64, UInt8
-#from camera.msg import ObjectDetection
-#from motor_control.msg import motor_cmd
 
 class QRDetectionNode:
     def __init__(self):
@@ -28,7 +26,7 @@ class QRDetectionNode:
         )
 
         # Init Publisher
-        self.pub_find_obj = rospy.Publisher(
+        self.pub_find = rospy.Publisher(
             "/find_object",
             UInt8,
             queue_size=10
@@ -79,7 +77,6 @@ class QRDetectionNode:
                 rospy.loginfo("Detected QR code: {}".format(qr_data))
 
                 try:
-                    #val = int(qr_data)
                     if qr_data_return == "":
                         qr_data_return = qr_data
                     
@@ -122,44 +119,26 @@ class QRDetectionNode:
                 self.find_obj = 3
             elif qr_obj == "red":
                 self.find_obj = 4
-            else:
-                self.find_obj = -1
             
             # If a different colour is recieved, a new message has occured
             if self.find_obj != self.prev_obj:
                 self.curr_msg += 1 
                 self.prev_obj = self.find_obj
                 rospy.loginfo("Finding {colour_obj} object".format(colour_obj = qr_obj))
-                
-            # # Resize if necessary for display
-            # if raw_image.shape != qr_frame.shape:
-            #     qr_frame = cv2.resize(qr_frame, (raw_image.shape[1], raw_image.shape[0]))
-
-            # # Concatenate side by side
-            # side_by_side = np.hstack((raw_image, qr_frame))
-
-            # # Labels
-            # cv2.putText(side_by_side, "Original", (10, 30),
-            #             cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-            # cv2.putText(side_by_side, "Undistorted + QR", 
-            #             (raw_image.shape[1] + 10, 30), 
-            #             cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
 
             # Show
             cv2.imshow("QR code detection", qr_frame)
-            #rospy.loginfo("{colour},{old_colour}".format(colour = self.curr_msg,old_colour = self.prev_msg))
+            
             # Publishing the MSG
+            msg = UInt8()
             if self.curr_msg != self.prev_msg: # New QR recieved
-                
-                # Send message
-                msg = UInt8()
+                # Send message  
                 msg.data = self.find_obj
                 rospy.loginfo("Publishing find object message: %d", msg.data)
-                self.pub_find_obj.publish(msg)
-
+                
                 #Updated message
                 self.prev_msg = self.curr_msg
-
+                self.pub_find.publish(msg)
             cv2.waitKey(1)
 
         except CvBridgeError as err:
@@ -172,7 +151,7 @@ class QRDetectionNode:
 
 # Main
 if __name__ == "__main__":
-    rospy.init_node('qr_node', anonymous=False)
+    rospy.init_node('qr_node', anonymous=False, xmlrpc_port=45100, tcpros_port=45101)
     qr_node = QRDetectionNode()
     try:
         rospy.spin()
