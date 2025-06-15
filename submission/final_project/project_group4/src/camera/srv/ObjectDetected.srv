@@ -1,0 +1,4 @@
+int8 object_detected # 1 if the object has been detected, otherwise 0
+
+---
+bool success

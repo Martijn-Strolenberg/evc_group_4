@@ -1,0 +1,4 @@
+<launch>
+  <node pkg="sensor_reading" type="imu_pub_node.py" name="imu_pub_node" output="screen">
+  </node>
+</launch>

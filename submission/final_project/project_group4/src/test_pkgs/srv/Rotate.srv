@@ -1,0 +1,4 @@
+float32 angle           # radians (+ CCW, – CW)
+float32 angular_speed   # rad/s   (must be > 0)
+---
+bool   success

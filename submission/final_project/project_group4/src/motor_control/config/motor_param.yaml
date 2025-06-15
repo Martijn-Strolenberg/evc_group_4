@@ -1,0 +1,23 @@
+## Motor Params
+gain: 1
+# negative: more to right postive: more to left
+# positive make right wheel do more; negative makes left wheel do more
+trim: 0.07 #0.015
+
+## Odom Params
+wheel_rad: 0.033
+baseline: 0.163
+encoder_res: 137
+
+## Movement params
+velocity: 0.1
+
+## Movement params
+max_velocity: 1
+acceleration: 0.5
+deceleration: 1
+
+## PID Params (tune!)
+Kp: 15.0
+Ki: 0.0
+Kd: 0.0

@@ -1,0 +1,3 @@
+bool collision   # true if a collision is detected, false otherwise
+---
+bool success
