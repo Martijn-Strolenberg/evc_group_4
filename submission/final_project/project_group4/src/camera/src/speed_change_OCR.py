@@ -1,30 +1,33 @@
 #!/usr/bin/env python2
 
+#Imports
 import cv2
 import rospy
 import numpy as np
 import pytesseract
 import re
+import easyocr 
+import time
+import torch
+import math
+
 from cv_bridge import CvBridge, CvBridgeError
 from sensor_msgs.msg import CompressedImage
 
 from motor_control.msg import motor_cmd
 
 from std_msgs.msg import Float64
-import easyocr 
-import time
-import torch
+
 from motor_control.srv import MoveStraight, Rotate, Stop, ConstRotate, ConstStraight, DriveLeftwheel, DriveRightwheel, SetMaxSpeed
-# from assignment_3_ocr.msg import motor_cmd
-# from jetson_camera.msg import twovids, motor_cmd
+
+
+
 class CameraSubscriberNode:
     def __init__(self):
         self.initialized = False
         rospy.loginfo("Initializing camera subscriber node...")
         self.bridge = CvBridge()
 
-        self.writer = None
-        self.first_image = True
 
         # Construct subscriber
         self.sub_image = rospy.Subscriber(
@@ -34,38 +37,50 @@ class CameraSubscriberNode:
             buff_size=2**24,
             queue_size=1
         )
-        # Publisher for sending movement commands
+        # Publisher for sending changes in speed
         self.pub_cmd = rospy.Publisher(
             "/max_speed",
             Float64,
             queue_size = 10
         )
-        self.prev_speed = None
 
-        self.change_aspect = True
 
-        self.first_image_received = False
-        
-        # self.video_save = True
 
+        # Parameters
         self.video_save = rospy.get_param("~video_save", False)
         self.confidence = rospy.get_param("~confidence", 0.4)
         self.commando_execution = rospy.get_param("~commando_execution", True)
-        self.state = rospy.get_param("~state", 1)
-        # self.commando_to_execute = 0
-        self.prev_msg = motor_cmd()
-        # zero messsage
-        self.zero_msg = motor_cmd()
-        self.zero_msg.velocity = 0
-        self.zero_msg.angle = 0
-        self.zero_msg.distance = 0
-        # create message counter
+
+        # Video writer variables
+        self.writer = None
+        self.first_image = True
+
+        # variables 
+        self.prev_speed = None
+        self.change_aspect = True
+        self.first_image_received = False
+        self.first_time = True    
+
+        # If set to true, it prints the time it takes to detect all words on an image 
+        self.Time_EasyOCR = False 
+
+        # Set to true to display result
+        self.display_result = True
+
+        # Pytesseract mess
+        # self.prev_msg = motor_cmd()
+        # self.zero_msg = motor_cmd()
+        # self.zero_msg.velocity = 0
+        # self.zero_msg.angle = 0
+        # self.zero_msg.distance = 0
+        # # create message counter
         self.message_counter = 0
+
+        # Initialize EasyOCR
         self.reader = easyocr.Reader(['en'])
         # self.reader = easyocr.Reader(['en'], gpu=False)
 
-        self.first_time = True       
-
+        # initialize node
         self.initialized = True
         rospy.loginfo("Camera subscriber node initialized!")
 
@@ -80,22 +95,26 @@ class CameraSubscriberNode:
         try:
 
             # Decode image without CvBridge
-            # raw_image = cv2.imdecode(np.frombuffer(data.data, np.uint8), cv2.IMREAD_COLOR)
             undis_image = cv2.imdecode(np.frombuffer(data.data, np.uint8), cv2.IMREAD_COLOR)
-            # undis_image = cv2.imdecode(np.frombuffer(data.data, np.uint8), cv2.IMREAD_COLOR)
-
+   
             # make copy 
             cv_image_2 = undis_image.copy()
 
             if self.change_aspect:
                 undis_image = self.resize_with_aspect_ratio(undis_image, 1080)
-            # execute OCR function
+           
+            # Execute OCR function with Pytesseract
             # cv_image_processed = self.OCR_on_img(cv_image_2,self.confidence)
-            
+
+
+            # Execute OCR function with Pytesseract
             cv_image_processed = self.EasyOCR_on_img(cv_image_2,self.confidence)
+
             if self.change_aspect:
                 cv_image_processed = self.resize_with_aspect_ratio(cv_image_processed, 1080)
 
+
+            # # Used for comparing non processed and processed image. 
             # # Stack the images horizontally
             # side_by_side = np.hstack((undis_image, cv_image_processed))
 
@@ -104,7 +123,8 @@ class CameraSubscriberNode:
             # cv2.putText(side_by_side, "OCR_processed", (cv_image_processed.shape[1] + 10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
 
             # Display the result
-            cv2.imshow("Original vs. OCR", cv_image_processed)
+            if self.display_result:
+                cv2.imshow("Original vs. OCR", cv_image_processed)
             
             if self.video_save:
                 # On first frame only: set up VideoWriter
@@ -126,12 +146,14 @@ class CameraSubscriberNode:
                 # Write the frame
                 self.writer.write(proc_img)
 
-            #cv2.waitKey(1)
+
             cv2.waitKey(1)  # Non-blocking update
         except CvBridgeError as err:
             rospy.logerr("Error converting image: {}".format(err))
             return
 
+            
+ # --------------------------------------------------------------- OCR functions for Pytesseract ----------------------------------------------------------- # 
     #OCR on image function
     def OCR_on_img(self, cv_image_2,minimal_conf):
         
@@ -147,7 +169,7 @@ class CameraSubscriberNode:
 
         # OCR to commando function
         if self.commando_execution:
-            cv_image_2 = self.OCR_to_command(data,self.state,cv_image_2)
+            cv_image_2 = self.OCR_to_command(data,cv_image_2)
 
         # loop over each word that was found
         for i in range(0, len(data["text"])):
@@ -195,35 +217,9 @@ class CameraSubscriberNode:
             flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_REPLICATE)
         return image , angle
 
-    def EasyOCR_on_img(self, cv_image_2,minimal_conf):
-        # if self.first_time:
-        #     print("CUDA available:", torch.cuda.is_available())
-        #     print("Device count:", torch.cuda.device_count())
-        #     print("Device name:", torch.cuda.get_device_name(0) if torch.cuda.is_available() else "No GPU")
-        #     self.first_time = False
-        start = time.time()
-        results = self.reader.readtext(cv_image_2)
-        if self.commando_execution: 
-            cv_image_2 = self.OCR_to_command_text(results,minimal_conf,cv_image_2)
 
-        for (bbox, text, confidence) in results:
-            if confidence >= minimal_conf:
-                if re.search(r'[A-Za-z0-9;:]', text):
-                    rospy.loginfo(f"Detected text: {text} (Confidence: {confidence:.2f})")
-                    pts = np.array(bbox, dtype=np.int32)
-                    cv2.polylines(cv_image_2, [pts], isClosed=True, color=(0, 255, 0), thickness=2)
-                    # cv2.rectangle(cv_image_2, (x, y), (x + w, y + h), (0, 255, 0), 2)
-                    cv2.putText(cv_image_2, text, (pts[0]- 10), cv2.FONT_HERSHEY_SIMPLEX,
-                        0.5, (0, 0, 255), 2)
-
-
-        end = time.time()
-        print(f"Elapsed time: {end - start:.3f} seconds")
-        return cv_image_2
-
-    def OCR_to_command(self,data,state,cv_image_2):
+    def OCR_to_command(self,data,cv_image_2):
         # set msg
-        msg = motor_cmd()
         # set variables
         keyword_no_colon = None
         # all accepted commando's 
@@ -263,18 +259,19 @@ class CameraSubscriberNode:
                                     if val <0.1: 
                                         val = 0.5
                                     msg.velocity = val
+                                    self.change_speed(val)
                                     # self.pub_cmd.publish(msg)
                                     rospy.loginfo("set speed to: {}".format(val))
 
                                 if commando_to_execute == "angle:":
                                    # angle case
-                                    msg.angle = float(np.deg2rad(val))
+                                    # msg.angle = float(np.deg2rad(val))
                                     # self.pub_cmd.publish(msg)
                                     rospy.loginfo("set angle to: {}".format(val))                                   
 
                                 if commando_to_execute == "move:":
                                    # move case
-                                    msg.distance = val
+                                    # msg.distance = val
                                     # self.pub_cmd.publish(msg)
                                     rospy.loginfo("set move to: {}".format(val))
 
@@ -289,51 +286,91 @@ class CameraSubscriberNode:
                             else:
                                 keyword_no_colon = text
                             cv2.rectangle(cv_image_2, (x-4, y-4), (x + w + 4, y + h + 4 ), (255,0 , 0), 2)
-        # execute publish message here so all commandos get stacked and only once per image will commandos be executed
-        # rospy.loginfo("zero message: {}".format(self.zero_msg ))
-        # rospy.loginfo(" -- message: {}".format(msg))
-        msg.new_mesg = self.message_counter
-        self.zero_msg.new_mesg = self.message_counter
-        if msg != self.zero_msg:   
-            if msg != self.prev_msg:
-                if msg.velocity<0.1:
-                    msg.velocity = 0.5
-                rospy.loginfo("Message Sent: {}".format(msg))
-                self.pub_cmd.publish(msg)
-                self.message_counter +=1
-                msg.new_mesg = self.message_counter
-                self.prev_msg = msg
-
-                # rospy.loginfo("prev message: {}".format(self.prev_msg ))
-
         return cv_image_2
     
+
+    
+ # ------------------------------------------------------------------------ OCR functions for EasyOCR ----------------------------------------------------------- # 
+
+    def EasyOCR_on_img(self, cv_image_2,minimal_conf):
+
+        # check if there is a GPU available and use it if so. 
+        if self.first_time:
+            print("CUDA available:", torch.cuda.is_available())
+            print("Device count:", torch.cuda.device_count())
+            print("Device name:", torch.cuda.get_device_name(0) if torch.cuda.is_available() else "No GPU")
+            self.first_time = False
+
+        # Timer for EasyOCR    
+        if self.Time_EasyOCR:
+            start = time.time()
+
+        # -------- EasyOCR on image ------------------
+        results = self.reader.readtext(cv_image_2)
+
+        # -------- Find commando's to execute --------
+        if self.commando_execution: 
+            cv_image_2 = self.OCR_to_command_text(results,minimal_conf,cv_image_2)
+
+        # -------- Display words ---------------------
+        for (bbox, text, confidence) in results:
+            # filter out weak confidence text
+            if confidence >= minimal_conf:
+                # check if a minimal of 1 charcter from the alpahbet or nummers 1-9 is detected
+                if re.search(r'[A-Za-z0-9;:]', text):
+                    #Print
+                    rospy.loginfo(f"Detected text: {text} (Confidence: {confidence:.2f})")
+                    # Specify box points, location of word
+                    pts = np.array(bbox, dtype=np.int32)
+                    # Draw bounding box (green for all text ) 
+                    cv2.polylines(cv_image_2, [pts], isClosed=True, color=(0, 255, 0), thickness=2)
+                    cv2.putText(cv_image_2, text, (pts[0]- 10), cv2.FONT_HERSHEY_SIMPLEX,
+                        0.45, (0, 255, 0), 1)
+
+        # Timer for EasyOCR   
+        if self.Time_EasyOCR:
+            end = time.time()
+            print(f"Elapsed time: {end - start:.3f} seconds")
+
+
+        return cv_image_2
+
+    # OCR_to_command functions was not reusable since EasyOCR doesnt gets lists of words as output, but only strings. 
     def OCR_to_command_text(self,results,minimal_conf,cv_image_2):
-
+        # Set message
         msg = Float64()
-        
-        # set variables
-        keyword_no_colon = None
-        # all accepted commando's 
-        commando_executions = ["speed:", "speed;","speed", "move", "angle"]
-        commando_to_execute = None
-        # main loop
-        for (bbox, raw_text, confidence) in results: 
+        # Variables for giving text colour, increases visibility in terminal
+        RESET = "\033[0m"
+        GREEN = "\033[92m"
 
-            # Match words, numbers, and single special characters
+        # Set variables
+        keyword_no_colon = None
+        commando_to_execute = None
+
+        # All accepted commando's 
+        commando_executions = ["speed:", "speed;","speed", "move", "angle"]
+
+        # Main loop
+        for (bbox, raw_text, confidence) in results: 
             
+            # Filter out weak confidence text
             if confidence >= minimal_conf:
 
+                # Check if a minimal of 1 charcter from the alpahbet or nummers 1-9 is detected
                 if re.search(r'[A-Za-z0-9;:]', raw_text):
 
-                    # # delete all non ascii characters and make sure every lettel is lowercase
+                    # Delete all non ascii characters and make sure every letter is lowercase
                     raw_text = "".join([c if ord(c) < 128 else "" for c in raw_text]).strip().lower()
-
+                    # Replace semicolon with colon
                     raw_text = raw_text.replace(';', ':')
-                    list_text = re.findall(r'\d+\.\d+|\d+|\w+|[^\s\w]', raw_text)
-                    print(list_text)
-                    print(type(list_text))
 
+                    # Make a list of words out of the string of text, sepperate: floating points numbers (\d+\.\d+), normal integers (\d+),
+                    # words (\w+) and special characters like colons ([^\s\w])
+                    list_text = re.findall(r'\d+\.\d+|\d+|\w+|[^\s\w]', raw_text)
+                    # Print list
+                    rospy.loginfo("text in the list: {}".format(list_text))
+
+                    # loop through list
                     for i in range(0, len(list_text)):
                         
                         text = list_text[i]
@@ -346,42 +383,56 @@ class CameraSubscriberNode:
                                 rospy.loginfo("No colon found: {}".format(text))
 
                         if commando_to_execute:
+                            if text == ":":
+                                continue
+                            # find integer or floating point value with optional + or minus sign 
                             match = re.search(r'[-+]?\d*\.\d+|[-+]?\d+', text)
                             if match:
-                                # val = float(match.group())
+                                # only return number 
                                 num_str = match.group()
-                                if re.fullmatch(r'0[1-9]', num_str):  # '01', '02', ..., '09'
+
+                                # Turn numbers like 07 into 0.7 in case "." not detected
+                                if re.fullmatch(r'0[1-9]', num_str):
                                     val = float('0.' + num_str[1])
                                 else:
                                     val = float(num_str)
+
                                 if commando_to_execute == "speed:":
                                     # speed case
+
+                                    # Limit speed between 0.1 and 1
                                     if val <0.1: 
-                                        val = 0.5
+                                        val = 0.1
 
                                     if val > 1.0: 
                                         val = 1.0
                                     
+                                    # Only change speed when new value detected
                                     if self.prev_speed != val:
                                         self.prev_speed = val
+
+                                        # # Change speed with services 
                                         # self.change_speed(val)
-                                        
+
+                                        # Change speed with topics
                                         msg.data = val 
                                         self.pub_cmd.publish(msg)
-                                        rospy.loginfo("change speed to: {}".format(val))
+
+ 
+                                        rospy.loginfo("{}change speed to: {}{}".format(GREEN,val,RESET))
                                     else: 
-                                        rospy.loginfo("speed stays:{}".format(val))
+                                        rospy.loginfo("{}speed stays: {}{}".format(GREEN,val,RESET))
 
 
                                 if commando_to_execute == "angle:":
                                     # angle case
-                                    msg.angle = float(np.deg2rad(val))
+                                    # msg.angle = float(np.deg2rad(val))
                                     # self.pub_cmd.publish(msg)
                                     rospy.loginfo("set angle to: {}".format(val))                                   
 
                                 if commando_to_execute == "move:":
                                     # move case
-                                    msg.distance = val
+                                    # msg.distance = val
                                     # self.pub_cmd.publish(msg)
                                     rospy.loginfo("set move to: {}".format(val))
 
@@ -392,17 +443,17 @@ class CameraSubscriberNode:
 
                         if text in commando_executions: 
                             # with colon
-                            print("also 3")
                             if re.search(r':', text):
                                 commando_to_execute = text
                             else:
                                 keyword_no_colon = text
+                            # Show detected commando on image using blue bounding box    
                             pts = np.array(bbox, dtype=np.int32)
                             cv2.polylines(cv_image_2, [pts], isClosed=True, color=(255, 0, 0), thickness=3)
 
         return cv_image_2
-    
 
+ #---------------------------------------------------------------------------------------------------------------------------#
 
     def resize_with_aspect_ratio(self,image, target_width):
         # Get the original dimensions
@@ -417,6 +468,8 @@ class CameraSubscriberNode:
 
         return resized_image
 
+    
+    # Function for changing speed with services
     def change_speed(self, speed: float) -> None:
         rospy.wait_for_service('set_max_speed')
         try:
@@ -425,13 +478,14 @@ class CameraSubscriberNode:
             print("Set max speed command success:", resp.success)
         except rospy.ServiceException as e:
             print("Service call failed:", e)
+    
 
     def cleanup(self):
         cv2.destroyAllWindows()
 
 if __name__ == "__main__":
     # Initialize the node
-    rospy.init_node('Motor_OCR_node', anonymous=False, xmlrpc_port=45104, tcpros_port=45105)
+    rospy.init_node('Motor_OCR_node', anonymous=False, xmlrpc_port=45106, tcpros_port=45107)
     camera_node = CameraSubscriberNode()
     try:
         rospy.spin()
